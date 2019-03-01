@@ -187,7 +187,6 @@ public class CommandCheck implements JCCommand {
         // Schema construction
         XSModel xs = sc.xsmodel();
         String xsmsgs = sc.xsConstructionMessages();
-        String crmsgs = sc.xsResolutionMessages();
         if (verbose) {
             System.out.println("== Schema construction ==");
             System.out.println(xs == null ? "Schema contruction: FAILED" : "Schema construction: OK");
@@ -195,9 +194,13 @@ public class CommandCheck implements JCCommand {
                 System.out.println("Schema construction messages:");
                 System.out.print(xsmsgs);
             }
-            if (crmsgs.length() > 0) {
+            if (sc.xsNamespaces().length() > 0) {
+                System.out.println("Schema namespaces constructed:");
+                System.out.print(sc.xsNamespaces());
+            }
+            if (sc.xsResolutionMessages().length() > 0) {
                 System.out.println("Catalog resolutions:");
-                System.out.print(crmsgs);
+                System.out.print(sc.xsResolutionMessages());
             }
         }
         if (xs == null || xsmsgs.length() > 0) {

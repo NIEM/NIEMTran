@@ -818,7 +818,7 @@ public class NTSchema {
                     msgs.append(String.format("  %s\n", docs.item(di)));
                 }                
             }
-            else {
+            else if (docs.getLength() > 0) {
                 msgs.append(String.format("%s <- %s\n", ns, docs.get(0)));
             }
         }
