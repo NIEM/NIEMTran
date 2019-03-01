@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<w:WantList w:release="4.0-with-domain-updates" w:product="NIEM"
+  w:nillableDefault="true"
+  xmlns:unece="http://release.niem.gov/niem/codes/unece_rec20/4.0/"
+  xmlns:ncic="http://release.niem.gov/niem/codes/fbi_ncic/4.0/"
+  xmlns:j="http://release.niem.gov/niem/domains/jxdm/6.0/"
+  xmlns:w="http://niem.gov/niem/wantlist/2.2"
+  xmlns:nc="http://release.niem.gov/niem/niem-core/4.0/" xmlns:hs="http://release.niem.gov/niem/domains/humanServices/4.0/">
+  <w:Element w:name="hs:PersonOtherKinAssociation" w:isReference="false" w:nillable="true"/>
+  <w:Element w:name="hs:PersonOtherKinAssociationCategoryCode"
+    w:isReference="false" w:nillable="false"/>
+  <w:Element w:name="j:PersonHairColorCode" w:isReference="false" w:nillable="false"/>
+  <w:Element w:name="nc:Date" w:isReference="false" w:nillable="false"/>
+  <w:Element w:name="nc:LengthUnitCode" w:isReference="false" w:nillable="false"/>
+  <w:Element w:name="nc:MeasureIntegerValue" w:isReference="false" w:nillable="false"/>
+  <w:Element w:name="nc:MeasurePointAbstract" w:isReference="false" w:nillable="false"/>
+  <w:Element w:name="nc:Person" w:isReference="false" w:nillable="true"/>
+  <w:Type w:name="hs:PersonOtherKinAssociationCodeSimpleType" w:isRequested="false">
+    <w:Facet w:facet="enumeration" w:value="Authority Figure"/>
+    <w:Facet w:facet="enumeration" w:value="Babysitter"/>
+    <w:Facet w:facet="enumeration" w:value="Brother"/>
+    <w:Facet w:facet="enumeration" w:value="Brother-In-Law"/>
+    <w:Facet w:facet="enumeration" w:value="Clergy"/>
+    <w:Facet w:facet="enumeration" w:value="Coach"/>
+    <w:Facet w:facet="enumeration" w:value="Domestic Partner"/>
+    <w:Facet w:facet="enumeration" w:value="Father-in-Law"/>
+    <w:Facet w:facet="enumeration" w:value="Fiance"/>
+    <w:Facet w:facet="enumeration" w:value="Fiancee"/>
+    <w:Facet w:facet="enumeration" w:value="Fictive Kin"/>
+    <w:Facet w:facet="enumeration" w:value="Godfather"/>
+    <w:Facet w:facet="enumeration" w:value="Godmother"/>
+    <w:Facet w:facet="enumeration" w:value="Granddaughter"/>
+    <w:Facet w:facet="enumeration" w:value="Grandson"/>
+    <w:Facet w:facet="enumeration" w:value="Great-Granddaughter"/>
+    <w:Facet w:facet="enumeration" w:value="Great-Grandson"/>
+    <w:Facet w:facet="enumeration" w:value="Maternal Aunt"/>
+    <w:Facet w:facet="enumeration" w:value="Maternal Female Cousin"/>
+    <w:Facet w:facet="enumeration" w:value="Maternal Grandfather"/>
+    <w:Facet w:facet="enumeration" w:value="Maternal Grandmother"/>
+    <w:Facet w:facet="enumeration" w:value="Maternal Great Grandfather"/>
+    <w:Facet w:facet="enumeration" w:value="Maternal Great Grandmother"/>
+    <w:Facet w:facet="enumeration" w:value="Maternal Male Cousin"/>
+    <w:Facet w:facet="enumeration" w:value="Maternal Uncle"/>
+    <w:Facet w:facet="enumeration" w:value="Mother-in-Law"/>
+    <w:Facet w:facet="enumeration" w:value="Neighbor"/>
+    <w:Facet w:facet="enumeration" w:value="Nephew"/>
+    <w:Facet w:facet="enumeration" w:value="Niece"/>
+    <w:Facet w:facet="enumeration" w:value="Paternal Aunt"/>
+    <w:Facet w:facet="enumeration" w:value="Paternal Female Cousin"/>
+    <w:Facet w:facet="enumeration" w:value="Paternal Grandfather"/>
+    <w:Facet w:facet="enumeration" w:value="Paternal Grandmother"/>
+    <w:Facet w:facet="enumeration" w:value="Paternal Great Grandfather"/>
+    <w:Facet w:facet="enumeration" w:value="Paternal Great Grandmother"/>
+    <w:Facet w:facet="enumeration" w:value="Paternal Male Cousin"/>
+    <w:Facet w:facet="enumeration" w:value="Paternal Uncle"/>
+    <w:Facet w:facet="enumeration" w:value="Roommate"/>
+    <w:Facet w:facet="enumeration" w:value="Significant Other"/>
+    <w:Facet w:facet="enumeration" w:value="Sister"/>
+    <w:Facet w:facet="enumeration" w:value="Sister-In-Law"/>
+    <w:Facet w:facet="enumeration" w:value="Teacher"/>
+    <w:Facet w:facet="enumeration" w:value="Unrelated Friend"/>
+  </w:Type>
+  <w:Type w:name="hs:PersonOtherKinAssociationType" w:isRequested="false">
+    <w:ElementInType w:name="hs:SourcePerson" w:isReference="false"
+      w:minOccurs="1" w:maxOccurs="1"/>
+    <w:ElementInType w:name="hs:TargetPerson" w:isReference="false"
+      w:minOccurs="1" w:maxOccurs="1"/>
+    <w:ElementInType
+      w:name="hs:PersonOtherKinAssociationCategoryAbstract"
+      w:isReference="false" w:minOccurs="1" w:maxOccurs="1"/>
+  </w:Type>
+  <w:Type w:name="nc:DateType" w:isRequested="false">
+    <w:ElementInType w:name="nc:DateRepresentation"
+      w:isReference="false" w:minOccurs="1" w:maxOccurs="1"/>
+  </w:Type>
+  <w:Type w:name="nc:LengthMeasureType" w:isRequested="false">
+    <w:ElementInType w:name="nc:LengthUnitAbstract"
+      w:isReference="false" w:minOccurs="1" w:maxOccurs="1"/>
+  </w:Type>
+  <w:Type w:name="nc:MeasureType" w:isRequested="true">
+    <w:ElementInType w:name="nc:MeasureValueAbstract"
+      w:isReference="false" w:minOccurs="1" w:maxOccurs="1"/>
+  </w:Type>
+  <w:Type w:name="nc:PersonNameTextType" w:isRequested="false">
+    <w:AttributeInType w:name="nc:sequenceID" w:minOccurs="0" w:maxOccurs="1"/>
+  </w:Type>
+  <w:Type w:name="nc:PersonNameType" w:isRequested="false">
+    <w:ElementInType w:name="nc:PersonNamePrefixText"
+      w:isReference="false" w:minOccurs="0" w:maxOccurs="1"/>
+    <w:ElementInType w:name="nc:PersonGivenName" w:isReference="false"
+      w:minOccurs="1" w:maxOccurs="1"/>
+    <w:ElementInType w:name="nc:PersonMiddleName" w:isReference="false"
+      w:minOccurs="0" w:maxOccurs="unbounded"/>
+    <w:ElementInType w:name="nc:PersonSurName" w:isReference="false"
+      w:minOccurs="1" w:maxOccurs="1"/>
+  </w:Type>
+  <w:Type w:name="nc:PersonType" w:isRequested="false">
+    <w:ElementInType w:name="nc:PersonBirthDate" w:isReference="false"
+      w:minOccurs="0" w:maxOccurs="1"/>
+    <w:ElementInType w:name="nc:PersonHairColorAbstract"
+      w:isReference="false" w:minOccurs="0" w:maxOccurs="1"/>
+    <w:ElementInType w:name="nc:PersonHeightMeasure"
+      w:isReference="false" w:minOccurs="0" w:maxOccurs="1"/>
+    <w:ElementInType w:name="nc:PersonName" w:isReference="false"
+      w:minOccurs="1" w:maxOccurs="1"/>
+  </w:Type>
+  <w:Type w:name="ncic:HAIRCodeSimpleType" w:isRequested="false">
+    <w:Facet w:facet="enumeration" w:value="0NG"/>
+    <w:Facet w:facet="enumeration" w:value="BLK"/>
+    <w:Facet w:facet="enumeration" w:value="BLN"/>
+    <w:Facet w:facet="enumeration" w:value="BLU"/>
+    <w:Facet w:facet="enumeration" w:value="BR0"/>
+    <w:Facet w:facet="enumeration" w:value="GRN"/>
+    <w:Facet w:facet="enumeration" w:value="GRY"/>
+    <w:Facet w:facet="enumeration" w:value="PLE"/>
+    <w:Facet w:facet="enumeration" w:value="PNK"/>
+    <w:Facet w:facet="enumeration" w:value="RED"/>
+    <w:Facet w:facet="enumeration" w:value="SDY"/>
+    <w:Facet w:facet="enumeration" w:value="WHI"/>
+    <w:Facet w:facet="enumeration" w:value="XXX"/>
+  </w:Type>
+  <w:Type w:name="unece:LengthCodeSimpleType" w:isRequested="false">
+    <w:Facet w:facet="enumeration" w:value="4H"/>
+    <w:Facet w:facet="enumeration" w:value="77"/>
+    <w:Facet w:facet="enumeration" w:value="A11"/>
+    <w:Facet w:facet="enumeration" w:value="A12"/>
+    <w:Facet w:facet="enumeration" w:value="A45"/>
+    <w:Facet w:facet="enumeration" w:value="A71"/>
+    <w:Facet w:facet="enumeration" w:value="AK"/>
+    <w:Facet w:facet="enumeration" w:value="B57"/>
+    <w:Facet w:facet="enumeration" w:value="C45"/>
+    <w:Facet w:facet="enumeration" w:value="C52"/>
+    <w:Facet w:facet="enumeration" w:value="C63"/>
+    <w:Facet w:facet="enumeration" w:value="CMT"/>
+    <w:Facet w:facet="enumeration" w:value="DMT"/>
+    <w:Facet w:facet="enumeration" w:value="FOT"/>
+    <w:Facet w:facet="enumeration" w:value="HMT"/>
+    <w:Facet w:facet="enumeration" w:value="INH"/>
+    <w:Facet w:facet="enumeration" w:value="KMT"/>
+    <w:Facet w:facet="enumeration" w:value="M7"/>
+    <w:Facet w:facet="enumeration" w:value="MMT"/>
+    <w:Facet w:facet="enumeration" w:value="MTR"/>
+    <w:Facet w:facet="enumeration" w:value="NMI"/>
+    <w:Facet w:facet="enumeration" w:value="SMI"/>
+    <w:Facet w:facet="enumeration" w:value="X1"/>
+    <w:Facet w:facet="enumeration" w:value="YRD"/>
+  </w:Type>
+</w:WantList>

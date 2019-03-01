@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema
+    targetNamespace="http://example.com"
+    xmlns:ns="http://example.com"
+    xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified"> 
+
+    <xs:element name="elA" type="ns:typeA"/>
+
+    <xs:simpleType name="typeA">
+        <xs:list itemType="xs:integer"/>
+    </xs:simpleType>
+
+</xs:schema>

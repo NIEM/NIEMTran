@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rel:Relations 
+    xmlns:nc="http://release.niem.gov/niem/niem-core/4.0/"
+    xmlns:j="http://release.niem.gov/niem/domains/jxdm/6.0/"
+    xmlns:hs="http://release.niem.gov/niem/domains/humanServices/4.0/"
+    xmlns:rel="http://example.com/Relatives/1.0/">
+    <hs:PersonOtherKinAssociation>
+        <hs:SourcePerson>
+            <nc:PersonBirthDate>
+                <nc:Date>1893-05-04</nc:Date>
+            </nc:PersonBirthDate>
+            <j:PersonHairColorCode>BLN</j:PersonHairColorCode>
+            <nc:PersonHeightMeasure>
+                <nc:MeasureIntegerValue>163</nc:MeasureIntegerValue>
+                <nc:LengthUnitCode>CMT</nc:LengthUnitCode>
+            </nc:PersonHeightMeasure>
+            <nc:PersonName>
+                <nc:PersonGivenName>Peter</nc:PersonGivenName>
+                <nc:PersonMiddleName nc:sequenceID="1">Death</nc:PersonMiddleName>
+                <nc:PersonMiddleName nc:sequenceID="2">Bredon</nc:PersonMiddleName>
+                <nc:PersonSurName>Wimsey</nc:PersonSurName>
+            </nc:PersonName>
+        </hs:SourcePerson>
+        <hs:TargetPerson>
+            <nc:PersonName>
+                <nc:PersonGivenName>Gerald</nc:PersonGivenName>
+                <nc:PersonSurName>Wimsey</nc:PersonSurName>
+            </nc:PersonName>
+        </hs:TargetPerson>
+        <hs:PersonOtherKinAssociationCategoryCode>Paternal Uncle</hs:PersonOtherKinAssociationCategoryCode>
+    </hs:PersonOtherKinAssociation>
+</rel:Relations>
