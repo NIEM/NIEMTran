@@ -28,9 +28,12 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import org.apache.xerces.impl.xs.util.StringListImpl;
 import org.apache.xerces.util.URI;
+import org.apache.xerces.xs.StringList;
 import org.apache.xerces.xs.XSImplementation;
 import org.apache.xerces.xs.XSLoader;
 import org.apache.xerces.xs.XSModel;
+import org.apache.xerces.xs.XSNamespaceItem;
+import org.apache.xerces.xs.XSNamespaceItemList;
 import org.w3c.dom.DOMConfiguration;
 import org.w3c.dom.DOMError;
 import org.w3c.dom.DOMErrorHandler;
@@ -158,6 +161,11 @@ public class NTSchema {
     private XSModel xsmodel = null;                         // assembled XML schema object
     private String xsConstructionMessages = null;           // XML Schema errors
 
+    protected String xsNamespaces = null;                   // namespace & contributing documents from XSModel
+    protected String xsWarnings = null;                     // warnings derived from XSModel
+    protected HashMap<String,List<MapRec>> nsPrefix = null; // nsPrefix.get(P) -> list of URIs mapped to prefix P
+    protected HashMap<String,List<MapRec>> nsURI    = null; // nsURI.get(U)    -> list of prefixes mapped to namespace U
+    
     /**
      * Constructs an empty Schema object. Add schema documents, namespace URIs,
      * and XML Catalog documents later, then check for import errors or generate
@@ -786,6 +794,49 @@ public class NTSchema {
     }
     
     /**
+     * Return string list of namespaces processed by Xerces. Each entry shows
+     * the namespace URI plus list of document that contributed to the namespace.
+     * @return namespaces and contributing documents
+     */
+    public String xsNamespaces () {
+        if (xsNamespaces != null) {
+            return xsNamespaces;
+        }
+        if (xsmodel() == null) {
+            xsNamespaces = "";
+            return xsNamespaces;
+        }
+        StringBuilder msgs = new StringBuilder();
+        XSNamespaceItemList nsil = xsmodel.getNamespaceItems();
+        for (int i = 0; i < nsil.getLength(); i++) {
+            XSNamespaceItem nsi = nsil.item(i);   
+            String ns = nsi.getSchemaNamespace();
+            StringList docs = nsi.getDocumentLocations();
+            if (docs.getLength() > 1) {
+                msgs.append(String.format("%s <-\n", ns));
+                for (int di = docs.getLength()-1; di >= 0; di--) {
+                    msgs.append(String.format("  %s\n", docs.item(di)));
+                }                
+            }
+            else {
+                msgs.append(String.format("%s <- %s\n", ns, docs.get(0)));
+            }
+        }
+        xsNamespaces = msgs.toString();
+        return xsNamespaces;
+    }
+    
+    /**
+     * Return warnings derived from Xerces XSModel. Complains about <ul>
+     * <li> Namespace prefix mapped to more than one URI
+     * <li> Namespace URI mapped to more than one prefix</ul>
+     * @return schema construction warnings
+     */
+    public String xsWarningMessages() {
+        return null;
+    }
+    
+    /**
      * Returns the XSModel constructed by Xerces for this schema.
      * @return schema XSModel object
      */
@@ -841,9 +892,22 @@ public class NTSchema {
         @Override
         public String toString() {
             return msgs.toString();
-        }
+        }     
     }
-        
+
+    protected class MapRec {
+        String ns = null;       // namespace in which mapping appears
+        String val = null;      // mapped namespace prefix or namespace URI 
+        MapRec(String ns, String val) {
+            this.ns = ns;
+            this.val = val;
+        }
+        @Override
+        public String toString () {
+            return String.format("[%s,%s]", val, ns);
+        }
+    } 
+    
     // ------------ STATIC HELPER METHODS  ----------------------------------    
 
     static String canonicalFileURI(File f) {
