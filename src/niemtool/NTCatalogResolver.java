@@ -54,6 +54,7 @@ import org.xml.sax.helpers.DefaultHandler;
  * This class is modified from org.apache.xerces.utils.XMLCatalogResolver, 
  * <br>version ID: XMLCatalogResolver.java 699892 2008-09-28 21:08:27Z mrglavas, 
  * <br>by Michael Glavassevich, IBM. 
+ * <br>Original source code used here under Apache 2.0 license.
  * 
  * <p>
  * The source code is identical except where marked by <code>//MODIFICATION</code>
@@ -76,7 +77,7 @@ import org.xml.sax.helpers.DefaultHandler;
  * <p>
  * Catalog file parsing results are obtained through a class extending the
  * org.apache.xml.resolver.Catalog class. The relevant <code>fCatalog</code>
- * member variable is private, which means this class could not be implemented
+ * member variable is private, which is why this class is not implemented
  * by extending the XMLCatalogResolver class.
  *
  * <p>
@@ -275,10 +276,17 @@ public class NTCatalogResolver
         return r.toString();
     }
     
+    /**
+     * Return results of all resolution operations since last reset().
+     * @return resolution messages
+     */
     public String resolutionMessages () {
         return resolutionMsgs.toString();
     }
     
+    /**
+     * Reset the list of resolution operations to an empty list.
+     */
     public void resetResolutions () {
         resolutionMsgs = new StringBuilder();
     }

@@ -34,15 +34,6 @@ public class NIEMTool {
     }
     
     private void run (String[] args) {
-        args = Arrays.asList(
-                "check", "-v", "-i", "xml-catalog.xml", "extension/CrashDriver.xsd"
-                
-                //"help"
-                //"check", "-s;", "cat1.xml;cat2.xml", "s1.xsd;s2.xsd"
-                //"check", "-w", "-i", "xml-catalog.xml", "extension/CrashDriver.xsd"
-                //"compile", "xml-catalog.xml", "http://example.com/CrashDriver/1.0/"
-                //"translate", "CrashDriver.no", "../iep-samples/iep2.xml"
-                ).toArray(new String[0]);
          
         JCommander jc = new JCommander();
         NTUsageFormatter uf = new NTUsageFormatter(jc); 

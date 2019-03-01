@@ -60,13 +60,7 @@ public class CommandCompile implements JCCommand {
     CommandCompile (JCommander jc) {
     }
 
-    public static void main (String[] args) {
-        
-        args = Arrays.asList(
-                //"xml-catalog.xml", "extension/CrashDriver.xsd"
-                "--help"
-                ).toArray(new String[0]);
-        
+    public static void main (String[] args) {       
         CommandCompile obj = new CommandCompile();
         obj.runMain(args);
     }
@@ -169,13 +163,11 @@ public class CommandCompile implements JCCommand {
         
         // Construct the XML schema object
         XSModel xs = sc.xsmodel();
-        if (!quiet) {
-            if (xs == null) {
-                System.out.println("schema construction FAILED");              
-            }
-            System.out.print(sc.xsErrorMessages());
-        }
         if (xs == null) {
+            if (!quiet) {
+                System.out.println("Schema construction: FAILED");
+                System.out.print(sc.xsConstructionMessages());
+            }
             System.exit(1);
         }
         

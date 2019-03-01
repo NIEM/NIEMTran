@@ -99,7 +99,7 @@ public class Main {
         XSModel xs = sc.xsmodel();
         System.out.println("\nschema construction " + (xs == null ? "FAILED" : "OK"));
         System.out.println("schema construction messages:");
-        System.out.print(sc.xsErrorMessages());
+        System.out.print(sc.xsConstructionMessages());
         
         System.out.println("\nCatalog resolver calls during schema construction:");
         System.out.print(sc.resolver().resolutionMessages());

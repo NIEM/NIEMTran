@@ -60,7 +60,7 @@ import org.xml.sax.helpers.DefaultHandler;
  * the operation of the Xerces parser and the Apache Commons XML resolver during 
  * schema construction.  It also reports inconsistencies and ambiguities in the 
  * <code>import</code>, <code>include</code>, and <code>redefine</code> elements,
- * assuming that <ul>
+ * under the assumption that <ul>
  * <li>the schema should be entirely constructed from local schema documents 
  * <li>each schema component should have a namespace
  * <li>each namespace should be constructed from a single schema document
@@ -70,12 +70,13 @@ import org.xml.sax.helpers.DefaultHandler;
  * <p>
  * This class can be used for schema checking in three ways: <ol>
  *
- * ><li> Initialization checking:
+ * <li> Initialization checking:
  *
  * <ul><li>Can all of the initial schema document files be read?
  * <li>Can all of the initial namespaces be resolved to a readable file?
  * <li>Are all of the catalog files readable and valid XML Catalog documents?</ul>
  *
+ * <p>
  * <li> Schema assembly. Parses each schema document (using vanilla
  * DOM, not the Xerces XML Scheme API), following every <code>import</code>,
  * <code>include</code>, and <code>redefine</code> element, checking each for 
@@ -93,6 +94,7 @@ import org.xml.sax.helpers.DefaultHandler;
  * <li>no namespace attribute
  * <li>no schemaLocation attribute</ul>
  *
+ * <p>
  * <li> Schema construction. Uses the Xerces XML Schema API to construct
  * the XSModel object, reports any errors returned by Xerces. Also reports
  * the result of all XML Catalog resolutions performed during construction.</ol>
@@ -115,8 +117,8 @@ import org.xml.sax.helpers.DefaultHandler;
      System.exit(1);
  }
  System.out.println("Schema root directory: " + s.schemaRootDirectory();
- if (!s.assemblyWarningMessages().equals("")) {
-     System.out.println("Schema assembly errors and warnings:");
+ if (!s.assemblyMessages().equals("")) {
+     System.out.println("Schema assembly findings:");
      System.out.print(s.assemblyWarningMessages());
  }
  XSModel xs = s.xmodel();
@@ -154,7 +156,7 @@ public class NTSchema {
     private HashMap<String, String> namespaceFile = null;   // map of namespace URI to schema document
 
     private XSModel xsmodel = null;                         // assembled XML schema object
-    private String validationErrors = null;                 // XML Schema errors
+    private String xsConstructionMessages = null;           // XML Schema errors
 
     /**
      * Constructs an empty Schema object. Add schema documents, namespace URIs,
@@ -645,26 +647,30 @@ public class NTSchema {
         r.fileURI = furi;
         if (attemptedFiles.contains(furi)) {
             if (loadedFiles.contains(furi)) {
-                r.msgs.add("[log] already loaded document\n");
+                r.msgs.add(String.format("[log] already loaded %s\n", furi));
             }
             else {
-                r.msgs.add("[log] already failed to load document\n");
+                r.msgs.add(String.format("[log] already failed to load %s\n", furi));
             }
-            return;
         }
-        String lns = namespaceFile.getOrDefault(r.ns, furi);
-        if (!lns.equals(furi)) {
-            r.msgs.add(String.format("namespace %s already loaded from a different file (%s)\n", r.ns, lns));
-        }
-        attemptedFiles.add(furi);
-        Handler myhandler = new Handler(this.loadDocs, r);
-        try {
-            saxp.parse(furi, myhandler);
-            loadedFiles.add(furi);
-        } catch (SAXException ex) {
-            r.msgs.add(String.format("can't parse schema document: %s\n", ex.getMessage()));
-        } catch (IOException ex) {
-            r.msgs.add(String.format("can't read schema document: %s\n", ex.getMessage()));
+        else {
+            r.msgs.add(String.format("[log] loading %s\n", furi));
+            String lns = namespaceFile.getOrDefault(r.ns, furi);
+            if (!lns.equals(furi)) {
+                r.msgs.add(String.format("namespace %s already loaded from a different file (%s)\n", r.ns, lns));
+            }
+            attemptedFiles.add(furi);
+            Handler myhandler = new Handler(this.loadDocs, r);
+            try {
+                saxp.parse(furi, myhandler);
+                loadedFiles.add(furi);
+            } catch (SAXException ex) {
+                String em = exceptionReason(ex);
+                r.msgs.add(String.format("can't parse schema document %s: %s\n", furi, em));
+            } catch (IOException ex) {
+                String em = exceptionReason(ex);
+                r.msgs.add(String.format("can't read %s: %s\n", furi, em));
+            }
         }
     }
 
@@ -760,22 +766,31 @@ public class NTSchema {
 
     // ------------ SCHEMA XSMODEL CONSTRUCTION -----------------------------
     
-    public String xsErrorMessages () {
-        if (xsmodel == null) {
-            xsmodel();
-        }
-        return validationErrors;
+    /**
+     * Return all schema construction messages produced by Xerces
+     * @return schema construction messages
+     */
+    public String xsConstructionMessages () {
+        xsmodel();
+        return xsConstructionMessages;
     }
     
-    public String xsCatalogMessages () {
-        if (xsmodel == null) {
-            xsmodel();
-        }
+    /**
+     * Return results of all resolution operations performed during schema 
+     * construction
+     * @return resolution messages
+     */
+    public String xsResolutionMessages () {
+        xsmodel();
         return resolver().resolutionMessages();
     }
     
+    /**
+     * Returns the XSModel constructed by Xerces for this schema.
+     * @return schema XSModel object
+     */
     public XSModel xsmodel () {
-        if (validationErrors != null) {
+        if (xsConstructionMessages != null) {
             return xsmodel;
         }
         initialize();
@@ -792,7 +807,7 @@ public class NTSchema {
         if (xsmodel == null) {
             ehandler.msgs.append("schema loader returned null");
         }
-        validationErrors = ehandler.toString();
+        xsConstructionMessages = ehandler.toString();
         return xsmodel;
     }
    
@@ -888,5 +903,15 @@ public class NTSchema {
         } else {
             return s1.substring(0, i);
         }
+    }
+    
+    // Extract exception reason in parenthesis, if it's there
+    static String exceptionReason (Exception ex) {
+        String rmsg = ex.getMessage();
+        int px = rmsg.indexOf("(");
+        if (px >= 0) {
+            rmsg = rmsg.substring(px);
+        }
+        return rmsg;
     }
 }

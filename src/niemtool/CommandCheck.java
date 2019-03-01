@@ -58,11 +58,6 @@ public class CommandCheck implements JCCommand {
     
     public static void main (String[] args) {
         
-        args = Arrays.asList(
-                "-i", "-v", "--", "xml-catalog.xml", "extension/CrashDriver.xsd"
-                //"--help"
-                ).toArray(new String[0]);
-        
         CommandCheck obj = new CommandCheck();
         obj.runMain(args);
     }
@@ -191,8 +186,8 @@ public class CommandCheck implements JCCommand {
         }
         // Schema construction
         XSModel xs = sc.xsmodel();
-        String xsmsgs = sc.xsErrorMessages();
-        String crmsgs = sc.xsCatalogMessages();
+        String xsmsgs = sc.xsConstructionMessages();
+        String crmsgs = sc.xsResolutionMessages();
         if (verbose) {
             System.out.println("== Schema construction ==");
             System.out.println(xs == null ? "Schema contruction: FAILED" : "Schema construction: OK");
