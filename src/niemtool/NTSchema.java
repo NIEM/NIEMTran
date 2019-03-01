@@ -81,17 +81,17 @@ import org.xml.sax.helpers.DefaultHandler;
  * <code>include</code>, and <code>redefine</code> element, checking each for 
  * completeness and consistency. Reports the following findings:<ul>
  *
- * <lI>[error] namespace URI resolves to non-local resource
- * <li>[error] schemaLocation resolves to non-local resource
- * <li>[error] resolved namespace != resolved schemaLocation
- * <li>[error] can't determine schema document to be loaded
- * <li>[error] can't parse schema document
- * <li>[error] can't read file
- * <li>[error] document does not have expected targetNamespace
- * <li>[error] namespace already loaded from a different schema document
- * <li>[warn] namespace URI does not resolve
- * <li>[error] no namespace attribute
- * <li>[warn] no schemaLocation attribute</ul>
+ * <lI>namespace URI resolves to non-local resource
+ * <li>schemaLocation resolves to non-local resource
+ * <li>resolved namespace != resolved schemaLocation
+ * <li>can't determine schema document to be loaded
+ * <li>can't parse schema document
+ * <li>can't read file
+ * <li>target namespace != expected namespace
+ * <li>namespace already loaded from a different file
+ * <li>namespace URI does not resolve
+ * <li>no namespace attribute
+ * <li>no schemaLocation attribute</ul>
  *
  * <li> Schema construction. Uses the Xerces XML Schema API to construct
  * the XSModel object, reports any errors returned by Xerces. Also reports
@@ -131,11 +131,6 @@ import org.xml.sax.helpers.DefaultHandler;
  */
 public class NTSchema {
     
-    public static final int NT_DEBUG = 0;
-    public static final int NT_LOG   = 1;
-    public static final int NT_WARN  = 2;
-    public static final int NT_ERROR = 3;  
-
     protected static SAXParserFactory sfact = null;          // bootstrap for SAX parser
     protected static SAXParser saxp = null;                  // reusable SAX parser, for schema assembly checking
     protected static DOMImplementationRegistry direg = null; // bootstrap for XML Schema loader
@@ -470,39 +465,29 @@ public class NTSchema {
      * Returns a string describing each document load attempt during the
      * schema assembly check. Each entry in the string is formatted as follows:
      * <pre><code>
-     * parent/file
-     * 
-     * filename:line# IMPORT path/to/file (ns=http://namespace/uri sl=schema/location/path)
-     *   [error] resolved namespace != resolved schemaLocation
-     *   [error] namespace URI resolves to non-local resource</code></pre> Returns
+     filename:line# IMPORT path/to/file (ns=http://namespace/uri sl=schema/location/path)
+       resolved namespace != resolved schemaLocation
+       namespace URI resolves to non-local resource</code></pre> 
+     * <p>
+     * Returns
      * an empty string if no errors encountered.
      *
-     * @return string description of load errors
+     * @return string of assembly log messages
      */
-    public String assemblyMessages() {
-        return assemblyMessages(NT_LOG);
-    }
-
-    /**
-     * Returns a string containing errors encountered during the schema assembly
-     * check. Returns an empty string if no errors encountered.
-     *
-     * @return error message string
-     */
-    public String assemblyErrorMessages() {
-        return assemblyMessages(NT_ERROR);
+    public String assemblyLogMessages() {
+        return assemblyMessages(true);
     }
     
     /**
-     * Returns a string containing errors and warnings encountered during the schema assembly
-     * check. Returns an empty string if no errors or warnings encountered.
-     *
-     * @return error message string
-     */    
-    public String assemblyWarningMessages() {
-        return assemblyMessages(NT_WARN);
+     * Returns a string describing document load attempts with findings. 
+     * Document loads with no checked error, inconsistency, or ambiguity
+     * are not listed.
+     * @return string of assembly findings
+     */
+    public String assemblyMessages() {
+        return assemblyMessages(false);
     }
-
+    
     /**
      * Returns a list of all schema document load attempts during the schema
      * assembly check.
@@ -514,29 +499,28 @@ public class NTSchema {
         return loadDocs;
     }
     
-    private String assemblyMessages(int level) {
+    private String assemblyMessages(boolean logMsgs) {
         assemblyCheck();
         if (loadDocs.size() < 1) {
-            return ("no initial schema document\n");
+            return ("No initial schema document\n");
         }
         StringBuilder e = new StringBuilder(256);
         for (LoadRec r : loadDocs) {
             boolean flag = false;
             for (String m : r.msgs) {
-                int mlev = NT_DEBUG;
-                if (m.startsWith("[error]"))     { mlev = NT_ERROR; }
-                else if (m.startsWith("[warn]")) { mlev = NT_WARN; }
-                else if (m.startsWith("[log]"))  { mlev = NT_LOG; }
-                
-                if (mlev >= level) {
-                    if (!flag) {
-                        e.append(assemblyMessageHeader(r));
-                        flag = true;
+                if (m.startsWith("[log] ")) {
+                    if (!logMsgs) {
+                        continue;
                     }
-                    e.append("  ").append(m);
+                    m = m.substring(6);
                 }
+                if (!flag) {
+                    e.append(assemblyMessageHeader(r));
+                    flag = true;
+                }
+                e.append("  ").append(m);
             }
-            if (!flag && level < NT_WARN) {
+            if (!flag && logMsgs) {
                 e.append(assemblyMessageHeader(r));
             }
         }
@@ -615,35 +599,33 @@ public class NTSchema {
         }
         if (r.ns != null) {
             if (r.nsRef == null && catalogFiles.size() > 0) {
-                r.msgs.add(String.format("[error] namespace URI does not resolve\n"));
+                r.msgs.add(String.format("namespace URI does not resolve\n"));
             } else if (!r.nsRef.startsWith("file:")) {
-                r.msgs.add(String.format("[error] namespace URI resolves to non-local resource\n"));
+                r.msgs.add(String.format("namespace URI resolves to non-local resource\n"));
             }
         } else {
             if ("import".equals(r.fkind)) {
-                r.msgs.add(String.format("[error] no namespace attribute\n"));
+                r.msgs.add(String.format("no namespace attribute\n"));
             }
         }
         if (r.sloc != null) {
             if (r.slocRef != null) {
                 if (!r.slocRef.startsWith("file:")) {
-                    r.msgs.add(String.format("[error] schemaLocation resolves to non-local resource\n"));
+                    r.msgs.add(String.format("schemaLocation resolves to non-local resource\n"));
                 }
             } else {
                 r.slocRef = canonicalFileURI(r.fileURI, r.sloc);
             }
         } else {
-            if ("include".equals(r.fkind) || "redefine".equals(r.fkind)) {
-                r.msgs.add(String.format("[error]  no schemaLocation attribute\n"));
-            } else if ("import".equals(r.fkind)) {
-                r.msgs.add(String.format("[warn]  no schemaLocation attribute\n"));
+            if (!"load".equals(r.fkind)) {
+                r.msgs.add(String.format("no schemaLocation attribute\n"));
             }
         }
         if (r.nsRef != null && r.slocRef != null) {
             if (r.nsRef.equals(r.slocRef)) {
                 loadDocumentFromURI(r, r.nsRef);
             } else {
-                r.msgs.add(String.format("[error] resolved namespace %s != resolved schemaLocation %s\n", r.nsRef, r.slocRef));
+                r.msgs.add(String.format("resolved namespace %s != resolved schemaLocation %s\n", r.nsRef, r.slocRef));
                 loadDocumentFromURI(r, r.nsRef);
                 loadDocumentFromURI(r, r.slocRef);
             }
@@ -652,7 +634,7 @@ public class NTSchema {
         } else if (r.slocRef != null) {
             loadDocumentFromURI(r, r.slocRef);
         } else {
-            r.msgs.add(String.format("[error] can't determine schema document to load"));
+            r.msgs.add(String.format("can't determine schema document to be loaded"));
         }
     }
 
@@ -663,16 +645,16 @@ public class NTSchema {
         r.fileURI = furi;
         if (attemptedFiles.contains(furi)) {
             if (loadedFiles.contains(furi)) {
-                r.msgs.add("[note]  already loaded document\n");
+                r.msgs.add("[log] already loaded document\n");
             }
             else {
-                r.msgs.add("[note]  already failed to load document\n");
+                r.msgs.add("[log] already failed to load document\n");
             }
             return;
         }
         String lns = namespaceFile.getOrDefault(r.ns, furi);
         if (!lns.equals(furi)) {
-            r.msgs.add(String.format("[error] namespace %s already loaded from a different file (%s)\n", r.ns, lns));
+            r.msgs.add(String.format("namespace %s already loaded from a different file (%s)\n", r.ns, lns));
         }
         attemptedFiles.add(furi);
         Handler myhandler = new Handler(this.loadDocs, r);
@@ -680,9 +662,9 @@ public class NTSchema {
             saxp.parse(furi, myhandler);
             loadedFiles.add(furi);
         } catch (SAXException ex) {
-            r.msgs.add(String.format("[error] can't parse schema document: %s\n", ex.getMessage()));
+            r.msgs.add(String.format("can't parse schema document: %s\n", ex.getMessage()));
         } catch (IOException ex) {
-            r.msgs.add(String.format("[error] can't read schema document: %s\n", ex.getMessage()));
+            r.msgs.add(String.format("can't read schema document: %s\n", ex.getMessage()));
         }
     }
 
@@ -712,7 +694,7 @@ public class NTSchema {
                 if ("schema".equals(local)) {
                     String tns = attrs.getValue("targetNamespace");
                     if (tns != null && r.ens != null && !tns.equals(r.ens)) {
-                        r.msgs.add(String.format("[error] targetNamespace %s != expected namespace %s\n", tns, r.ens));
+                        r.msgs.add(String.format("targetNamespace %s != expected namespace %s\n", tns, r.ens));
                     }
                 } else if ("import".equals(local)) {
                     LoadRec nr = new LoadRec();

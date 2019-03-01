@@ -91,10 +91,10 @@ public class Main {
         for (String s : dl) {
             System.out.println("  "+s);
         }
-        System.out.println("\nschema assembly load messages:");
+        System.out.println("\nschema assembly messages:");
         System.out.print(sc.assemblyMessages());
-        System.out.println("\nschema assembly error messages:");
-        System.out.print(sc.assemblyErrorMessages());
+        System.out.println("\nschema assembly log messages:");
+        System.out.print(sc.assemblyLogMessages());
         
         XSModel xs = sc.xsmodel();
         System.out.println("\nschema construction " + (xs == null ? "FAILED" : "OK"));

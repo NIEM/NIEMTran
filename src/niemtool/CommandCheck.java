@@ -41,9 +41,6 @@ public class CommandCheck implements JCCommand {
     @Parameter(names = {"-v"}, description = "verbose output")
     private boolean verbose = false;
     
-    @Parameter(names = "-w", description = "display warning messages")
-    private boolean warn = false;
-    
     @Parameter(names = "-q", description = "no output, exit status only")
     private boolean quiet = false;
     
@@ -62,7 +59,7 @@ public class CommandCheck implements JCCommand {
     public static void main (String[] args) {
         
         args = Arrays.asList(
-                "-i", "-s;", "--", "xml-catalog.xml", "extension/CrashDriver.xsd"
+                "-i", "-v", "--", "xml-catalog.xml", "extension/CrashDriver.xsd"
                 //"--help"
                 ).toArray(new String[0]);
         
@@ -180,14 +177,13 @@ public class CommandCheck implements JCCommand {
                 System.out.println("  " + s.substring(schemaRootLength));
             }
             System.out.println("Schema document load messages:");
-            System.out.print(sc.assemblyMessages());
+            System.out.print(sc.assemblyLogMessages());
         }
-        String assemblyErrs = (warn ? sc.assemblyWarningMessages() : sc.assemblyErrorMessages());
-        if (assemblyErrs.length() > 0) {
+        if (sc.assemblyMessages().length() > 0) {
             if (!quiet && !verbose) {
                 System.out.println("Schema root directory: " + schemaRoot);                
-                System.out.println("Schema assembly error messages:");
-                System.out.print(assemblyErrs);
+                System.out.println("Schema assembly messages:");
+                System.out.print(sc.assemblyMessages());
             }
             if (!ignore) {
                 System.exit(1);
@@ -211,7 +207,7 @@ public class CommandCheck implements JCCommand {
         }
         if (xs == null || xsmsgs.length() > 0) {
             if (!quiet && !verbose) {
-                if (assemblyErrs.length() < 1) {
+                if (sc.assemblyMessages().length() < 1) {
                     System.out.println("Schema root directory= " + schemaRoot);
                 }
                 if (xs == null) {
