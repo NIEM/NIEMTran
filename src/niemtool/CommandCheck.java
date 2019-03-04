@@ -149,11 +149,13 @@ public class CommandCheck implements JCCommand {
                 System.exit(1);
             }
         }
-        String initErrs = sc.initializationErrorMessages();
-        if (initErrs.length() > 0) {
+        List<String> initErrs = sc.initializationErrorMessages();
+        if (initErrs.size() > 0) {
             if (!quiet) {
                 System.out.println("Schema initialization errors:");
-                System.out.print(initErrs);
+                for (String s : initErrs) {
+                    System.out.print("  "+s);
+                }
             }
             if (!ignore) {
                 System.exit(1);
@@ -171,14 +173,18 @@ public class CommandCheck implements JCCommand {
             for (String s : dl) {
                 System.out.println("  " + s.substring(schemaRootLength));
             }
-            System.out.println("Schema document load messages:");
-            System.out.print(sc.assemblyLogMessages());
+            System.out.println("Schema assembly log messages:");
+            for (String s : sc.assemblyLogMessages()) {
+                System.out.print("  " + s);
+            }
         }
-        if (sc.assemblyMessages().length() > 0) {
+        if (sc.assemblyMessages().size() > 0) {
             if (!quiet && !verbose) {
                 System.out.println("Schema root directory: " + schemaRoot);                
                 System.out.println("Schema assembly messages:");
-                System.out.print(sc.assemblyMessages());
+                for (String s : sc.assemblyMessages()) {
+                    System.out.print("  " + s);
+                }
             }
             if (!ignore) {
                 System.exit(1);
@@ -186,26 +192,33 @@ public class CommandCheck implements JCCommand {
         }
         // Schema construction
         XSModel xs = sc.xsmodel();
-        String xsmsgs = sc.xsConstructionMessages();
+        List<String> xsmsgs = sc.xsConstructionMessages();
         if (verbose) {
             System.out.println("== Schema construction ==");
             System.out.println(xs == null ? "Schema contruction: FAILED" : "Schema construction: OK");
-            if (xsmsgs.length() > 0) {
+            if (xsmsgs.size() > 0) {
                 System.out.println("Schema construction messages:");
+                for (String s : xsmsgs) {
+                    System.out.print("  " + s);
+                }
                 System.out.print(xsmsgs);
             }
-            if (sc.xsNamespaces().length() > 0) {
+            if (sc.xsNamespaceList().size() > 0) {
                 System.out.println("Schema namespaces constructed:");
-                System.out.print(sc.xsNamespaces());
+                for (String s : sc.xsNamespaceList()) {
+                    System.out.print("  " + s);
+                }
             }
-            if (sc.xsResolutionMessages().length() > 0) {
+            if (sc.xsResolutionMessages().size() > 0) {
                 System.out.println("Catalog resolutions:");
-                System.out.print(sc.xsResolutionMessages());
+                for (String s : sc.xsResolutionMessages()) {
+                    System.out.print("  " + s);
+                }
             }
         }
-        if (xs == null || xsmsgs.length() > 0) {
+        if (xs == null || xsmsgs.size() > 0) {
             if (!quiet && !verbose) {
-                if (sc.assemblyMessages().length() < 1) {
+                if (sc.assemblyMessages().size() < 1) {
                     System.out.println("Schema root directory= " + schemaRoot);
                 }
                 if (xs == null) {

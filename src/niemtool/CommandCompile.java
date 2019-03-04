@@ -128,10 +128,11 @@ public class CommandCompile implements JCCommand {
             System.out.println(ex.getMessage());
             System.exit(2);
         }
-        String err = sc.initializationErrorMessages();
-        if (!"".equals(err)) {
+        if (sc.initializationErrorMessages().size() > 0) {
             System.out.println("initialization error");
-            System.out.print(err);
+            for (String s : sc.initializationErrorMessages()) {
+                System.out.print("  "+s);
+            }
             System.exit(1);
         }
         

@@ -171,7 +171,7 @@ public class NTCatalogResolver
     static URL catSchemaResource = null;                // URL of XML Catalog XSD
     static URL catDTDResource = null;                   // URL of XML Catalog DTD
     
-    private StringBuilder resolutionMsgs = new StringBuilder(); // catalog resolution results; clear with resetResolutions();
+    private List<String> resolutionMsgs = new ArrayList<>();    // catalog resolution results; clear with resetResolutions();
     
     /**
      * Returns a list of file URIs for all requested catalog files. 
@@ -250,45 +250,33 @@ public class NTCatalogResolver
     }
 
     /**
-     * Return catalog validation results in one string.
-     * @return catalog validation results
-     */
-    public String validationResultString() {
-        StringBuilder r = new StringBuilder(64);
-        for (String s : validationResults()) {
-            r.append(s);
-        }
-        return r.toString();
-    }
-
-    /**
-     * Return catalog validation errors in one string.
-     * Returns an empty string if no errors encountered.
+     * Return list of catalog validation error messages..
+     * Returns an empty list if no errors encountered.
      * @return catalog error messages
      */
-    public String validationErrorString() {
-        StringBuilder r = new StringBuilder(64);
+    public List<String> validationErrors() {
+        List<String> result = new ArrayList<>();
         for (String s : validationResults()) {
             if (!s.endsWith(": OK\n")) {
-                r.append(s);
+                result.add(s);
             }
         }
-        return r.toString();
+        return result;
     }
     
     /**
      * Return results of all resolution operations since last reset().
      * @return resolution messages
      */
-    public String resolutionMessages () {
-        return resolutionMsgs.toString();
+    public List<String> resolutionMessages () {
+        return resolutionMsgs;
     }
     
     /**
      * Reset the list of resolution operations to an empty list.
      */
     public void resetResolutions () {
-        resolutionMsgs = new StringBuilder();
+        resolutionMsgs.clear();
     }
     
     /**
@@ -497,7 +485,7 @@ public class NTCatalogResolver
         } else if (systemId != null) {
             resolvedId = resolveSystem(systemId);
         }
-        resolutionMsgs.append(String.format("resolveEntity(%s,%s) -> %s\n", publicId, systemId, resolvedId)); // MODIFIED
+        resolutionMsgs.add(String.format("resolveEntity(%s,%s) -> %s\n", publicId, systemId, resolvedId)); // MODIFIED
 
         if (resolvedId != null) {
             InputSource source = new InputSource(resolvedId);
@@ -545,7 +533,7 @@ public class NTCatalogResolver
         } else if (systemId != null) {
             resolvedId = resolveSystem(systemId);
         }
-        resolutionMsgs.append(String.format("resolveEntity(%s,%s,%s) -> %s\n",  //MODIFIED
+        resolutionMsgs.add(String.format("resolveEntity(%s,%s,%s) -> %s\n",  //MODIFIED
                 publicId, baseURI, systemId, resolvedId));
 
         if (resolvedId != null) {
@@ -731,7 +719,7 @@ public class NTCatalogResolver
             fCatalogsChanged = false;
         }
         String res = (fCatalog != null) ? fCatalog.resolveSystem(systemId) : null;  // MODIFIED
-        resolutionMsgs.append(String.format("resolveSystem(%s) -> %s\n", systemId, res));
+        resolutionMsgs.add(String.format("resolveSystem(%s) -> %s\n", systemId, res));
         return res;
     }
 
@@ -757,7 +745,7 @@ public class NTCatalogResolver
             fCatalogsChanged = false;
         }
         String res = (fCatalog != null) ? fCatalog.resolvePublic(publicId, systemId) : null;    // MODIFIED
-        resolutionMsgs.append(String.format("resolvePublic(%s,%s) -> %s\n", publicId, systemId, res));
+        resolutionMsgs.add(String.format("resolvePublic(%s,%s) -> %s\n", publicId, systemId, res));
         return res;
     }
 
@@ -786,7 +774,7 @@ public class NTCatalogResolver
         }
         String res = (fCatalog != null) ? fCatalog.resolveURI(uri) : null; // MODIFIED
         if (uri != null) {
-            resolutionMsgs.append(String.format("resolveURI(%s) -> %s\n", uri, res));
+            resolutionMsgs.add(String.format("resolveURI(%s) -> %s\n", uri, res));
         }
         return res;
     }

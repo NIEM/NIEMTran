@@ -148,7 +148,7 @@ public class NTSchema {
     private List<String> initialSchemaFileURIs = null;      // list of initial schema documents to load (converted to canonical file:// URIs)    
     private List<String> initialNSURIs = null;              // list of namespaces to resolve for initial achema documents (as URIs)
     private List<String> allSchemaFileURIs = null;          // list of initial schema documents & initial namespace URI resolutions
-    private String initErrors = null;                       // initialization errors; eg. schema document not found
+    private List<String> initErrors = null;                 // initialization errors; eg. schema document not found
     private NTCatalogResolver resolver = null;              // catalog resolver used for load checking & schema generation
 
     private String schemaRootDirectory = "";                // file URI for root directory of all schema documents 
@@ -159,10 +159,10 @@ public class NTSchema {
     private HashMap<String, String> namespaceFile = null;   // map of namespace URI to schema document
 
     private XSModel xsmodel = null;                         // assembled XML schema object
-    private String xsConstructionMessages = null;           // XML Schema errors
+    private List<String> xsConstructionMessages = null;     // XML Schema error messages
 
-    protected String xsNamespaces = null;                   // namespace & contributing documents from XSModel
-    protected String xsWarnings = null;                     // warnings derived from XSModel
+    protected List<String> xsNamespaces = null;             // namespace & contributing documents from XSModel
+    protected List<String> xsWarnings = null;               // schema warnings derived from XSModel
     protected HashMap<String,List<MapRec>> nsPrefix = null; // nsPrefix.get(P) -> list of URIs mapped to prefix P
     protected HashMap<String,List<MapRec>> nsURI    = null; // nsURI.get(U)    -> list of prefixes mapped to namespace U
     
@@ -241,7 +241,6 @@ public class NTSchema {
      * Add one catalog file to the list of catalogs used to resolve URIs. This
      * may change the schema, so initialization, assembly checking, and schema
      * validation may also change.
-     *
      * @param cfn catalog file path
      */
     public final void addCatalogFile(String cfn) {
@@ -256,7 +255,6 @@ public class NTSchema {
      * Add one file to the list of initial schema documents. This changes the
      * schema, so initialization, assembly checking, and schema validation may
      * also change.
-     *
      * @param sfn schema file path
      */
     public final void addSchemaFile(String sfn) {
@@ -270,7 +268,6 @@ public class NTSchema {
      * Add one URI to the list of initial namespace URIs specifying initial schema
      * documents. This changes the schema, so initialization, assembly checking,
      * and schema validation may also change.
-     
      * @param sns namespace URI string
      */
     public final void addSchemaNamespaceURI(String sns) {
@@ -282,8 +279,7 @@ public class NTSchema {
 
     /**
      * Returns a list of file URIs for the initial list of catalog files
-     * used to specify the schema.
-     * 
+     * used to specify the schema. 
      * @return list of provided catalog file paths
      */
     public List<String> getCatalogFiles() {
@@ -294,7 +290,6 @@ public class NTSchema {
     /**
      * Returns a list of file URIs for all the initial and subordinate
      * catalog files requested during catalog file parsing
-     * 
      * @return list of all catalog files requested
      */
     public List<String> getAllCatalogFiles() {
@@ -305,7 +300,6 @@ public class NTSchema {
     /**
      * Returns a list of file URIs for the valid catalog files loaded
      * during catalog file parsing.
-     * 
      * @return list of all valid catalog files
      */
     public List<String> getAllValidCatalogFiles() {
@@ -315,7 +309,6 @@ public class NTSchema {
 
     /**
      * Returns a list of initial schema documents used to generate the schema.
-     *
      * @return list of initial schema documents
      */
     public List<String> getSchemaFiles() {
@@ -327,7 +320,6 @@ public class NTSchema {
      * Returns a list of namespaces used to specify the schema. These
      * namespaces are resolved against the catalog, and the corresponding
      * local resources are used to generate the schema.
-     *
      * @return list of initial namespace URIs
      */
     public List<String> getSchemaNSURIs() {
@@ -338,7 +330,6 @@ public class NTSchema {
     /**
      * Returns a list of file: URIs, one for each initial schema document 
      * provided as a file name or namespace URI.
-     * 
      * @return list of initial schema document file URIs
      */
     public List<String> getAllInitialSchemaURIs() {
@@ -348,7 +339,6 @@ public class NTSchema {
 
     /**
      * Returns the catalog resolver used to construct the schema.
-     *
      * @return catalog resolver object
      */
     public NTCatalogResolver resolver() {
@@ -359,24 +349,22 @@ public class NTSchema {
     /**
      * Returns the result of parsing the catalog files used to specify the
      * schema. Includes result of parsing subordinate catalogs.
-     *
      * @return a string containing catalog parsing results
      */
-    public String catalogParsingResults() {
+    public List<String> catalogParsingResults() {
         initialize();
-        return resolver().validationResultString();
+        return resolver().validationResults();
     }
 
     /**
      * Returns any errors encountered in parsing the catalog files used to
      * specify the schema. Includes errors found while parsing subordinate
      * catalogs.
-     *
      * @return a string containing catalog parsing errors; empty string if none
      */
-    public String catalogParsingErrors() {
+    public List<String> catalogParsingErrors() {
         initialize();
-        return resolver().validationErrorString();
+        return resolver().validationErrors();
     }
 
     /**
@@ -386,7 +374,7 @@ public class NTSchema {
      * @return a string containing schema initialization errors; empty string if
      * none
      */
-    public String initializationErrorMessages() {
+    public List<String> initializationErrorMessages() {
         initialize();
         return initErrors;
     }
@@ -395,14 +383,14 @@ public class NTSchema {
         if (initErrors != null) {
             return;
         }
-        StringBuffer errs = new StringBuffer(128);
+        initErrors = new ArrayList<>();
         if (resolver == null) {
             resolver = new NTCatalogResolver();
             if (catalogFiles.size() > 0) {
                   resolver.setCatalogList(catalogFiles.toArray(new String[0]));
             }
         }
-        errs.append(resolver.validationErrorString());
+        initErrors.addAll(resolver.validationErrors());
 
         initialSchemaFileURIs = new ArrayList<>();
         allSchemaFileURIs = new ArrayList<>();
@@ -416,7 +404,7 @@ public class NTSchema {
                 initialSchemaFileURIs.add(suri);
                 allSchemaFileURIs.add(suri);
             } else {
-                errs.append(String.format("can't read schema file %s\n", s));
+                initErrors.add(String.format("can't read schema file %s\n", s));
             }
         }
         initialNSURIs = new ArrayList<>();
@@ -425,21 +413,20 @@ public class NTSchema {
             try {
                 rv = resolver.resolveURI(s);
                 if (rv == null) {
-                    errs.append(String.format("can't resolve namespace %s\n", s));
+                    initErrors.add(String.format("can't resolve namespace %s\n", s));
                 } else if (!rv.startsWith("file:")) {
-                    errs.append(String.format("namespace %s resolves to non-local resource %s\n", s, rv));
+                    initErrors.add(String.format("namespace %s resolves to non-local resource %s\n", s, rv));
                 } else {
                     initialNSURIs.add(s);
                     allSchemaFileURIs.add(rv);
                 }
             } catch (IOException ex) {
-                errs.append(String.format("invalid URI syntax for initial namespace %s\n", s));
+                initErrors.add(String.format("invalid URI syntax for initial namespace %s\n", s));
             }
         }
         if (allSchemaFileURIs.size() < 1) {
-            errs.append("no readable schema documents provided\n");
+            initErrors.add("no readable schema documents provided\n");
         }
-        initErrors = errs.toString();
     }
 
     // ------------- SCHEMA ASSEMBLY CHECKING -------------------------------
@@ -472,19 +459,17 @@ public class NTSchema {
     }
     
     /**
-     * Returns a string describing each document load attempt during the
-     * schema assembly check. Each entry in the string is formatted as follows:
+     * Returns a list of messages describing each document load attempt during the
+     * schema assembly check. Each entry in the list is formatted as follows:
      * <pre><code>
      filename:line# IMPORT path/to/file (ns=http://namespace/uri sl=schema/location/path)
        resolved namespace != resolved schemaLocation
        namespace URI resolves to non-local resource</code></pre> 
      * <p>
-     * Returns
-     * an empty string if no errors encountered.
-     *
-     * @return string of assembly log messages
+     * Returns an empty list if no errors encountered.
+     * @return list of assembly log messages
      */
-    public String assemblyLogMessages() {
+    public List<String> assemblyLogMessages() {
         return assemblyMessages(true);
     }
     
@@ -494,7 +479,7 @@ public class NTSchema {
      * are not listed.
      * @return string of assembly findings
      */
-    public String assemblyMessages() {
+    public List<String> assemblyMessages() {
         return assemblyMessages(false);
     }
     
@@ -509,12 +494,13 @@ public class NTSchema {
         return loadDocs;
     }
     
-    private String assemblyMessages(boolean logMsgs) {
+    private List<String> assemblyMessages(boolean logMsgs) {
         assemblyCheck();
+        List<String> res = new ArrayList<>();       
         if (loadDocs.size() < 1) {
-            return ("No initial schema document\n");
+            res.add("No initial schema document\n");
+            return res;
         }
-        StringBuilder e = new StringBuilder(256);
         for (LoadRec r : loadDocs) {
             boolean flag = false;
             for (String m : r.msgs) {
@@ -525,16 +511,16 @@ public class NTSchema {
                     m = m.substring(6);
                 }
                 if (!flag) {
-                    e.append(assemblyMessageHeader(r));
+                    res.add(assemblyMessageHeader(r));
                     flag = true;
                 }
-                e.append("  ").append(m);
+                res.add("  " + m);
             }
             if (!flag && logMsgs) {
-                e.append(assemblyMessageHeader(r));
+                res.add(assemblyMessageHeader(r));
             }
         }
-        return e.toString();
+        return res;
     }
 
     private String assemblyMessageHeader(LoadRec r) {
@@ -775,20 +761,20 @@ public class NTSchema {
     // ------------ SCHEMA XSMODEL CONSTRUCTION -----------------------------
     
     /**
-     * Return all schema construction messages produced by Xerces
-     * @return schema construction messages
+     * Return list of all schema construction messages produced by Xerces
+     * @return list of schema construction messages
      */
-    public String xsConstructionMessages () {
+    public List<String> xsConstructionMessages () {
         xsmodel();
         return xsConstructionMessages;
     }
     
     /**
-     * Return results of all resolution operations performed during schema 
-     * construction
-     * @return resolution messages
+     * Return results of all XML Catalog resolution operations performed during 
+     * schema construction
+     * @return list of resolution messages
      */
-    public String xsResolutionMessages () {
+    public List<String> xsResolutionMessages () {
         xsmodel();
         return resolver().resolutionMessages();
     }
@@ -798,31 +784,29 @@ public class NTSchema {
      * the namespace URI plus list of document that contributed to the namespace.
      * @return namespaces and contributing documents
      */
-    public String xsNamespaces () {
+    public List<String> xsNamespaceList () {
         if (xsNamespaces != null) {
             return xsNamespaces;
         }
+        xsNamespaces = new ArrayList<>();
         if (xsmodel() == null) {
-            xsNamespaces = "";
             return xsNamespaces;
         }
-        StringBuilder msgs = new StringBuilder();
         XSNamespaceItemList nsil = xsmodel.getNamespaceItems();
         for (int i = 0; i < nsil.getLength(); i++) {
             XSNamespaceItem nsi = nsil.item(i);   
             String ns = nsi.getSchemaNamespace();
             StringList docs = nsi.getDocumentLocations();
             if (docs.getLength() > 1) {
-                msgs.append(String.format("%s <-\n", ns));
+                xsNamespaces.add(String.format("%s <- MULTIPLE DOCUMENTS\n", ns));
                 for (int di = docs.getLength()-1; di >= 0; di--) {
-                    msgs.append(String.format("  %s\n", docs.item(di)));
-                }                
+                    xsNamespaces.add(String.format("  %s\n", docs.item(di)));
+                } 
             }
             else if (docs.getLength() > 0) {
-                msgs.append(String.format("%s <- %s\n", ns, docs.get(0)));
+               xsNamespaces.add(String.format("%s <- %s\n", ns, docs.get(0)));
             }
         }
-        xsNamespaces = msgs.toString();
         return xsNamespaces;
     }
     
@@ -845,7 +829,8 @@ public class NTSchema {
             return xsmodel;
         }
         initialize();
-        SchemaErrorHandler ehandler = new SchemaErrorHandler();
+        xsConstructionMessages = new ArrayList<>();
+        SchemaErrorHandler ehandler = new SchemaErrorHandler(xsConstructionMessages);
         DOMConfiguration config = xsloader.getConfig();
         config.setParameter("validate", true);
         config.setParameter("resource-resolver", resolver());
@@ -856,14 +841,17 @@ public class NTSchema {
                 allSchemaFileURIs.size());
         xsmodel = xsloader.loadURIList(slist);
         if (xsmodel == null) {
-            ehandler.msgs.append("schema loader returned null");
+            xsConstructionMessages.add("schema loader returned null");
         }
-        xsConstructionMessages = ehandler.toString();
         return xsmodel;
     }
    
     private class SchemaErrorHandler implements DOMErrorHandler {
-        public final StringBuilder msgs = new StringBuilder();
+        private final List<String> msgs;
+        SchemaErrorHandler(List<String> msgs) {
+            super();
+            this.msgs = msgs;
+        }
         @Override
         public boolean handleError(DOMError error) {
             short sevCode = error.getSeverity();
@@ -881,7 +869,7 @@ public class NTSchema {
                     fn = uri.substring(index + 1)+":";
                 }
             }
-            msgs.append(String.format("%s %s %d:%d %s\n", 
+            msgs.add(String.format("%s %s %d:%d %s\n", 
                     sevstr, 
                     fn, 
                     loc.getLineNumber(),
