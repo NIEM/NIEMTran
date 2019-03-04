@@ -1,1 +1,0 @@
-Relatives-IEPD is a very simple example showing equivalence of NIEM XML and NIEM JSON
