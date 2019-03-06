@@ -22,10 +22,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
+import org.apache.commons.io.FileUtils;
 import org.apache.xerces.impl.xs.util.StringListImpl;
 import org.apache.xerces.util.URI;
 import org.apache.xerces.xs.StringList;
@@ -895,6 +898,20 @@ public class NTSchema {
             return String.format("[%s,%s]", val, ns);
         }
     } 
+    
+    public void testOutput (File f) {
+        try {
+            FileUtils.writeStringToFile(f, "*Initialization:\n", "utf-8", false);
+            FileUtils.writeLines(f, this.initializationErrorMessages(), true);
+            FileUtils.writeStringToFile(f, "*Assembly:\n", "utf-8", true);
+            FileUtils.writeLines(f, this.assemblyMessages(), true);
+            FileUtils.writeStringToFile(f, "*Construction:\n", "utf-8", true);
+            FileUtils.writeLines(f, this.xsConstructionMessages, true);
+            FileUtils.writeLines(f, this.xsNamespaces, true);
+        } catch (IOException ex) {
+            Logger.getLogger(NTSchema.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
     
     // ------------ STATIC HELPER METHODS  ----------------------------------    
 
