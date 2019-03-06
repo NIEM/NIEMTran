@@ -1,0 +1,3 @@
+*Assembly:
+extension/CrashDriver.xsd:22 IMPORT niem/domains/jxdm/6.0/jxdm.xsd (ns=http://release.niem.gov/niem/domains/jxdm/6.0/ sl=../niem/domains/jxdm/6.0/jxdm.xsd)
+  can't read file:/C:/Work/NetBeans/NIEMTool/target/test-classes/missing-schema/niem/domains/jxdm/6.0/jxdm.xsd: (The system cannot find the file specified)

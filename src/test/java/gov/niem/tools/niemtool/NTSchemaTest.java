@@ -72,7 +72,31 @@ public class NTSchemaTest {
         testSchemaLoad("/correct");
     }
     
-
+    @Test
+    public void testMissingCatalog () {
+        testSchemaLoad("/missing-catalog");
+    }
+    
+    @Test
+    public void testInvalidCatalog () {
+        testSchemaLoad("/invalid-catalog");
+    }
+    
+    @Test
+    public void testMissingSchema () {
+        testSchemaLoad("/missing-schema");
+    }  
+    
+    @Test
+    public void testInvalidSchema1 () {
+        testSchemaLoad("/invalid-schema-1");
+    }
+    
+    @Test
+    public void testInvalidSchema2 () {
+        testSchemaLoad("/invalid-schema-2");
+    }
+    
     public void testSchemaLoad (String resource) {
         URL durl  = this.getClass().getResource(resource);
         File dir  = new File(durl.getFile());
@@ -81,7 +105,7 @@ public class NTSchemaTest {
         IOFileFilter efilter = new SuffixFileFilter(".xsd");        
         File expected = new File(dir, "NTSchema-testOutput.txt");
         try {
-            File out = folder.newFile();
+            File out = folder.newFile("NTSchema-testOutput.txt");
             NTSchema s = new NTSchema();
             Iterator<File> dfiles = FileUtils.iterateFiles(dir, dfilter, null);
             while (dfiles.hasNext()) {

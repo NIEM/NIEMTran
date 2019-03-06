@@ -1,0 +1,3 @@
+*Assembly:
+extension/CrashDriver.xsd:22 IMPORT niem/domains/jxdm/6.0/jxdm.xsd (ns=http://release.niem.gov/niem/domains/jxdm/6.0/ sl=../niem/domains/jxdm/6.0/jxdm.xsd)
+  can't parse schema document file:/C:/Work/NetBeans/NIEMTool/target/test-classes/invalid-schema-1/niem/domains/jxdm/6.0/jxdm.xsd: The element type "xs:complexTypeXX" must be terminated by the matching end-tag "</xs:complexTypeXX>".
