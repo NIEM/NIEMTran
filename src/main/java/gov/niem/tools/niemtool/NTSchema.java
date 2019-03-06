@@ -15,8 +15,15 @@
  */
 package gov.niem.tools.niemtool;
 
+import static gov.niem.tools.niemtool.NTConstants.APPINFO_NS_URI_PREFIX;
+import static gov.niem.tools.niemtool.NTConstants.CONFORMANCE_ATTRIBUTE_NAME;
+import static gov.niem.tools.niemtool.NTConstants.CONFORMANCE_TARGET_NS_URI_PREFIX;
+import static gov.niem.tools.niemtool.NTConstants.NDR_NS_URI_PREFIX;
+import static gov.niem.tools.niemtool.NTConstants.NIEM_XS_PREFIX;
+import static gov.niem.tools.niemtool.NTConstants.STRUCTURES_NS_URI_PREFIX;
 import java.io.File;
 import java.io.IOException;
+import java.io.StringReader;
 import static java.lang.Math.min;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,6 +31,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import static javax.xml.XMLConstants.W3C_XML_SCHEMA_INSTANCE_NS_URI;
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -32,17 +40,20 @@ import org.apache.commons.io.FileUtils;
 import org.apache.xerces.impl.xs.util.StringListImpl;
 import org.apache.xerces.util.URI;
 import org.apache.xerces.xs.StringList;
+import org.apache.xerces.xs.XSAnnotation;
 import org.apache.xerces.xs.XSImplementation;
 import org.apache.xerces.xs.XSLoader;
 import org.apache.xerces.xs.XSModel;
 import org.apache.xerces.xs.XSNamespaceItem;
 import org.apache.xerces.xs.XSNamespaceItemList;
+import org.apache.xerces.xs.XSObjectList;
 import org.w3c.dom.DOMConfiguration;
 import org.w3c.dom.DOMError;
 import org.w3c.dom.DOMErrorHandler;
 import org.w3c.dom.DOMLocator;
 import org.w3c.dom.bootstrap.DOMImplementationRegistry;
 import org.xml.sax.Attributes;
+import org.xml.sax.InputSource;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -161,8 +172,8 @@ public class NTSchema {
     private HashSet<String> loadedFiles = null;             // schema documents successfully loaded
     private HashMap<String, String> namespaceFile = null;   // map of namespace URI to schema document
 
-    private XSModel xsmodel = null;                         // assembled XML schema object
-    private List<String> xsConstructionMessages = null;     // XML Schema error messages
+    private XSModel xsmodel = null;                         // constructed XML schema object from Xerces
+    private List<String> xsConstructionErrors = null;       // error messages from Xerces
 
     protected List<String> xsNamespaces = null;             // namespace & contributing documents from XSModel
     protected List<String> xsWarnings = null;               // schema warnings derived from XSModel
@@ -769,7 +780,7 @@ public class NTSchema {
      */
     public List<String> xsConstructionMessages () {
         xsmodel();
-        return xsConstructionMessages;
+        return xsConstructionErrors;
     }
     
     /**
@@ -788,30 +799,9 @@ public class NTSchema {
      * @return namespaces and contributing documents
      */
     public List<String> xsNamespaceList () {
-        if (xsNamespaces != null) {
-            return xsNamespaces;
-        }
-        xsNamespaces = new ArrayList<>();
-        if (xsmodel() == null) {
-            return xsNamespaces;
-        }
-        XSNamespaceItemList nsil = xsmodel.getNamespaceItems();
-        for (int i = 0; i < nsil.getLength(); i++) {
-            XSNamespaceItem nsi = nsil.item(i);   
-            String ns = nsi.getSchemaNamespace();
-            StringList docs = nsi.getDocumentLocations();
-            if (docs.getLength() > 1) {
-                xsNamespaces.add(String.format("%s <- MULTIPLE DOCUMENTS\n", ns));
-                for (int di = docs.getLength()-1; di >= 0; di--) {
-                    xsNamespaces.add(String.format("  %s\n", docs.item(di)));
-                } 
-            }
-            else if (docs.getLength() > 0) {
-               xsNamespaces.add(String.format("%s <- %s\n", ns, docs.get(0)));
-            }
-        }
+        processNamespaceItems();
         return xsNamespaces;
-    }
+    } 
     
     /**
      * Return warnings derived from Xerces XSModel. Complains about <ul>
@@ -819,7 +809,16 @@ public class NTSchema {
      * <li> Namespace URI mapped to more than one prefix</ul>
      * @return schema construction warnings
      */
-    public String xsWarningMessages() {
+    public List<String> xsWarningMessages() {
+        if (xsWarnings != null) {
+            return xsWarnings;
+        }
+        xsWarnings = new ArrayList<>();
+        if (xsmodel() == null) {
+            return xsWarnings;
+        }
+        
+        
         return null;
     }
     
@@ -828,12 +827,12 @@ public class NTSchema {
      * @return schema XSModel object
      */
     public XSModel xsmodel () {
-        if (xsConstructionMessages != null) {
+        if (xsConstructionErrors != null) {
             return xsmodel;
         }
         initialize();
-        xsConstructionMessages = new ArrayList<>();
-        SchemaErrorHandler ehandler = new SchemaErrorHandler(xsConstructionMessages);
+        xsConstructionErrors = new ArrayList<>();
+        SchemaErrorHandler ehandler = new SchemaErrorHandler(xsConstructionErrors);
         DOMConfiguration config = xsloader.getConfig();
         config.setParameter("validate", true);
         config.setParameter("resource-resolver", resolver());
@@ -844,7 +843,7 @@ public class NTSchema {
                 allSchemaFileURIs.size());
         xsmodel = xsloader.loadURIList(slist);
         if (xsmodel == null) {
-            xsConstructionMessages.add("schema loader returned null");
+            xsConstructionErrors.add("schema loader returned null");
         }
         return xsmodel;
     }
@@ -885,6 +884,128 @@ public class NTSchema {
             return msgs.toString();
         }     
     }
+    
+    protected void processNamespaceItems () {
+        if (xsNamespaces != null) {
+            return;
+        }
+        xsNamespaces = new ArrayList<>();
+        xsWarnings   = new ArrayList<>();
+        nsPrefix     = new HashMap<>();
+        nsURI        = new HashMap<>();
+        if (xsmodel() == null) {
+            return;
+        }
+        // Each namespace in the schema model has a synthetic annotation contatining
+        // the namespace declarations and attributes from the xs:schema element
+        // Process it to construct the prefix and namespace mappings, and the NDR version        
+        XSNamespaceItemList nsil = xsmodel.getNamespaceItems();
+        for (int i = 0; i < nsil.getLength(); i++) {
+            XSNamespaceItem nsi = nsil.item(i);   
+            String ns = nsi.getSchemaNamespace();
+            if (!W3C_XML_SCHEMA_NS_URI.equals(ns)) {
+                XSObjectList annl = nsi.getAnnotations();
+                for (int ai = 0; ai < annl.getLength(); ai++) {
+                    XSAnnotation an = (XSAnnotation)annl.get(ai);
+                    String as = an.getAnnotationString();
+                    processAnnotation(ns, as);
+                }
+                // Also process list of documents contributing to this namespace
+                StringList docs = nsi.getDocumentLocations();
+                if (docs.getLength() > 1) {
+                    StringBuilder msg = new StringBuilder();
+                    msg.append(String.format("%s <- MULTIPLE DOCUMENTS\n", ns));
+                    for (int di = 0; di < docs.getLength(); di++) {
+                        msg.append(String.format("  %s\n", docs.item(di)));
+                    }
+                    xsNamespaces.add(msg.toString());
+                } else if (docs.getLength() == 1) {
+                    xsNamespaces.add(String.format("%s <- %s\n", ns, docs.item(0)));
+                } else {
+                    xsNamespaces.add(String.format("%s <- NOTHING???\n", ns));
+                }               
+            }
+        }  
+        // Now look for prefix mapped to more than one namespace
+        nsPrefix.forEach((prefix,value) -> {
+           boolean same = true;
+           String first = value.size() > 0 ? value.get(0).val : null;
+           for (int i = 1; same && i < value.size(); i++) {
+               same = first.equals(value.get(i).val);
+           }            
+           if (!same) {
+               xsWarnings.add(String.format("prefix %s has multiple mappings\n", prefix));
+               value.forEach((mrec) -> {
+                   xsWarnings.add(String.format("  mapped to %s in %s\n", mrec.val, mrec.ns));
+               });
+           }
+        });   
+        // Now look for namespace mapped to more than one prefix
+        nsURI.forEach((uri,value) -> {
+            boolean same = true;
+            String first = value.size() > 0 ? value.get(0).val : null;
+            for (int i = 1; same && i < value.size(); i++) {
+                same = first.equals(value.get(i).val);
+            }
+            if (!same) {
+                xsWarnings.add(String.format("namespace %s has multiple mappings\n", uri));
+                value.forEach((mrec) -> {
+                    xsWarnings.add(String.format("  mapped to \"%s\" in %s\n", mrec.val, mrec.ns));
+                });
+            }
+        });
+    }
+
+    /**
+     * Parse the synthetic xs:annotation from a schema namespace item.
+     * Adds the prefix mappings and namespace URI mappings for this namespace.
+     * Determines the NDR version of this namespace.
+     */    
+    protected void processAnnotation (String ns, String annotation) {
+        AnnotationHandler h = new AnnotationHandler(this, ns);
+        InputSource is = new InputSource(new StringReader(annotation));
+        try {
+            saxp.parse(is, h);
+        } catch (Exception ex) {
+            // IGNORE
+        }
+    }        
+    
+    protected class AnnotationHandler extends DefaultHandler {
+        private NTSchema obj;
+        private String namespace;  
+        AnnotationHandler (NTSchema obj, String ns) {
+            super();
+            this.obj = obj;
+            this.namespace = ns;
+        }
+        @Override
+        public void startPrefixMapping(String prefix, String uri) {
+            if (!"".equals(prefix) 
+                    && !W3C_XML_SCHEMA_NS_URI.equals(uri)
+                    && !uri.startsWith(APPINFO_NS_URI_PREFIX)
+                    && !uri.startsWith(CONFORMANCE_TARGET_NS_URI_PREFIX)
+                    && !uri.startsWith(W3C_XML_SCHEMA_INSTANCE_NS_URI)
+                    && !uri.startsWith(NIEM_XS_PREFIX)) {
+                // Record the declared namespace uri in the prefix map
+                List<MapRec> mlist = obj.nsPrefix.get(prefix);
+                if (mlist == null) {
+                    mlist = new ArrayList<>();
+                    obj.nsPrefix.put(prefix, mlist);
+                }
+                MapRec nr = new MapRec(namespace, uri);
+                mlist.add(nr);
+                // Record the declared prefix in the namespace uri map
+                mlist = obj.nsURI.get(uri);
+                if (mlist == null) {
+                    mlist = new ArrayList<>();
+                    obj.nsURI.put(uri, mlist);
+                }
+                nr = new MapRec(namespace, prefix);
+                mlist.add(nr);
+            }
+        }        
+    }
 
     protected class MapRec {
         String ns = null;       // namespace in which mapping appears
@@ -901,13 +1022,17 @@ public class NTSchema {
     
     public void testOutput (File f) {
         try {
-            FileUtils.writeStringToFile(f, "*Initialization:\n", "utf-8", false);
-            FileUtils.writeLines(f, this.initializationErrorMessages(), true);
-            FileUtils.writeStringToFile(f, "*Assembly:\n", "utf-8", true);
-            FileUtils.writeLines(f, this.assemblyMessages(), true);
-            FileUtils.writeStringToFile(f, "*Construction:\n", "utf-8", true);
-            FileUtils.writeLines(f, this.xsConstructionMessages, true);
-            FileUtils.writeLines(f, this.xsNamespaces, true);
+            if (!this.initializationErrorMessages().isEmpty()) {
+                FileUtils.writeStringToFile(f, "*Initialization:\n", "utf-8", false);
+                FileUtils.writeLines(f, "utf-8", this.initializationErrorMessages(), "", true);
+            } else if (!this.assemblyMessages().isEmpty()) {
+                FileUtils.writeStringToFile(f, "*Assembly:\n", "utf-8", true);
+                FileUtils.writeLines(f, "utf-8", this.assemblyMessages(), "", true);
+            } else {
+                FileUtils.writeStringToFile(f, "*Construction:\n", "utf-8", true);
+                FileUtils.writeLines(f, "utf-8", this.xsConstructionMessages(), "", true);
+                FileUtils.writeLines(f, "utf-8", this.xsNamespaceList(), "", true);
+            }
         } catch (IOException ex) {
             Logger.getLogger(NTSchema.class.getName()).log(Level.SEVERE, null, ex);
         }

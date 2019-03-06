@@ -18,12 +18,14 @@ package gov.niem.tools.niemtool;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.List;
+import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.xml.parsers.ParserConfigurationException;
-import junit.framework.Assert;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.IOFileFilter;
+import org.apache.commons.io.filefilter.RegexFileFilter;
+import org.apache.commons.io.filefilter.SuffixFileFilter;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -33,6 +35,8 @@ import org.junit.rules.TemporaryFolder;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import org.junit.Rule;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 /**
  *
@@ -62,37 +66,39 @@ public class NTSchemaTest {
     @Rule
     public TemporaryFolder folder = new TemporaryFolder();
 
-    /**
-     * Test of addCatalogFile method, of class NTSchema.
-     */
+    
     @Test
-    @DisplayName("Correct schema")
-    public void testCorrectSchema() throws ParserConfigurationException {
-        URL durl = this.getClass().getResource("/correct");
-        File dir = new File(durl.getFile());
-        File expected = new File(dir, "NTSchema.out");
-        File out = null;
+    public void testCorrect () {
+        testSchemaLoad("/correct");
+    }
+    
+
+    public void testSchemaLoad (String resource) {
+        URL durl  = this.getClass().getResource(resource);
+        File dir  = new File(durl.getFile());
+        File edir = new File(dir, "extension");
+        IOFileFilter dfilter = new RegexFileFilter("^.*catalog.xml$");
+        IOFileFilter efilter = new SuffixFileFilter(".xsd");        
+        File expected = new File(dir, "NTSchema-testOutput.txt");
         try {
-            out = folder.newFile("NTSchema.out");
-            NTSchema s = genSchema(dir);
-            s.testOutput(out);
+            File out = folder.newFile();
+            NTSchema s = new NTSchema();
+            Iterator<File> dfiles = FileUtils.iterateFiles(dir, dfilter, null);
+            while (dfiles.hasNext()) {
+                File f = dfiles.next();
+                s.addCatalogFile(f.getPath());
+            }
+            Iterator<File> efiles = FileUtils.iterateFiles(edir, efilter, null);
+            while (efiles.hasNext()) {
+                File f = efiles.next();
+                s.addSchemaFile(f.getPath());
+            }
+            s.testOutput(out);            
             assertEquals(FileUtils.readLines(expected, "utf-8"), FileUtils.readLines(out, "utf-8"));
         } catch (IOException ex) {
             Logger.getLogger(NTSchemaTest.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
-    private NTSchema genSchema (File dir) {
-        File catalog = new File(dir,"xml-catalog.xml");
-        File schema  = new File(dir,"extension/CrashDriver.xsd");
-        NTSchema s = null;
-        try {
-            s = new NTSchema();
         } catch (ParserConfigurationException ex) {
             Logger.getLogger(NTSchemaTest.class.getName()).log(Level.SEVERE, null, ex);
         }
-        s.addCatalogFile(catalog.getPath());
-        s.addSchemaFile(schema.getPath());
-        return s;
     }
 }

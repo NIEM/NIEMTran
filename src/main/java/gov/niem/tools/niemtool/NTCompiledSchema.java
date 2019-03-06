@@ -69,23 +69,8 @@ public class NTCompiledSchema extends NTSchema {
         }        
         ntmodel =  new NTSchemaModel();        
         
-        // Each namespace in the schema model has a synthetic annotation contatining
-        // the namespace declarations and attributes from the xs:schema element
-        // Process it to construct the prefix and namespace mappings, and the NDR version
-        XSNamespaceItemList nsil = xs.getNamespaceItems();
-        for (int i = 0; i < nsil.getLength(); i++) {
-            XSNamespaceItem nsi = nsil.item(i);
-            String ns = nsi.getSchemaNamespace();
-            if (!W3C_XML_SCHEMA_NS_URI.equals(ns) && !ns.startsWith(STRUCTURES_NS_URI_PREFIX)) {
-                XSObjectList annl = nsi.getAnnotations();
-                for (int j = 0; j < annl.getLength(); j++) {
-                    XSAnnotation an = (XSAnnotation)annl.get(j);
-                    String as = an.getAnnotationString();
-                    processAnnotation(ns, as);
-                }
-            }
-        }
         // Now iterate through the prefix mappings to generate a context
+        processNamespaceItems();
         nsPrefix.forEach((prefix,value) -> {
            boolean same = true;
            String first = value.get(0).val;
@@ -95,30 +80,7 @@ public class NTCompiledSchema extends NTSchema {
            if (same)  {
                ntmodel.addContext(prefix, value.get(0).val);
            }
-           else {
-               msgs.append(String.format("[warn] multiple namespaces mapped to prefix \"%s\"\n", prefix));
-               value.forEach((mr) -> {
-                   msgs.append(String.format("  mapped to %s in namespace %s\n", mr.val, mr.ns));
-               });
-           }
-        });
-        // Now iterate through the namespace mappings
-        nsURI.forEach((uri,value) -> {
-           boolean same = true;
-           String first = value.get(0).val;
-           for (int i = 1; same && i < value.size(); i++) {
-               same = (first.equals(value.get(i).val));
-           }
-           if (same) {
-               ntmodel.addNamespacePrefix(uri, value.get(0).val);
-           }
-           else {
-               msgs.append(String.format("[warn] multiple prefixes mapped to namespace %s\n", uri));
-               value.forEach((mr) -> {
-                   msgs.append(String.format("  mapped to prefix \"%s\" in namespace %s\n", mr.val, mr.ns));
-               });
-           }
-        });      
+        });    
         // Now get the simple types for simple elements
         XSNamedMap map = xs.getComponents(XSConstants.ELEMENT_DECLARATION);       
         for (int i = 0; i < map.getLength(); i++) {
@@ -164,24 +126,7 @@ public class NTCompiledSchema extends NTSchema {
         result = result + stype.getName();
         return result;
     }
-    
-
-    /**
-     * Parse the synthetic xs:annotation from a schema namespace item.
-     * Adds the prefix mappings and namespace URI mappings for this namespace.
-     * Determines the NDR version of this namespace.
-     */
-    private void processAnnotation (String namespace, String annotation) {
-        Handler h = new Handler(this, namespace);
-        InputSource is = new InputSource(new StringReader(annotation));
-        try {
-            saxp.parse(is, h);
-        } catch (Exception ex) {
-            // IGNORE
-        }
-        ntmodel.addNamespaceVersion(namespace, h.ndrVersion);
-    }
-   
+       
     private class Handler extends DefaultHandler {
         private final NTCompiledSchema obj;    
         private final String namespace;

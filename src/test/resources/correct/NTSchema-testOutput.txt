@@ -1,0 +1,10 @@
+*Construction:
+http://www.w3.org/1999/xlink <- file:/C:/Work/NetBeans/NIEMTool/target/test-classes/correct/niem/external/ogc/xlink/1.0.0/xlinks.xsd
+http://www.opengis.net/gml/3.2 <- file:/C:/Work/NetBeans/NIEMTool/target/test-classes/correct/niem/external/ogc/gml/3.2.1/gml.xsd
+http://example.com/CrashDriver/1.0/ <- file:/C:/Work/NetBeans/NIEMTool/target/test-classes/correct/extension/CrashDriver.xsd
+http://release.niem.gov/niem/structures/4.0/ <- file:/C:/Work/NetBeans/NIEMTool/target/test-classes/correct/niem/utility/structures/4.0/structures.xsd
+http://release.niem.gov/niem/proxy/xsd/4.0/ <- file:/C:/Work/NetBeans/NIEMTool/target/test-classes/correct/niem/proxy/xsd/4.0/xs.xsd
+http://release.niem.gov/niem/adapters/geospatial/4.0/ <- file:/C:/Work/NetBeans/NIEMTool/target/test-classes/correct/niem/adapters/geospatial/4.0/geospatial.xsd
+http://release.niem.gov/niem/niem-core/4.0/ <- file:/C:/Work/NetBeans/NIEMTool/target/test-classes/correct/niem/niem-core/4.0/niem-core.xsd
+http://release.niem.gov/niem/domains/jxdm/6.0/ <- file:/C:/Work/NetBeans/NIEMTool/target/test-classes/correct/niem/domains/jxdm/6.0/jxdm.xsd
+http://release.niem.gov/niem/codes/unece_rec20/4.0/ <- file:/C:/Work/NetBeans/NIEMTool/target/test-classes/correct/niem/codes/unece_rec20/4.0/unece_rec20-misc.xsd
