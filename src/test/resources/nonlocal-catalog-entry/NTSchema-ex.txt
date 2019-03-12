@@ -1,0 +1,7 @@
+*Assembly:
+file:/C:/Work/NetBeans/NIEMTool/target/test-classes/nonlocal-catalog-entry/extension/CrashDriver.xsd:22 IMPORT ns=http://release.niem.gov/niem/domains/jxdm/6.0/ sl=../niem/domains/jxdm/6.0/jxdm.xsd
+  namespace http://release.niem.gov/niem/domains/jxdm/6.0/ resolves to non-local resource
+  namespace resolves to http://example.com/non/local/entry
+  schemaLocation resolves to file:/C:/Work/NetBeans/NIEMTool/target/test-classes/nonlocal-catalog-entry/niem/domains/jxdm/6.0/jxdm.xsd
+  resolved namespace != resolved schemaLocation
+  loading file:/C:/Work/NetBeans/NIEMTool/target/test-classes/nonlocal-catalog-entry/niem/domains/jxdm/6.0/jxdm.xsd

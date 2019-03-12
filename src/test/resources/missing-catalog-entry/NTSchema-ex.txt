@@ -1,0 +1,5 @@
+*Assembly:
+extension/CrashDriver.xsd:22 IMPORT ns=http://release.niem.gov/niem/domains/jxdm/6.0/ sl=../niem/domains/jxdm/6.0/jxdm.xsd
+  no catalog entry for namespace http://release.niem.gov/niem/domains/jxdm/6.0/
+  schemaLocation resolves to niem/domains/jxdm/6.0/jxdm.xsd
+  loading niem/domains/jxdm/6.0/jxdm.xsd

@@ -1,0 +1,37 @@
+*Assembly:
+niem/adapters/geospatial/4.0/geospatial.xsd:8 IMPORT ns=http://www.opengis.net/gml/3.2 sl=../../../external/ogc/gml/3.2.1/gml.xsd
+  namespace resolves to niem/external/ogc/gml/3.2.1/gml.xsd
+  schemaLocation resolves to niem/external/ogc/gml/3.2.1/gml.xsd
+  loading niem/external/ogc/gml/3.2.1/gml.xsd
+  include "dynamicFeature.xsd" found in a namespace that has a catalog entry
+  include "topology.xsd" found in a namespace that has a catalog entry
+  include "coverage.xsd" found in a namespace that has a catalog entry
+  include "coordinateReferenceSystems.xsd" found in a namespace that has a catalog entry
+  include "observation.xsd" found in a namespace that has a catalog entry
+  include "temporalReferenceSystems.xsd" found in a namespace that has a catalog entry
+  include "deprecatedTypes.xsd" found in a namespace that has a catalog entry
+niem/external/ogc/gml/3.2.1/coordinateOperations.xsd:16 IMPORT ns=http://www.isotc211.org/2005/gmd sl=../../iso/19139/20070417/gmd/gmd.xsd
+  namespace resolves to niem/external/ogc/iso/19139/20070417/gmd/gmd.xsd
+  schemaLocation resolves to niem/external/ogc/iso/19139/20070417/gmd/gmd.xsd
+  loading niem/external/ogc/iso/19139/20070417/gmd/gmd.xsd
+  include "../gmd/metadataApplication.xsd" found in a namespace that has a catalog entry
+niem/external/ogc/iso/19139/20070417/gmd/metadataApplication.xsd:8 IMPORT ns=http://www.isotc211.org/2005/gco sl=../gco/gco.xsd
+  namespace resolves to niem/external/ogc/iso/19139/20070417/gco/gco.xsd
+  schemaLocation resolves to niem/external/ogc/iso/19139/20070417/gco/gco.xsd
+  loading niem/external/ogc/iso/19139/20070417/gco/gco.xsd
+  include "../gco/basicTypes.xsd" found in a namespace that has a catalog entry
+niem/external/ogc/iso/19139/20070417/gmd/spatialRepresentation.xsd:8 IMPORT ns=http://www.isotc211.org/2005/gss sl=../gss/gss.xsd
+  namespace resolves to niem/external/ogc/iso/19139/20070417/gss/gss.xsd
+  schemaLocation resolves to niem/external/ogc/iso/19139/20070417/gss/gss.xsd
+  loading niem/external/ogc/iso/19139/20070417/gss/gss.xsd
+  include "../gss/geometry.xsd" found in a namespace that has a catalog entry
+niem/external/ogc/iso/19139/20070417/gmd/maintenance.xsd:8 IMPORT ns=http://www.isotc211.org/2005/gts sl=../gts/gts.xsd
+  namespace resolves to niem/external/ogc/iso/19139/20070417/gts/gts.xsd
+  schemaLocation resolves to niem/external/ogc/iso/19139/20070417/gts/gts.xsd
+  loading niem/external/ogc/iso/19139/20070417/gts/gts.xsd
+  include "../gts/temporalObjects.xsd" found in a namespace that has a catalog entry
+niem/external/ogc/iso/19139/20070417/gmd/extent.xsd:11 IMPORT ns=http://www.isotc211.org/2005/gsr sl=../gsr/gsr.xsd
+  namespace resolves to niem/external/ogc/iso/19139/20070417/gsr/gsr.xsd
+  schemaLocation resolves to niem/external/ogc/iso/19139/20070417/gsr/gsr.xsd
+  loading niem/external/ogc/iso/19139/20070417/gsr/gsr.xsd
+  include "../gsr/spatialReferencing.xsd" found in a namespace that has a catalog entry

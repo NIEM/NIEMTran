@@ -1,0 +1,8 @@
+*Assembly:
+extension/CrashDriver.xsd:25 IMPORT ns=http://release.niem.gov/niem/structures/4.0/ sl=../niem/structures/4.0/structures.xsd
+  namespace resolves to niem/utility/structures/4.0/structures.xsd
+  schemaLocation resolves to niem/structures/4.0/structures.xsd
+  resolved namespace != resolved schemaLocation
+  loading niem/utility/structures/4.0/structures.xsd
+  loading niem/structures/4.0/structures.xsd
+  namespace http://release.niem.gov/niem/structures/4.0/ also loaded from niem/utility/structures/4.0/structures.xsd

@@ -134,7 +134,7 @@ import org.xml.sax.helpers.DefaultHandler;
      System.exit(1);
  }
  System.out.println("Schema root directory: " + s.schemaRootDirectory();
- if (!s.assemblyMessages().equals("")) {
+ if (!s.assemblyWarningMessages().equals("")) {
      System.out.println("Schema assembly findings:");
      System.out.print(s.assemblyWarningMessages());
  }
@@ -142,6 +142,7 @@ import org.xml.sax.helpers.DefaultHandler;
  System.out.println(xs == null ? "Schema construction FAILED" : "Schema construction SUCCEDED");
  if (!s.xsWarningMessages().equals("") {
      System.out.println("Schema construction errors and warnings:"
+     System.out.print(s.xsConstructionMessages());
      System.out.print(s.xsWarningMessages());
  }</code></pre>
  *
@@ -363,7 +364,7 @@ public class NTSchema {
     /**
      * Returns the result of parsing the catalog files used to specify the
      * schema. Includes result of parsing subordinate catalogs.
-     * @return a string containing catalog parsing results
+     * @return a list of catalog parsing results
      */
     public List<String> catalogParsingResults() {
         initialize();
@@ -385,7 +386,7 @@ public class NTSchema {
      * Returns any initialization errors for the schema. Includes any errors in
      * the catalog files.
      *
-     * @return a string containing schema initialization errors; empty string if
+     * @return a list of schema initialization errors; empty list if
      * none
      */
     public List<String> initializationErrorMessages() {
@@ -493,60 +494,28 @@ public class NTSchema {
      * are not listed.
      * @return string of assembly findings
      */
-    public List<String> assemblyMessages() {
+    public List<String> assemblyWarningMessages() {
         return assemblyMessages(false);
     }
     
-    /**
-     * Returns a list of all schema document load attempts during the schema
-     * assembly check.
-     *
-     * @return list of load-attempt records
-     */
-    public List<LoadRec> assemblyList() {
+    private List<String> assemblyMessages(boolean allMsgs) {
         assemblyCheck();
-        return loadDocs;
-    }
-    
-    private List<String> assemblyMessages(boolean logMsgs) {
-        assemblyCheck();
+        String pilePrefix = "*" + schemaRootDirectory;
         List<String> res = new ArrayList<>();       
         if (loadDocs.size() < 1) {
             res.add("No initial schema document\n");
             return res;
         }
         for (LoadRec r : loadDocs) {
-            boolean flag = false;
-            for (String m : r.msgs) {
-                if (m.startsWith("[log] ")) {
-                    if (!logMsgs) {
-                        continue;
-                    }
-                    m = m.substring(6);
+            if (allMsgs || r.warnFlag) {
+                res.add(r.msgHeader());
+                for (String m : r.msgs) {
+                    m = m.replace(pilePrefix, "");
+                    res.add("  " + m);
                 }
-                if (!flag) {
-                    res.add(assemblyMessageHeader(r));
-                    flag = true;
-                }
-                res.add("  " + m);
-            }
-            if (!flag && logMsgs) {
-                res.add(assemblyMessageHeader(r));
             }
         }
         return res;
-    }
-
-    private String assemblyMessageHeader(LoadRec r) {
-        String prp;
-        if (r.parent == null) {
-            prp = "[initial load]";
-        } else {
-            prp = pileRelativePath(r.parent);
-        }
-        String h = String.format("%s:%d %s %s (ns=%s sl=%s)\n", 
-                prp, r.pline, r.fkind.toUpperCase(), pileRelativePath(r.fileURI), r.ns, r.sloc);
-        return h;
     }
 
     private String pileRelativePath(String u) {
@@ -571,7 +540,7 @@ public class NTSchema {
         for (String furi : initialSchemaFileURIs) {
             LoadRec lr = new LoadRec();
             lr.fkind = "load";
-            lr.slocRef = furi;
+            lr.slocRes = furi;
             loadDocs.add(lr);
         }
         for (String ns : initialNSURIs) {
@@ -592,6 +561,10 @@ public class NTSchema {
             schemaRootDirectory = loadDocs.get(0).fileURI;
             for (LoadRec r : loadDocs) {
                 schemaRootDirectory = commonPrefix(schemaRootDirectory, r.fileURI);
+                schemaRootDirectory = commonPrefix(schemaRootDirectory, r.fileURI_2);
+            }
+            for (String cf : getAllCatalogFiles()) {
+                schemaRootDirectory = commonPrefix(schemaRootDirectory, cf);
             }
             schemaRootDirectoryLength = schemaRootDirectory.length();
         }
@@ -599,52 +572,58 @@ public class NTSchema {
 
     private void loadDocument(LoadRec r) {
         try {
-            r.nsRef = resolver().resolveURI(r.ns);
-            if (r.slocRef == null) {    // could be initial schema doc
+            r.nsRes = resolver().resolveURI(r.ns);
+            if (r.slocRes == null) {    // could be initial schema doc
                 r.sloc = r.sloc.trim();
-                r.slocRef = resolver().resolveURI(r.sloc);
+                r.slocRes = resolver().resolveURI(r.sloc);
             }
         } catch (Exception ex) {
             /* ignore */
         }
         if (r.ns != null) {
-            if (r.nsRef == null && catalogFiles.size() > 0) {
-                r.msgs.add(String.format("namespace URI does not resolve\n"));
-            } else if (!r.nsRef.startsWith("file:")) {
-                r.msgs.add(String.format("namespace URI resolves to non-local resource\n"));
+            if (r.nsRes == null && catalogFiles.size() > 0) {
+                r.warn("no catalog entry for namespace %s\n", r.ns);
+            } else if (!r.nsRes.startsWith("file:")) {
+                r.warn("namespace %s resolves to non-local resource\n", r.ns);
             }
         } else {
             if ("import".equals(r.fkind)) {
-                r.msgs.add(String.format("no namespace attribute\n"));
+                r.warn("no namespace attribute in import element\n");
             }
         }
         if (r.sloc != null) {
-            if (r.slocRef != null) {
-                if (!r.slocRef.startsWith("file:")) {
-                    r.msgs.add(String.format("schemaLocation resolves to non-local resource\n"));
+            if (r.slocRes != null) {
+                if (!r.slocRes.startsWith("file:")) {
+                    r.warn("schemaLocation resolves to non-local resource\n");
                 }
             } else {
-                r.slocRef = canonicalFileURI(r.fileURI, r.sloc);
+                r.slocRes = canonicalFileURI(r.fileURI, r.sloc);
             }
         } else {
             if (!"load".equals(r.fkind)) {
-                r.msgs.add(String.format("no schemaLocation attribute\n"));
+                r.warn("no schemaLocation attribute in %s element\n", r.fkind);
             }
         }
-        if (r.nsRef != null && r.slocRef != null) {
-            if (r.nsRef.equals(r.slocRef)) {
-                loadDocumentFromURI(r, r.nsRef);
+        if (r.nsRes != null) {
+            r.log("namespace resolves to *%s\n", r.nsRes);
+        }
+        r.log("schemaLocation resolves to *%s\n", r.slocRes);
+        if (r.nsRes != null && r.slocRes != null) {
+            if (r.nsRes.equals(r.slocRes)) {
+                loadDocumentFromURI(r, r.nsRes);
             } else {
-                r.msgs.add(String.format("resolved namespace %s != resolved schemaLocation %s\n", r.nsRef, r.slocRef));
-                loadDocumentFromURI(r, r.nsRef);
-                loadDocumentFromURI(r, r.slocRef);
+                r.warn("resolved namespace != resolved schemaLocation\n");
+                loadDocumentFromURI(r, r.nsRes);
+                loadDocumentFromURI(r, r.slocRes);
+                r.fileURI = r.nsRes;
+                r.fileURI_2 = r.slocRes;    // remember both files for schema root determination later
             }
-        } else if (r.nsRef != null) {
-            loadDocumentFromURI(r, r.nsRef);
-        } else if (r.slocRef != null) {
-            loadDocumentFromURI(r, r.slocRef);
+        } else if (r.nsRes != null) {
+            loadDocumentFromURI(r, r.nsRes);
+        } else if (r.slocRes != null) {
+            loadDocumentFromURI(r, r.slocRes);
         } else {
-            r.msgs.add(String.format("can't determine schema document to be loaded"));
+            r.warn("can't determine a schema document to load");
         }
     }
 
@@ -655,18 +634,21 @@ public class NTSchema {
         r.fileURI = furi;
         if (attemptedFiles.contains(furi)) {
             if (loadedFiles.contains(furi)) {
-                r.msgs.add(String.format("[log] already loaded %s\n", furi));
+                r.log("already loaded *%s\n", furi);
             }
             else {
-                r.msgs.add(String.format("[log] already failed to load %s\n", furi));
+                r.log("already failed to load *%s\n", furi);
             }
         }
         else {
-            r.msgs.add(String.format("[log] loading %s\n", furi));
-            String lns = namespaceFile.getOrDefault(r.ns, furi);
-            if (!lns.equals(furi)) {
-                r.msgs.add(String.format("namespace %s already loaded from a different file (%s)\n", r.ns, lns));
+            r.log("loading *%s\n", furi);
+            if (r.ns != null) {
+                String lns = namespaceFile.getOrDefault(r.ns, furi);
+                if (!lns.equals(furi)) {
+                    r.warn("namespace %s also loaded from *%s\n", r.ns, lns);
+                }
             }
+            namespaceFile.put(r.ns, furi);
             attemptedFiles.add(furi);
             Handler myhandler = new Handler(this.loadDocs, r);
             try {
@@ -674,10 +656,10 @@ public class NTSchema {
                 loadedFiles.add(furi);
             } catch (SAXException ex) {
                 String em = exceptionReason(ex);
-                r.msgs.add(String.format("can't parse schema document %s: %s\n", furi, em));
+                r.warn("can't parse schema document *%s: %s\n", furi, em);
             } catch (IOException ex) {
                 String em = exceptionReason(ex);
-                r.msgs.add(String.format("can't read %s: %s\n", furi, em));
+                r.warn("can't read *%s: %s\n", furi, em);
             }
         }
     }
@@ -708,7 +690,7 @@ public class NTSchema {
                 if ("schema".equals(local)) {
                     String tns = attrs.getValue("targetNamespace");
                     if (tns != null && r.ens != null && !tns.equals(r.ens)) {
-                        r.msgs.add(String.format("targetNamespace %s != expected namespace %s\n", tns, r.ens));
+                        r.warn("targetNamespace %s != expected namespace %s\n", tns, r.ens);
                     }
                 } else if ("import".equals(local)) {
                     LoadRec nr = new LoadRec();
@@ -728,47 +710,57 @@ public class NTSchema {
                     nr.ens = r.ens;
                     nr.sloc = attrs.getValue("schemaLocation");
                     lds.add(nr);
+                    if (r.nsRes != null) {
+                        r.warn("include \"%s\" found in a namespace that has a catalog entry\n", nr.sloc);
+                    }                    
                 }
             }
         }
     }
 
     /**
-     * A class for recording the results of an attempt to load a schema
-     * document.
+     * A class for recording the results of a schema document load attempt
      */
-    public class LoadRec {
-        public String fkind;            // operation attempting the load: import, include, redefine, or initial load
-        public String fileURI;          // canonical file URI of the document to be loaded
-        public String parent;           // canonical file URI of parent document (or null for initial load)
-        public int pline;               // line number of import/include/redefine element in parent document
-        public String ens;              // expected document namespace
-        public String ns;               // namespace attribute from import element
-        public String sloc;             // schemaLocation attribute from import/include/redefine element
-        public String nsRef;            // namespace resolution URI (or null if not resolved)
-        public String slocRef;          // schemaLocation resolution or path (or null if no schemaLocation)
-        public List<String> msgs;       // empty list if no messages for this document load attempt
+    private class LoadRec {
+        private String fkind;            // operation attempting the load: import, include, redefine, or initial load
+        private String parent;           // canonical file URI of parent document (or null for initial load)
+        private int pline;               // line number of import/include/redefine element in parent document
+        private String ens;              // expected document namespace (needed for include & redefine)
+        private String ns;               // namespace attribute from import element
+        private String sloc;             // schemaLocation attribute from import/include/redefine element
+        private String nsRes;            // namespace resolution URI (or null if not resolved)
+        private String slocRes;          // schemaLocation resolution or path (or null if no schemaLocation)
+        private String fileURI;          // canonical file URI of the document to be loaded        
+        private String fileURI_2;        // other file URI to be loaded (if namespace != schemaLocation)
+        private boolean warnFlag;        // false if all messages are log entries
+        private List<String> msgs;       // empty list if no messages for this document load attempt
 
         LoadRec() {
-            fkind = fileURI = parent = ens = ns = sloc = nsRef = slocRef = null;
+            fkind = parent = ens = ns = sloc = nsRes = slocRes = fileURI = fileURI_2 = null;
             pline = 0;
+            warnFlag = false;
             msgs = new ArrayList<>();
         }
-
-        @Override
-        public String toString() {
-            StringBuilder s = new StringBuilder(256);
-            s.append(String.format(
-                    "parent= %s\nline= %d\noperation=%s\ntarget=%s\nexpected namespace= %s\n" +
-                    "namespace attribute= %s\nschemaLocation attribute= %s\nnamespace resolution= %s\n" +
-                    "schemaLocation resolution or path= %s\n",
-                    parent, pline, fkind, fileURI, ens, ns, sloc, nsRef, slocRef));
-            if (msgs.size() > 0) {
-                for (String ms : msgs) {
-                    s.append("  ").append(ms);
-                }
+        
+        private String msgHeader () {
+            String prp;
+            if (parent == null) {
+                prp = "[initial load]";
+            } else {
+                prp = pileRelativePath(parent);
             }
-            return s.toString();
+            String h = String.format("%s:%d %s ns=%s sl=%s\n",
+                    prp, pline, fkind.toUpperCase(), ns, sloc);
+            return h;           
+        }
+        
+        private void warn (String fmt, Object... args  ) {
+            warnFlag = true;
+            log(fmt, args);
+        }
+        
+        private void log (String fmt, Object... args) {
+            msgs.add(String.format(fmt, args));             
         }
     }
 
@@ -1025,11 +1017,11 @@ public class NTSchema {
             if (!this.initializationErrorMessages().isEmpty()) {
                 FileUtils.writeStringToFile(f, "*Initialization:\n", "utf-8", false);
                 FileUtils.writeLines(f, "utf-8", this.initializationErrorMessages(), "", true);
-            } else if (!this.assemblyMessages().isEmpty()) {
-                FileUtils.writeStringToFile(f, "*Assembly:\n", "utf-8", true);
-                FileUtils.writeLines(f, "utf-8", this.assemblyMessages(), "", true);
+            } else if (!this.assemblyWarningMessages().isEmpty()) {
+                FileUtils.writeStringToFile(f, "*Assembly:\n", "utf-8", false);
+                FileUtils.writeLines(f, "utf-8", this.assemblyWarningMessages(), "", true);
             } else {
-                FileUtils.writeStringToFile(f, "*Construction:\n", "utf-8", true);
+                FileUtils.writeStringToFile(f, "*Construction:\n", "utf-8", false);
                 FileUtils.writeLines(f, "utf-8", this.xsConstructionMessages(), "", true);
                 FileUtils.writeLines(f, "utf-8", this.xsNamespaceList(), "", true);
             }
@@ -1081,6 +1073,7 @@ public class NTSchema {
     }
 
     static String commonPrefix(String s1, String s2) {
+        if (s2 == null) { return s1; }
         int len1 = s1.length();
         int len2 = s2.length();
         int lim = min(len1, len2);

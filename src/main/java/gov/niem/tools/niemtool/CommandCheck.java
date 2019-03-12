@@ -35,7 +35,7 @@ public class CommandCheck implements JCCommand {
     @Parameter(names = "-s", description = "filename separator character")
     private String fsep = ",";
     
-    @Parameter(names = "-i", description = "continue checking after initialization or assembly errors")
+    @Parameter(names = "-i", description = "continue checking after initialization or assembly warnings")
     private boolean ignore = false;
    
     @Parameter(names = {"-v"}, description = "verbose output")
@@ -178,11 +178,11 @@ public class CommandCheck implements JCCommand {
                 System.out.print("  " + s);
             }
         }
-        if (sc.assemblyMessages().size() > 0) {
+        if (sc.assemblyWarningMessages().size() > 0) {
             if (!quiet && !verbose) {
                 System.out.println("Schema root directory: " + schemaRoot);                
                 System.out.println("Schema assembly messages:");
-                for (String s : sc.assemblyMessages()) {
+                for (String s : sc.assemblyWarningMessages()) {
                     System.out.print("  " + s);
                 }
             }
@@ -218,7 +218,7 @@ public class CommandCheck implements JCCommand {
         }
         if (xs == null || xsmsgs.size() > 0) {
             if (!quiet && !verbose) {
-                if (sc.assemblyMessages().size() < 1) {
+                if (sc.assemblyWarningMessages().size() < 1) {
                     System.out.println("Schema root directory= " + schemaRoot);
                 }
                 if (xs == null) {
@@ -232,7 +232,6 @@ public class CommandCheck implements JCCommand {
         if (!quiet && !verbose) {
             System.out.println("Schema construction: OK");
         }
-        System.exit(0);
      }
 }    
 

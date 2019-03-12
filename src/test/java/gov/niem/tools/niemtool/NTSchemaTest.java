@@ -62,31 +62,27 @@ public class NTSchemaTest {
     @After
     public void tearDown() {
     }
-    
-    @Rule
-    public TemporaryFolder folder = new TemporaryFolder();
 
-    
+    @Test
+    public void testCatalogSchemalocMismatch () {
+        testSchemaLoad("/catalog-schemaloc-mismatch");
+    }
+   
     @Test
     public void testCorrect () {
         testSchemaLoad("/correct");
     }
-    
+
     @Test
-    public void testMissingCatalog () {
-        testSchemaLoad("/missing-catalog");
+    public void testInclude () {
+        testSchemaLoad("/include");
     }
-    
+        
     @Test
     public void testInvalidCatalog () {
         testSchemaLoad("/invalid-catalog");
     }
-    
-    @Test
-    public void testMissingSchema () {
-        testSchemaLoad("/missing-schema");
-    }  
-    
+        
     @Test
     public void testInvalidSchema1 () {
         testSchemaLoad("/invalid-schema-1");
@@ -97,15 +93,35 @@ public class NTSchemaTest {
         testSchemaLoad("/invalid-schema-2");
     }
     
+    @Test
+    public void testMissingCatalog () {
+        testSchemaLoad("/missing-catalog");
+    }
+    
+    @Test
+    public void testMissingCatalogEntry () {
+        testSchemaLoad("/missing-catalog-entry");
+    }
+        
+    @Test
+    public void testMissingSchema () {
+        testSchemaLoad("/missing-schema");
+    }  
+    
+    @Test
+    public void testNonlocalCatalogEntry () {
+        testSchemaLoad("/nonlocal-catalog-entry");
+    }
+
     public void testSchemaLoad (String resource) {
         URL durl  = this.getClass().getResource(resource);
         File dir  = new File(durl.getFile());
         File edir = new File(dir, "extension");
         IOFileFilter dfilter = new RegexFileFilter("^.*catalog.xml$");
         IOFileFilter efilter = new SuffixFileFilter(".xsd");        
-        File expected = new File(dir, "NTSchema-testOutput.txt");
+        File expected = new File(dir, "NTSchema-ex.txt");
         try {
-            File out = folder.newFile("NTSchema-testOutput.txt");
+            File out = new File(dir, "NTSchema-out.txt");
             NTSchema s = new NTSchema();
             Iterator<File> dfiles = FileUtils.iterateFiles(dir, dfilter, null);
             while (dfiles.hasNext()) {
@@ -118,7 +134,8 @@ public class NTSchemaTest {
                 s.addSchemaFile(f.getPath());
             }
             s.testOutput(out);            
-            assertEquals(FileUtils.readLines(expected, "utf-8"), FileUtils.readLines(out, "utf-8"));
+            assertTrue(FileUtils.contentEquals(expected, out));
+            out.delete();
         } catch (IOException ex) {
             Logger.getLogger(NTSchemaTest.class.getName()).log(Level.SEVERE, null, ex);
         } catch (ParserConfigurationException ex) {
