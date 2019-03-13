@@ -55,7 +55,7 @@ public class NTXMLtoJSON {
     static {
         integerTypes.addAll(Arrays.asList(integerTypeNames));
     }       
-    private static SAXParser saxParser = null;          // XML Catalog parser
+    private static SAXParser saxParser = null;
     
     private NTSchemaModel model = null;
 

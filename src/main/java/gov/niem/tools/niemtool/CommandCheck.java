@@ -37,6 +37,9 @@ public class CommandCheck implements JCCommand {
     
     @Parameter(names = "-i", description = "continue checking after initialization or assembly warnings")
     private boolean ignore = false;
+    
+    @Parameter(names = "-n", description = "don't report NIEM-specific warnings")
+    private boolean noNIEM = false;
    
     @Parameter(names = {"-v"}, description = "verbose output")
     private boolean verbose = false;
@@ -132,16 +135,9 @@ public class CommandCheck implements JCCommand {
         // Initialization checking
         boolean schemasFound = (sc.getAllInitialSchemaURIs().size() > 0);
         if (verbose) {
-            System.out.println("== Schema initialization ==\nCatalog validation results:");
-            for (String s : sc.resolver().validationResults()) {
-                System.out.print("  " + s);
-            }
-            if (sc.getAllInitialSchemaURIs().size() > 0) {
-                System.out.println("Initial schema documents:");
-                for (String s : sc.getAllInitialSchemaURIs()) {
-                    System.out.println("  " + s);
-                }
-            }
+            System.out.println("== Schema initialization ==");
+            printMessages("Catalog validation results:", sc.resolver().validationResults());
+            printMessages("Initial schema documents:", sc.getAllInitialSchemaURIs());
         }
         if (!schemasFound) {
             System.out.println("No initial schema documents provided");   
@@ -152,10 +148,7 @@ public class CommandCheck implements JCCommand {
         List<String> initErrs = sc.initializationErrorMessages();
         if (initErrs.size() > 0) {
             if (!quiet) {
-                System.out.println("Schema initialization errors:");
-                for (String s : initErrs) {
-                    System.out.print("  "+s);
-                }
+                printMessages("Schema initialization errors:", initErrs);
             }
             if (!ignore) {
                 System.exit(1);
@@ -173,18 +166,12 @@ public class CommandCheck implements JCCommand {
             for (String s : dl) {
                 System.out.println("  " + s.substring(schemaRootLength));
             }
-            System.out.println("Schema assembly log messages:");
-            for (String s : sc.assemblyLogMessages()) {
-                System.out.print("  " + s);
-            }
+            printMessages("Schema assembly log messages:", sc.assemblyLogMessages());
         }
-        if (sc.assemblyWarningMessages().size() > 0) {
+        if (!sc.assemblyWarningMessages().isEmpty()) {
             if (!quiet && !verbose) {
                 System.out.println("Schema root directory: " + schemaRoot);                
-                System.out.println("Schema assembly messages:");
-                for (String s : sc.assemblyWarningMessages()) {
-                    System.out.print("  " + s);
-                }
+                printMessages("Schema assembly messages:", sc.assemblyWarningMessages());
             }
             if (!ignore) {
                 System.exit(1);
@@ -192,47 +179,38 @@ public class CommandCheck implements JCCommand {
         }
         // Schema construction
         XSModel xs = sc.xsmodel();
-        List<String> xsmsgs = sc.xsConstructionMessages();
         if (verbose) {
             System.out.println("== Schema construction ==");
             System.out.println(xs == null ? "Schema contruction: FAILED" : "Schema construction: OK");
-            if (xsmsgs.size() > 0) {
-                System.out.println("Schema construction messages:");
-                for (String s : xsmsgs) {
-                    System.out.print("  " + s);
-                }
-                System.out.print(xsmsgs);
-            }
-            if (sc.xsNamespaceList().size() > 0) {
-                System.out.println("Schema namespaces constructed:");
-                for (String s : sc.xsNamespaceList()) {
-                    System.out.print("  " + s);
-                }
-            }
-            if (sc.xsResolutionMessages().size() > 0) {
-                System.out.println("Catalog resolutions:");
-                for (String s : sc.xsResolutionMessages()) {
-                    System.out.print("  " + s);
-                }
-            }
+            printMessages("Schema construction messages:", sc.xsConstructionMessages());
+            printMessages("Schema warnings:", sc.xsWarningMessages());
+            if (!noNIEM) { printMessages("Schema NIEM warnings:", sc.xsNIEMWarningMessages()); }
+            printMessages("Namespaces constructed:", sc.xsNamespaceList());
+            printMessages("Catalog resolutions:", sc.xsResolutionMessages());
         }
-        if (xs == null || xsmsgs.size() > 0) {
-            if (!quiet && !verbose) {
-                if (sc.assemblyWarningMessages().size() < 1) {
-                    System.out.println("Schema root directory= " + schemaRoot);
-                }
-                if (xs == null) {
-                    System.out.println("Schema construction: FAILED");
-                }
-                System.out.println("Schema construction messages:");
-                System.out.print(xsmsgs);
+        else if (!quiet) {
+            if (sc.assemblyWarningMessages().isEmpty()) {
+                System.out.println("Schema root directory= " + schemaRoot);                
             }
+            System.out.println(xs == null ? "Schema contruction: FAILED" : "Schema construction: OK");
+            printMessages("Schema construction messages:", sc.xsConstructionMessages());
+            printMessages("Schema warnings:", sc.xsWarningMessages());
+            if (!noNIEM) { printMessages("Schema NIEM warnings:", sc.xsNIEMWarningMessages()); }            
+        }
+        if (xs == null) {
             System.exit(1);
         }
-        if (!quiet && !verbose) {
-            System.out.println("Schema construction: OK");
-        }
      }
+    
+    static void printMessages (String header, List<String> msgs) {
+        if (msgs.isEmpty()) {
+            return;
+        }
+        System.out.println(header);
+        for (String s : msgs) {
+            System.out.print("  " + s);
+        }
+    }
 }    
 
 

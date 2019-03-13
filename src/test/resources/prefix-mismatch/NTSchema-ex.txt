@@ -5,16 +5,16 @@ http://release.niem.gov/niem/proxy/xsd/4.0/ <- file:/C:/Work/NetBeans/NIEMTool/t
 http://release.niem.gov/niem/niem-core/4.0/ <- file:/C:/Work/NetBeans/NIEMTool/target/test-classes/prefix-mismatch/niem/niem-core/4.0/niem-core.xsd
 http://release.niem.gov/niem/domains/jxdm/6.0/ <- file:/C:/Work/NetBeans/NIEMTool/target/test-classes/prefix-mismatch/niem/domains/jxdm/6.0/jxdm.xsd
 http://release.niem.gov/niem/codes/unece_rec20/4.0/ <- file:/C:/Work/NetBeans/NIEMTool/target/test-classes/prefix-mismatch/niem/codes/unece_rec20/4.0/unece_rec20-misc.xsd
-prefix exch has multiple mappings
-  mapped to http://example.com/CrashDriver/1.0/ in http://example.com/CrashDriver/1.0/
-  mapped to http://release.niem.gov/niem/niem-core/4.0/ in http://release.niem.gov/niem/domains/jxdm/6.0/
-namespace http://release.niem.gov/niem/niem-core/4.0/ has multiple mappings
-  mapped to "nc" in http://example.com/CrashDriver/1.0/
-  mapped to "nc" in http://release.niem.gov/niem/niem-core/4.0/
-  mapped to "exch" in http://release.niem.gov/niem/domains/jxdm/6.0/
-namespace http://release.niem.gov/niem/structures/4.0/ has multiple mappings
-  mapped to "s" in http://example.com/CrashDriver/1.0/
-  mapped to "structures" in http://release.niem.gov/niem/proxy/xsd/4.0/
-  mapped to "structures" in http://release.niem.gov/niem/niem-core/4.0/
-  mapped to "structures" in http://release.niem.gov/niem/domains/jxdm/6.0/
-  mapped to "structures" in http://release.niem.gov/niem/codes/unece_rec20/4.0/
+prefix "exch" is mapped to multiple namespaces
+  mapped to http://example.com/CrashDriver/1.0/ in namespace http://example.com/CrashDriver/1.0/
+  mapped to http://release.niem.gov/niem/niem-core/4.0/ in namespace http://release.niem.gov/niem/domains/jxdm/6.0/
+multiple prefixes are mapped to namespace http://release.niem.gov/niem/niem-core/4.0/
+  prefix "nc" mapped in namespace http://example.com/CrashDriver/1.0/
+  prefix "nc" mapped in namespace http://release.niem.gov/niem/niem-core/4.0/
+  prefix "exch" mapped in namespace http://release.niem.gov/niem/domains/jxdm/6.0/
+multiple prefixes are mapped to namespace http://release.niem.gov/niem/structures/4.0/
+  prefix "s" mapped in namespace http://example.com/CrashDriver/1.0/
+  prefix "structures" mapped in namespace http://release.niem.gov/niem/proxy/xsd/4.0/
+  prefix "structures" mapped in namespace http://release.niem.gov/niem/niem-core/4.0/
+  prefix "structures" mapped in namespace http://release.niem.gov/niem/domains/jxdm/6.0/
+  prefix "structures" mapped in namespace http://release.niem.gov/niem/codes/unece_rec20/4.0/

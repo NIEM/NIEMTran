@@ -55,7 +55,7 @@ public class NTSchemaModel {
             this.namespacePrefix  = m.namespacePrefix;
             this.context          = m.context;
         } catch (RuntimeException ex) {
-            throw (new FormatException("Can't initialize suitable SAX parser", ex)); 
+            throw (new FormatException("Can't initialize NTSchemaModel", ex)); 
         }
     }
     
@@ -69,7 +69,7 @@ public class NTSchemaModel {
             this.namespacePrefix  = m.namespacePrefix;
             this.context          = m.context;
         } catch (RuntimeException ex) {
-            throw (new FormatException("Can't initialize suitable SAX parser", ex));            
+            throw (new FormatException("Can't initialize NTSchemaModel", ex));            
         }
     }
     

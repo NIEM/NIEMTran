@@ -1,7 +1,7 @@
 *Construction:
-[error] jxdm.xsd: 22:44 s4s-att-not-allowed: Attribute 'nameXX' cannot appear in element 'complexType'.
-[error] jxdm.xsd: 22:44 s4s-att-must-appear: Attribute 'name' must appear in element 'complexType'.
-[error] jxdm.xsd: 149:75 src-resolve: Cannot resolve the name 'j:CrashDriverType' to a(n) 'type definition' component.
+xerces[error] jxdm.xsd: 22:44 s4s-att-not-allowed: Attribute 'nameXX' cannot appear in element 'complexType'.
+xerces[error] jxdm.xsd: 22:44 s4s-att-must-appear: Attribute 'name' must appear in element 'complexType'.
+xerces[error] jxdm.xsd: 149:75 src-resolve: Cannot resolve the name 'j:CrashDriverType' to a(n) 'type definition' component.
 http://example.com/CrashDriver/1.0/ <- file:/C:/Work/NetBeans/NIEMTool/target/test-classes/invalid-schema-2/extension/CrashDriver.xsd
 http://release.niem.gov/niem/structures/4.0/ <- file:/C:/Work/NetBeans/NIEMTool/target/test-classes/invalid-schema-2/niem/utility/structures/4.0/structures.xsd
 http://release.niem.gov/niem/proxy/xsd/4.0/ <- file:/C:/Work/NetBeans/NIEMTool/target/test-classes/invalid-schema-2/niem/proxy/xsd/4.0/xs.xsd

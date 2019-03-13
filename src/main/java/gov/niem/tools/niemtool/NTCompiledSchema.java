@@ -17,26 +17,19 @@ package gov.niem.tools.niemtool;
 
 import java.io.StringReader;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import javax.xml.parsers.ParserConfigurationException;
-import org.apache.xerces.xs.XSAnnotation;
 import org.apache.xerces.xs.XSAttributeDeclaration;
 import org.apache.xerces.xs.XSComplexTypeDefinition;
 import org.apache.xerces.xs.XSConstants;
 import org.apache.xerces.xs.XSElementDeclaration;
 import org.apache.xerces.xs.XSModel;
 import org.apache.xerces.xs.XSNamedMap;
-import org.apache.xerces.xs.XSNamespaceItem;
-import org.apache.xerces.xs.XSNamespaceItemList;
 import org.apache.xerces.xs.XSObject;
-import org.apache.xerces.xs.XSObjectList;
 import org.apache.xerces.xs.XSSimpleTypeDefinition;
 import org.apache.xerces.xs.XSTypeDefinition;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
-import org.xml.sax.helpers.DefaultHandler;
-import static javax.xml.XMLConstants.W3C_XML_SCHEMA_INSTANCE_NS_URI;
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import static gov.niem.tools.niemtool.NTConstants.*;
 
@@ -45,20 +38,13 @@ import static gov.niem.tools.niemtool.NTConstants.*;
  * @author Scott Renner <sar@mitre.org>
  */
 public class NTCompiledSchema extends NTSchema {
-     
+        
     private NTSchemaModel ntmodel = null;
-    private final HashMap<String,List<MapRec>> nsPrefix = new HashMap<>();
-    private final HashMap<String,List<MapRec>> nsURI    = new HashMap<>();
-    private final StringBuilder msgs = new StringBuilder();
     
     public NTCompiledSchema (List<String> catalogs, List<String>schemaOrNSs) throws ParserConfigurationException {
         super(catalogs,schemaOrNSs);
     }
-    
-    public String compilationMessages () {
-        return msgs.toString();
-    }
-    
+        
     public NTSchemaModel ntmodel () {
         if (ntmodel != null) {
             return ntmodel;
@@ -69,7 +55,7 @@ public class NTCompiledSchema extends NTSchema {
         }        
         ntmodel =  new NTSchemaModel();        
         
-        // Now iterate through the prefix mappings to generate a context
+        // Iterate through the prefix mappings to generate a context
         processNamespaceItems();
         nsPrefix.forEach((prefix,value) -> {
            boolean same = true;
@@ -80,8 +66,19 @@ public class NTCompiledSchema extends NTSchema {
            if (same)  {
                ntmodel.addContext(prefix, value.get(0).val);
            }
-        });    
-        // Now get the simple types for simple elements
+        });
+        // Iterate through the namespace mappings
+        nsURI.forEach((ns, value) -> {
+           boolean same = true;
+           String first = value.get(0).val;
+           for (int i = 1; same && i < value.size(); i++) {
+               same = (first.equals(value.get(i).val));
+           }
+           if (same) {
+               ntmodel.addNamespacePrefix(ns, first);
+           }
+        });
+        // Get the simple types for simple elements
         XSNamedMap map = xs.getComponents(XSConstants.ELEMENT_DECLARATION);       
         for (int i = 0; i < map.getLength(); i++) {
             XSElementDeclaration item = (XSElementDeclaration) map.item(i);
@@ -99,7 +96,7 @@ public class NTCompiledSchema extends NTSchema {
                 ntmodel.addSimpleElement(buildURI(item), ts);
             }
         }     
-        // Now get the simple types for attributes        
+        // Get the simple types for attributes        
         map = xs.getComponents(XSConstants.ATTRIBUTE_DECLARATION);
         for (int i = 0; i < map.getLength(); i++) {
             XSAttributeDeclaration item = (XSAttributeDeclaration) map.item(i);
@@ -126,64 +123,7 @@ public class NTCompiledSchema extends NTSchema {
         result = result + stype.getName();
         return result;
     }
-       
-    private class Handler extends DefaultHandler {
-        private final NTCompiledSchema obj;    
-        private final String namespace;
-        String ndrVersion = "";
-        Handler(NTCompiledSchema obj, String namespace) {
-            super();
-            this.obj = obj;
-            this.namespace = namespace;
-        }
-        @Override
-        public void startPrefixMapping(String prefix, String uri) {
-            if (!"".equals(prefix) 
-                    && !W3C_XML_SCHEMA_NS_URI.equals(uri)
-                    && !uri.startsWith(APPINFO_NS_URI_PREFIX)
-                    && !uri.startsWith(CONFORMANCE_TARGET_NS_URI_PREFIX)
-                    && !uri.startsWith(W3C_XML_SCHEMA_INSTANCE_NS_URI)
-                    && !uri.startsWith(NIEM_XS_PREFIX)) {
-                // Record the declared namespace uri in the prefix map
-                List<MapRec> mlist = obj.nsPrefix.get(prefix);
-                if (mlist == null) {
-                    mlist = new ArrayList<>();
-                    obj.nsPrefix.put(prefix, mlist);
-                }
-                MapRec nr = new MapRec(namespace, uri);
-                mlist.add(nr);
-                // Record the declared prefix in the namespace uri map
-                mlist = obj.nsURI.get(uri);
-                if (mlist == null) {
-                    mlist = new ArrayList<>();
-                    obj.nsURI.put(uri, mlist);
-                }
-                nr = new MapRec(namespace, prefix);
-                mlist.add(nr);
-            }
-        }
-        @Override
-        public void startElement (String ens, String ename, String raw, Attributes atts) {
-            if ("".equals(ndrVersion)) {
-                for (int i = 0; i < atts.getLength(); i++) {
-                    String auri = atts.getURI(i);
-                    String av = atts.getValue(i);
-                    String aln = atts.getLocalName(i);
-                    if (auri.startsWith(CONFORMANCE_TARGET_NS_URI_PREFIX) && CONFORMANCE_ATTRIBUTE_NAME.equals(aln)) {
-                        av = av.substring(NDR_NS_URI_PREFIX.length());
-                        int sp = av.indexOf('/');
-                        if (sp >= 0) {
-                            av = av.substring(0, sp);
-                        }
-                        ndrVersion = av;
-                        return;
-                    }
-                }
-            }
-        }
-    }
-    
-    
+        
     private static String buildURI (XSObject item) {
         if (item.getNamespace().endsWith("#")) {
             return item.getNamespace()+item.getName();
@@ -192,19 +132,6 @@ public class NTCompiledSchema extends NTSchema {
             return item.getNamespace()+"#"+item.getName();
         }
     }
-    
-    
-    private class MapRec {
-        String ns = null;
-        String val = null;
-        MapRec(String ns, String val) {
-            this.ns = ns;
-            this.val = val;
-        }
-        @Override
-        public String toString () {
-            return String.format("[%s,%s]", val, ns);
-        }
-    }
+
 }
 

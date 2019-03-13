@@ -10,9 +10,9 @@
                 <goal>org.codehaus.mojo:exec-maven-plugin:1.5.0:exec</goal>
             </goals>
             <properties>
-                <exec.args>-classpath %classpath gov.niem.tools.niemtool.NIEMTool check -i correct/xml-catalog.xml correct/extension/CrashDriver.xsd</exec.args>
+                <exec.args>-classpath %classpath gov.niem.tools.niemtool.NIEMTool check -v -i xml-catalog.xml extension/CrashDriver.xsd</exec.args>
                 <exec.executable>java</exec.executable>
-                <exec.workingdir>C:\Work\NetBeans\NIEMTool\src\test\resources</exec.workingdir>
+                <exec.workingdir>C:\Work\NetBeans\NIEMTool\src\test\resources\correct</exec.workingdir>
             </properties>
         </action>
         <action>
@@ -25,10 +25,10 @@
                 <goal>org.codehaus.mojo:exec-maven-plugin:1.5.0:exec</goal>
             </goals>
             <properties>
-                <exec.args>-agentlib:jdwp=transport=dt_socket,server=n,address=${jpda.address} -classpath %classpath gov.niem.tools.niemtool.NIEMTool check -i correct/xml-catalog.xml correct/extension/CrashDriver.xsd</exec.args>
+                <exec.args>-agentlib:jdwp=transport=dt_socket,server=n,address=${jpda.address} -classpath %classpath gov.niem.tools.niemtool.NIEMTool check -v -i xml-catalog.xml extension/CrashDriver.xsd</exec.args>
                 <exec.executable>java</exec.executable>
                 <jpda.listen>true</jpda.listen>
-                <exec.workingdir>C:\Work\NetBeans\NIEMTool\src\test\resources</exec.workingdir>
+                <exec.workingdir>C:\Work\NetBeans\NIEMTool\src\test\resources\correct</exec.workingdir>
             </properties>
         </action>
         <action>
@@ -41,9 +41,9 @@
                 <goal>org.codehaus.mojo:exec-maven-plugin:1.5.0:exec</goal>
             </goals>
             <properties>
-                <exec.args>-classpath %classpath gov.niem.tools.niemtool.NIEMTool check -i correct/xml-catalog.xml correct/extension/CrashDriver.xsd</exec.args>
+                <exec.args>-classpath %classpath gov.niem.tools.niemtool.NIEMTool check -v -i xml-catalog.xml extension/CrashDriver.xsd</exec.args>
                 <exec.executable>java</exec.executable>
-                <exec.workingdir>C:\Work\NetBeans\NIEMTool\src\test\resources</exec.workingdir>
+                <exec.workingdir>C:\Work\NetBeans\NIEMTool\src\test\resources\correct</exec.workingdir>
             </properties>
         </action>
     </actions>
