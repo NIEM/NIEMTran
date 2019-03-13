@@ -37,6 +37,8 @@ public class NTSchemaTest {
     
     public NTSchemaTest() {
     }
+    
+    // @ParameterizedTest would be cool, but it's not working
 
     @Test
     public void testCatalogSchemalocMismatch () {
@@ -86,6 +88,11 @@ public class NTSchemaTest {
     @Test
     public void testNonlocalCatalogEntry () {
         testSchemaLoad("/nonlocal-catalog-entry");
+    } 
+    
+    @Test
+    public void testPrefixMismatch () {
+        testSchemaLoad("/prefix-mismatch");
     }
 
     public void testSchemaLoad (String resource) {

@@ -809,7 +809,38 @@ public class NTSchema {
         if (xsmodel() == null) {
             return xsWarnings;
         }
-        
+        // Iterate through the prefix mappings, find mismatches
+        nsPrefix.forEach((prefix,value) -> {
+           boolean same = true;
+           String first = value.get(0).val;
+           for (int i = 1; same && i < value.size(); i++) {
+               same = (first.equals(value.get(i).val));
+           }            
+           if (!same) {
+               StringBuilder msg = new StringBuilder();
+               msg.append(String.format("prefix \"%s\" is mapped to multiple namespaces\n", prefix));
+               value.forEach((mr) -> {
+                   msg.append(String.format("  mapped to %s in namespace %s\n", mr.val, mr.ns));
+               });
+               xsWarnings.add(msg.toString());
+           }
+        });
+        // Iterate through the namespace mappings, find mismatches
+        nsURI.forEach((uri,value) -> {
+           boolean same = true;
+           String first = value.get(0).val;
+           for (int i = 1; same && i < value.size(); i++) {
+               same = (first.equals(value.get(i).val));
+           }
+           if (!same) {
+               StringBuilder msg = new StringBuilder();
+               msg.append(String.format("multiple prefixes are mapped to namespace %s\n", uri));
+               value.forEach((mr) -> {
+                   msg.append(String.format("  prefix \"%s\" mapped in namespace %s\n", mr.val, mr.ns));
+               });
+               xsWarnings.add(msg.toString());
+           }
+        });         
         
         return null;
     }
@@ -1024,6 +1055,7 @@ public class NTSchema {
                 FileUtils.writeStringToFile(f, "*Construction:\n", "utf-8", false);
                 FileUtils.writeLines(f, "utf-8", this.xsConstructionMessages(), "", true);
                 FileUtils.writeLines(f, "utf-8", this.xsNamespaceList(), "", true);
+                FileUtils.writeLines(f, "utf-8", this.xsWarningMessages(), "", true);
             }
         } catch (IOException ex) {
             Logger.getLogger(NTSchema.class.getName()).log(Level.SEVERE, null, ex);
