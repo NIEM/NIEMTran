@@ -15,6 +15,8 @@
  */
 package gov.niem.tools.niemtool;
 
+import com.google.gson.Gson;
+import com.google.gson.stream.JsonReader;
 import static gov.niem.tools.niemtool.NTConstants.APPINFO_NS_URI_PREFIX;
 import static gov.niem.tools.niemtool.NTConstants.CONFORMANCE_ATTRIBUTE_NAME;
 import static gov.niem.tools.niemtool.NTConstants.CONFORMANCE_TARGET_NS_URI_PREFIX;
@@ -25,10 +27,12 @@ import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import static java.lang.Math.min;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_INSTANCE_NS_URI;
@@ -159,12 +163,14 @@ import org.xml.sax.helpers.DefaultHandler;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class NTSchema {
+    private static final String NIEM_CONTEXT_RESOURCE = "/NIEM4.0context.json";
+    private static HashMap<String,String> niemContextPrefix = null; // map ns URI -> usual prefix
     
-    protected static SAXParserFactory sfact = null;          // bootstrap for SAX parser
-    protected static SAXParser saxp = null;                  // reusable SAX parser, for schema assembly checking
-    protected static DOMImplementationRegistry direg = null; // bootstrap for XML Schema loader
-    protected static XSImplementation xsimpl = null;         // more bootstrap
-    protected static XSLoader xsloader = null;               // reusable XML Schema loader, produces XSModel
+    private static SAXParserFactory sfact = null;           // bootstrap for SAX parser
+    private static SAXParser saxp = null;                   // reusable SAX parser, for schema assembly checking
+    private static DOMImplementationRegistry direg = null;  // bootstrap for XML Schema loader
+    private static XSImplementation xsimpl = null;          // more bootstrap
+    private static XSLoader xsloader = null;                // reusable XML Schema loader, produces XSModel
        
     private List<String> catalogFiles = new ArrayList<>();  // list of initial catalog files for resolver (as provided)
     private List<String> schemaFiles = new ArrayList<>();   // list of initial schema documents to load (as provided)
@@ -185,12 +191,12 @@ public class NTSchema {
     private XSModel xsmodel = null;                         // constructed XML schema object from Xerces
     private List<String> xsConstructionErrors = null;       // error messages from Xerces
 
-    protected List<String> xsNamespaces = null;             // namespace & contributing documents from XSModel
-    protected List<String> xsWarnings = null;               // schema warnings derived from XSModel
-    protected List<String> xsNIEMWarnings = null;           // niem-specific schema warnings from XSModel
-    protected HashMap<String,List<MapRec>> nsPrefix = null; // nsPrefix.get(P) -> list of URIs mapped to prefix P
-    protected HashMap<String,List<MapRec>> nsURI    = null; // nsURI.get(U)    -> list of prefixes mapped to namespace U
-    protected HashMap<String,String> nsNDRversion = null;   // from ct:conformanceTargets; "" for external namespace
+    private List<String> xsNamespaces = null;               // namespace & contributing documents from XSModel
+    private List<String> xsWarnings = null;                 // schema warnings derived from XSModel
+    private List<String> xsNIEMWarnings = null;             // niem-specific schema warnings from XSModel
+    private HashMap<String,List<MapRec>> nsPrefix = null;   // nsPrefix.get(P) -> list of URIs mapped to prefix P
+    private HashMap<String,List<MapRec>> nsURI    = null;   // nsURI.get(U)    -> list of prefixes mapped to namespace U
+    private HashMap<String,String> nsNDRversion = null;     // from ct:conformanceTargets; "" for external namespace
     
     /**
      * Constructs an empty Schema object. Add schema documents, namespace URIs,
@@ -199,7 +205,7 @@ public class NTSchema {
      * throwing an exception if any of it fails.
      * @throws ParserConfigurationException
      */
-    public NTSchema() throws ParserConfigurationException {
+    public NTSchema() throws ParserConfigurationException, IOException {
         // Bootstrap the parsers when the first object is created
         if (sfact == null) {
             try {
@@ -220,6 +226,27 @@ public class NTSchema {
                 throw (new ParserConfigurationException("Can't initializte XML Schema parser" + ex.getMessage()));
             }
         }
+        if (niemContextPrefix == null) {
+            try {
+                URL niemContext = this.getClass().getResource(NIEM_CONTEXT_RESOURCE);
+                File contextFile = FileUtils.toFile(niemContext);
+                String contextData = FileUtils.readFileToString(contextFile, "utf-8");
+                Gson gson = new Gson();
+                StringReader r = new StringReader(contextData);
+                JsonReader jr = new JsonReader(r);
+                jr.beginObject();
+                niemContextPrefix = new HashMap<>();
+                while (jr.hasNext()) {
+                    String key = jr.nextName();
+                    String val = jr.nextString();
+                    String nss = removeNamespaceVersion(val);
+                    niemContextPrefix.put(nss, key);
+                }  
+            } catch (IOException ex) {
+                throw (new IOException(
+                        String.format("Can't read NIEM context resource %s: %s", NIEM_CONTEXT_RESOURCE, ex.getMessage())));
+            }
+        }
     }
 
     /**
@@ -230,7 +257,7 @@ public class NTSchema {
      * @throws ParserConfigurationException
      */
     public NTSchema(List<String> catalogFiles, List<String> schemaOrNamespace)
-            throws ParserConfigurationException {
+            throws ParserConfigurationException, IOException {
 
         this();
 
@@ -784,15 +811,6 @@ public class NTSchema {
     // ------------ SCHEMA XSMODEL CONSTRUCTION -----------------------------
     
     /**
-     * Return list of all schema construction messages produced by Xerces
-     * @return list of schema construction messages
-     */
-    public List<String> xsConstructionMessages () {
-        xsmodel();
-        return xsConstructionErrors;
-    }
-    
-    /**
      * Return results of all XML Catalog resolution operations performed during 
      * schema construction
      * @return list of resolution messages
@@ -800,6 +818,15 @@ public class NTSchema {
     public List<String> xsResolutionMessages () {
         xsmodel();
         return resolver().resolutionMessages();
+    }
+    
+    /**
+     * Return list of all schema construction messages produced by Xerces
+     * @return list of schema construction messages
+     */
+    public List<String> xsConstructionMessages () {
+        xsmodel();
+        return xsConstructionErrors;
     }
     
     /**
@@ -816,68 +843,37 @@ public class NTSchema {
      * Return warnings derived from Xerces XSModel. Complains about <ul>
      * <li> Namespace prefix mapped to more than one URI
      * <li> Namespace URI mapped to more than one prefix</ul>
-     * @return schema construction warnings
+     * @return list of warnings
      */
     public List<String> xsWarningMessages() {
-        if (xsWarnings != null) {
-            return xsWarnings;
-        }
-        xsWarnings = new ArrayList<>();
-        if (xsmodel() == null) {
-            return xsWarnings;
-        }
-        // Iterate through the prefix mappings, find mismatches
         processNamespaceItems();
-        nsPrefix.forEach((prefix,value) -> {
-           boolean same = true;
-           String first = value.get(0).val;
-           for (int i = 1; same && i < value.size(); i++) {
-               same = (first.equals(value.get(i).val));
-           }            
-           if (!same) {
-               StringBuilder msg = new StringBuilder();
-               msg.append(String.format("prefix \"%s\" is mapped to multiple namespaces\n", prefix));
-               value.forEach((mr) -> {
-                   msg.append(String.format("  mapped to %s in namespace %s\n", mr.val, mr.ns));
-               });
-               xsWarnings.add(msg.toString());
-           }
-        });
-        // Iterate through the namespace mappings, find mismatches
-        nsURI.forEach((uri,value) -> {
-           boolean same = true;
-           String first = value.get(0).val;
-           for (int i = 1; same && i < value.size(); i++) {
-               same = (first.equals(value.get(i).val));
-           }
-           if (!same) {
-               StringBuilder msg = new StringBuilder();
-               msg.append(String.format("multiple prefixes are mapped to namespace %s\n", uri));
-               value.forEach((mr) -> {
-                   msg.append(String.format("  prefix \"%s\" mapped in namespace %s\n", mr.val, mr.ns));
-               });
-               xsWarnings.add(msg.toString());
-           }
-        });      
         return xsWarnings;
     }
     
+    /**
+     * Return NIEM-specific warnings derived from Xerces XSModel.<ul>
+     * <li>External namespaces
+     * <li>Non-standard prefix for namespace in NIEM model</ul>
+     * @return list of NIEM-specfic warnings
+     */
     public List<String> xsNIEMWarningMessages() {
-        if (xsNIEMWarnings != null) {
-            return xsNIEMWarnings;
-        }
-        xsNIEMWarnings = new ArrayList<>();
-        if (xsmodel() == null) {
-            return xsNIEMWarnings;
-        }
-        // Iterate through the namespace versions, find external namespaces
         processNamespaceItems();
-        nsNDRversion.forEach((ns, ver) -> {
-            if ("".equals(ver)) {
-                xsNIEMWarnings.add(String.format("namespace %s is external (no NIEM conformance assertion)\n", ns));
-            }
-        });
         return xsNIEMWarnings;
+    }
+    
+    protected Map<String,List<MapRec>> nsPrefix() {
+        processNamespaceItems();
+        return nsPrefix;
+    }
+    
+    protected Map<String,List<MapRec>> nsURI() {
+        processNamespaceItems();
+        return nsURI;
+    }
+    
+    protected Map<String,String> nsNDRversion() {
+        processNamespaceItems();
+        return nsNDRversion;
     }
     
     /**
@@ -943,14 +939,20 @@ public class NTSchema {
         }     
     }
     
-    protected void processNamespaceItems () {
-        if (xsNamespaces != null) {
+    /**
+     * Extract information from the Xerces XSModel namespace information items.
+     * Generate the warning messages.
+     */
+    private void processNamespaceItems () {
+        if (nsPrefix != null) {
             return;
         }
-        xsNamespaces = new ArrayList<>();
         nsPrefix     = new HashMap<>();
         nsURI        = new HashMap<>();
         nsNDRversion = new HashMap<>();
+        xsNamespaces = new ArrayList<>();
+        xsWarnings   = new ArrayList<>();
+        xsNIEMWarnings = new ArrayList<>();
         if (xsmodel() == null) {
             return;
         }
@@ -962,6 +964,7 @@ public class NTSchema {
             XSNamespaceItem nsi = nsil.item(i);   
             String ns = nsi.getSchemaNamespace();
             if (!W3C_XML_SCHEMA_NS_URI.equals(ns)) {
+                // Process annnotatons, generate nsPrefix, nsURI, nsNDRversion
                 XSObjectList annl = nsi.getAnnotations();
                 for (int ai = 0; ai < annl.getLength(); ai++) {
                     XSAnnotation an = (XSAnnotation)annl.get(ai);
@@ -984,6 +987,58 @@ public class NTSchema {
                 }               
             }
         }  
+        // Iterate through the prefix mappings, generate multiple-map warnings
+        processNamespaceItems();
+        nsPrefix.forEach((prefix,value) -> {
+           boolean same = true;
+           String first = value.get(0).val;
+           for (int i = 1; same && i < value.size(); i++) {
+               same = (first.equals(value.get(i).val));
+           }            
+           if (!same) {
+               StringBuilder msg = new StringBuilder();
+               msg.append(String.format("prefix \"%s\" is mapped to multiple namespaces\n", prefix));
+               value.forEach((mr) -> {
+                   msg.append(String.format("  mapped to %s in namespace %s\n", mr.val, mr.ns));
+               });
+               xsWarnings.add(msg.toString());
+           }
+        });
+        // Iterate through the namespace mappings, generate warnings for
+        // multiple-map and non-standard namespace prefix
+        nsURI.forEach((uri,value) -> {
+           boolean same = true;
+           String first = value.get(0).val;
+           for (int i = 1; same && i < value.size(); i++) {
+               same = (first.equals(value.get(i).val));
+           }
+           if (!same) {
+               StringBuilder msg = new StringBuilder();
+               msg.append(String.format("multiple prefixes are mapped to namespace %s\n", uri));
+               value.forEach((mr) -> {
+                   msg.append(String.format("  prefix \"%s\" mapped in namespace %s\n", mr.val, mr.ns));
+               });
+               xsWarnings.add(msg.toString());
+           }
+           // Find non-standard prefixes
+            String nss = removeNamespaceVersion(uri);
+            String ep  = niemContextPrefix.get(nss);
+            if (ep != null) {
+                value.forEach((mr) -> {
+                    if (!ep.equals(mr.val)) {
+                        xsNIEMWarnings.add(
+                                String.format("namespace %s mapped to non-standard prefix %s (in namespace %s)",
+                                        uri, mr.val, mr.ns));
+                    }
+                });
+            }        
+        });       
+        // Iterate through the namespace versions, find external namespaces
+        nsNDRversion.forEach((ns, ver) -> {
+            if ("".equals(ver)) {
+                xsNIEMWarnings.add(String.format("namespace %s is external (no NIEM conformance assertion)\n", ns));
+            }
+        });
     }
 
     /**
@@ -991,7 +1046,7 @@ public class NTSchema {
      * Adds the prefix mappings and namespace URI mappings for this namespace.
      * Determines the NDR version of this namespace.
      */    
-    protected void processAnnotation (String ns, String annotation) {
+    private void processAnnotation (String ns, String annotation) {
         AnnotationHandler h = new AnnotationHandler(this, ns);
         InputSource is = new InputSource(new StringReader(annotation));
         try {
@@ -1002,10 +1057,10 @@ public class NTSchema {
         nsNDRversion.put(ns, h.ndrVersion);
     }        
     
-    protected class AnnotationHandler extends DefaultHandler {
-        protected NTSchema obj;
-        protected String namespace;
-        protected String ndrVersion = "";
+    private class AnnotationHandler extends DefaultHandler {
+        private NTSchema obj;
+        private String namespace;
+        private String ndrVersion = "";
         AnnotationHandler (NTSchema obj, String ns) {
             super();
             this.obj = obj;
@@ -1161,6 +1216,18 @@ public class NTSchema {
             rmsg = rmsg.substring(px);
         }
         return rmsg;
+    }
+    
+    /**
+     * Removes the version from a NIEM namespace URI or context value
+     * For example, 
+     *     http://release.niem.gov/niem/codes/hl7/4.0/# becomes
+     *     http://release.niem.gov/niem/codes/hl7/
+     * @param ns
+     * @return 
+     */
+    static String removeNamespaceVersion (String ns) {
+        return ns.replaceFirst("\\d+\\.\\d+/#?$", "");
     }
 }
 

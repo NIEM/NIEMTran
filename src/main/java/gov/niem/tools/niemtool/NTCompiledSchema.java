@@ -32,6 +32,7 @@ import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import static gov.niem.tools.niemtool.NTConstants.*;
+import java.io.IOException;
 
 /**
  *
@@ -41,7 +42,8 @@ public class NTCompiledSchema extends NTSchema {
         
     private NTSchemaModel ntmodel = null;
     
-    public NTCompiledSchema (List<String> catalogs, List<String>schemaOrNSs) throws ParserConfigurationException {
+    public NTCompiledSchema (List<String> catalogs, List<String>schemaOrNSs) 
+            throws ParserConfigurationException, IOException {
         super(catalogs,schemaOrNSs);
     }
         
@@ -56,8 +58,7 @@ public class NTCompiledSchema extends NTSchema {
         ntmodel =  new NTSchemaModel();        
         
         // Iterate through the prefix mappings to generate a context
-        processNamespaceItems();
-        nsPrefix.forEach((prefix,value) -> {
+        nsPrefix().forEach((prefix,value) -> {
            boolean same = true;
            String first = value.get(0).val;
            for (int i = 1; same && i < value.size(); i++) {
@@ -68,7 +69,7 @@ public class NTCompiledSchema extends NTSchema {
            }
         });
         // Iterate through the namespace mappings
-        nsURI.forEach((ns, value) -> {
+        nsURI().forEach((ns, value) -> {
            boolean same = true;
            String first = value.get(0).val;
            for (int i = 1; same && i < value.size(); i++) {

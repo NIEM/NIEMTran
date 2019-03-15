@@ -22,12 +22,13 @@ import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
  * @author Scott Renner <sar@mitre.org>
  */
 public class NTConstants {
-    public static final String RDF_NS_URI = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
+    
     public static final String APPINFO_NS_URI_PREFIX = "http://release.niem.gov/niem/appinfo/";
     public static final String CONFORMANCE_ATTRIBUTE_NAME = "conformanceTargets";
     public static final String CONFORMANCE_TARGET_NS_URI_PREFIX = "http://release.niem.gov/niem/conformanceTargets/";
     public static final String NDR_NS_URI_PREFIX = "http://reference.niem.gov/niem/specification/naming-and-design-rules/";    
     public static final String NIEM_XS_PREFIX = "http://release.niem.gov/niem/proxy/xsd/";
+    public static final String RDF_NS_URI = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";    
     public static final String STRUCTURES_NS_URI_PREFIX = "http://release.niem.gov/niem/structures/";
 }
 

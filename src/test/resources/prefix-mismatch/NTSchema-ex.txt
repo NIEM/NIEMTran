@@ -18,3 +18,4 @@ multiple prefixes are mapped to namespace http://release.niem.gov/niem/structure
   prefix "structures" mapped in namespace http://release.niem.gov/niem/niem-core/4.0/
   prefix "structures" mapped in namespace http://release.niem.gov/niem/domains/jxdm/6.0/
   prefix "structures" mapped in namespace http://release.niem.gov/niem/codes/unece_rec20/4.0/
+namespace http://release.niem.gov/niem/niem-core/4.0/ mapped to non-standard prefix exch (in namespace http://release.niem.gov/niem/domains/jxdm/6.0/)namespace http://release.niem.gov/niem/structures/4.0/ mapped to non-standard prefix s (in namespace http://example.com/CrashDriver/1.0/)
