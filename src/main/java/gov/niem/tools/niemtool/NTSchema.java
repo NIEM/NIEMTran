@@ -163,8 +163,6 @@ import org.xml.sax.helpers.DefaultHandler;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class NTSchema {
-    private static final String NIEM_CONTEXT_RESOURCE = "/NIEM4.0context.json";
-    private static HashMap<String,String> niemContextPrefix = null; // map ns URI -> usual prefix
     
     private static SAXParserFactory sfact = null;           // bootstrap for SAX parser
     private static SAXParser saxp = null;                   // reusable SAX parser, for schema assembly checking
@@ -224,27 +222,6 @@ public class NTSchema {
                 xsloader = xsimpl.createXSLoader(null);
             } catch (Exception ex) {
                 throw (new ParserConfigurationException("Can't initializte XML Schema parser" + ex.getMessage()));
-            }
-        }
-        if (niemContextPrefix == null) {
-            try {
-                URL niemContext = this.getClass().getResource(NIEM_CONTEXT_RESOURCE);
-                File contextFile = FileUtils.toFile(niemContext);
-                String contextData = FileUtils.readFileToString(contextFile, "utf-8");
-                Gson gson = new Gson();
-                StringReader r = new StringReader(contextData);
-                JsonReader jr = new JsonReader(r);
-                jr.beginObject();
-                niemContextPrefix = new HashMap<>();
-                while (jr.hasNext()) {
-                    String key = jr.nextName();
-                    String val = jr.nextString();
-                    String nss = removeNamespaceVersion(val);
-                    niemContextPrefix.put(nss, key);
-                }  
-            } catch (IOException ex) {
-                throw (new IOException(
-                        String.format("Can't read NIEM context resource %s: %s", NIEM_CONTEXT_RESOURCE, ex.getMessage())));
             }
         }
     }
@@ -1021,8 +998,7 @@ public class NTSchema {
                xsWarnings.add(msg.toString());
            }
            // Find non-standard prefixes
-            String nss = removeNamespaceVersion(uri);
-            String ep  = niemContextPrefix.get(nss);
+            String ep  = NIEMContext.stdPrefix(uri);
             if (ep != null) {
                 value.forEach((mr) -> {
                     if (!ep.equals(mr.val)) {
@@ -1218,17 +1194,6 @@ public class NTSchema {
         }
         return rmsg;
     }
-    
-    /**
-     * Removes the version from a NIEM namespace URI or context value
-     * For example, 
-     *     http://release.niem.gov/niem/codes/hl7/4.0/# becomes
-     *     http://release.niem.gov/niem/codes/hl7/
-     * @param ns
-     * @return 
-     */
-    static String removeNamespaceVersion (String ns) {
-        return ns.replaceFirst("\\d+\\.\\d+/#?$", "");
-    }
+
 }
 
