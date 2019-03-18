@@ -1,3 +1,4 @@
+*Schema root: file:/C:/Work/NetBeans/NIEMTool/target/test-classes/catalog-schemaloc-mismatch/
 *Assembly:
 extension/CrashDriver.xsd:25 IMPORT ns=http://release.niem.gov/niem/structures/4.0/ sl=../niem/structures/4.0/structures.xsd
   namespace resolves to niem/utility/structures/4.0/structures.xsd
@@ -6,3 +7,10 @@ extension/CrashDriver.xsd:25 IMPORT ns=http://release.niem.gov/niem/structures/4
   loading niem/utility/structures/4.0/structures.xsd
   loading niem/structures/4.0/structures.xsd
   namespace http://release.niem.gov/niem/structures/4.0/ also loaded from niem/utility/structures/4.0/structures.xsd
+*Construction:
+http://example.com/CrashDriver/1.0/ <- extension/CrashDriver.xsd
+http://release.niem.gov/niem/structures/4.0/ <- niem/utility/structures/4.0/structures.xsd
+http://release.niem.gov/niem/proxy/xsd/4.0/ <- niem/proxy/xsd/4.0/xs.xsd
+http://release.niem.gov/niem/niem-core/4.0/ <- niem/niem-core/4.0/niem-core.xsd
+http://release.niem.gov/niem/domains/jxdm/6.0/ <- niem/domains/jxdm/6.0/jxdm.xsd
+http://release.niem.gov/niem/codes/unece_rec20/4.0/ <- niem/codes/unece_rec20/4.0/unece_rec20-misc.xsd

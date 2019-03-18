@@ -86,6 +86,11 @@ public class NTSchemaTest {
     }  
     
     @Test
+    public void testNoGMLCatalog () {
+        testSchemaLoad("/no-gml-catalog");
+    }  
+    
+    @Test
     public void testNonlocalCatalogEntry () {
         testSchemaLoad("/nonlocal-catalog-entry");
     } 

@@ -42,6 +42,10 @@ public class NTCompiledSchema extends NTSchema {
         
     private NTSchemaModel ntmodel = null;
     
+    public NTCompiledSchema () throws ParserConfigurationException, IOException {
+        super();
+    }
+    
     public NTCompiledSchema (List<String> catalogs, List<String>schemaOrNSs) 
             throws ParserConfigurationException, IOException {
         super(catalogs,schemaOrNSs);
@@ -57,7 +61,7 @@ public class NTCompiledSchema extends NTSchema {
         }        
         ntmodel =  new NTSchemaModel();        
         
-        // Iterate through the prefix mappings to generate a context
+        // Collect the unique prefix mappings to generate a context
         nsPrefix().forEach((prefix,value) -> {
            boolean same = true;
            String first = value.get(0).val;
@@ -65,10 +69,15 @@ public class NTCompiledSchema extends NTSchema {
                same = (first.equals(value.get(i).val));
            }            
            if (same)  {
-               ntmodel.addContext(prefix, value.get(0).val);
+               if (!first.endsWith("#")) {
+                   ntmodel.addContext(prefix, first + "#");
+               }
+               else {
+                   ntmodel.addContext(prefix, first);
+               }
            }
         });
-        // Iterate through the namespace mappings
+        // Collect the unique namespace mappings
         nsURI().forEach((ns, value) -> {
            boolean same = true;
            String first = value.get(0).val;
@@ -78,6 +87,12 @@ public class NTCompiledSchema extends NTSchema {
            if (same) {
                ntmodel.addNamespacePrefix(ns, first);
            }
+        });
+        // Find external namespaces
+        nsNDRversion().forEach((ns, ver) -> {
+            if ("".equals(ver)){
+                ntmodel.addExternalNS(ns);
+            }
         });
         // Get the simple types for simple elements
         XSNamedMap map = xs.getComponents(XSConstants.ELEMENT_DECLARATION);       

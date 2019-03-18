@@ -1,0 +1,39 @@
+{
+  "modelVersion": "1.0",
+  "attributes": {
+    "http://release.niem.gov/niem/structures/4.0/#uri": "anyURI",
+    "http://release.niem.gov/niem/structures/4.0/#id": "ID",
+    "http://release.niem.gov/niem/niem-core/4.0/#sequenceID": "integer",
+    "http://release.niem.gov/niem/structures/4.0/#ref": "IDREF",
+    "http://release.niem.gov/niem/niem-core/4.0/#personNameCommentText": "string",
+    "http://release.niem.gov/niem/structures/4.0/#metadata": "list/IDREF",
+    "http://release.niem.gov/niem/structures/4.0/#relationshipMetadata": "list/IDREF"
+  },
+  "simpleElements": {
+    "http://release.niem.gov/niem/niem-core/4.0/#LengthUnitCode": "token",
+    "http://release.niem.gov/niem/niem-core/4.0/#PersonGivenName": "string",
+    "http://example.com/CrashDriver/1.0/#PersonFictionalCharacterIndicator": "boolean",
+    "http://release.niem.gov/niem/niem-core/4.0/#IdentificationID": "string",
+    "http://release.niem.gov/niem/niem-core/4.0/#LongitudeDegreeValue": "decimal",
+    "http://release.niem.gov/niem/niem-core/4.0/#PersonMiddleName": "string",
+    "http://release.niem.gov/niem/niem-core/4.0/#MeasureDecimalValue": "decimal",
+    "http://release.niem.gov/niem/niem-core/4.0/#PersonSurName": "string",
+    "http://release.niem.gov/niem/niem-core/4.0/#LatitudeDegreeValue": "decimal",
+    "http://release.niem.gov/niem/niem-core/4.0/#Date": "date"
+  },
+  "namespacePrefix": {
+    "http://release.niem.gov/niem/niem-core/4.0/": "nc",
+    "http://release.niem.gov/niem/domains/jxdm/6.0/": "j",
+    "http://release.niem.gov/niem/codes/unece_rec20/4.0/": "unece",
+    "http://example.com/CrashDriver/1.0/": "exch",
+    "http://release.niem.gov/niem/structures/4.0/": "structures"
+  },
+  "context": {
+    "nc": "http://release.niem.gov/niem/niem-core/4.0/#",
+    "exch": "http://example.com/CrashDriver/1.0/#",
+    "structures": "http://release.niem.gov/niem/structures/4.0/#",
+    "j": "http://release.niem.gov/niem/domains/jxdm/6.0/#",
+    "unece": "http://release.niem.gov/niem/codes/unece_rec20/4.0/#"
+  },
+  "externalNSHandler": {}
+}

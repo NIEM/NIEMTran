@@ -174,13 +174,8 @@ public class CommandCompile implements JCCommand {
         
         // Compile the schema into the NTSchemaModel object
         NTSchemaModel model = sc.ntmodel();
-        model.namespaceVersion().forEach((ns,ver) -> {
-            if ("".equals(ver)) {
-                System.out.println("schema includes external namespace " + ns);
-            }
-            else if ("4.0".compareTo(ver) > 0) {
-                System.out.println(String.format("namespace %s has NIEM version %s (below 4.0)", ns, ver));
-            }
+        model.externalNSHandler().forEach((ns,h) -> {
+            System.out.println("schema includes external namespace " + ns);
         });
         
          // Write compiled object to file

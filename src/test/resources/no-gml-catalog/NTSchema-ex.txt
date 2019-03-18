@@ -1,0 +1,218 @@
+*Schema root: file:/C:/Work/NetBeans/NIEMTool/target/test-classes/no-gml-catalog/
+*Assembly:
+niem/adapters/geospatial/4.0/geospatial.xsd:8 IMPORT ns=http://www.opengis.net/gml/3.2 sl=../../../external/ogc/gml/3.2.1/gml.xsd
+  no catalog entry for namespace http://www.opengis.net/gml/3.2
+  schemaLocation resolves to niem/external/ogc/gml/3.2.1/gml.xsd
+  loading niem/external/ogc/gml/3.2.1/gml.xsd
+niem/external/ogc/gml/3.2.1/coordinateOperations.xsd:16 IMPORT ns=http://www.isotc211.org/2005/gmd sl=../../iso/19139/20070417/gmd/gmd.xsd
+  no catalog entry for namespace http://www.isotc211.org/2005/gmd
+  schemaLocation resolves to niem/external/ogc/iso/19139/20070417/gmd/gmd.xsd
+  loading niem/external/ogc/iso/19139/20070417/gmd/gmd.xsd
+niem/external/ogc/gml/3.2.1/referenceSystems.xsd:12 IMPORT ns=http://www.isotc211.org/2005/gmd sl=../../iso/19139/20070417/gmd/gmd.xsd
+  no catalog entry for namespace http://www.isotc211.org/2005/gmd
+  schemaLocation resolves to niem/external/ogc/iso/19139/20070417/gmd/gmd.xsd
+  already loaded niem/external/ogc/iso/19139/20070417/gmd/gmd.xsd
+niem/external/ogc/gml/3.2.1/gmlBase.xsd:14 IMPORT ns=http://www.w3.org/1999/xlink sl=../../xlink/1.0.0/xlinks.xsd
+  no catalog entry for namespace http://www.w3.org/1999/xlink
+  schemaLocation resolves to niem/external/ogc/xlink/1.0.0/xlinks.xsd
+  loading niem/external/ogc/xlink/1.0.0/xlinks.xsd
+niem/external/ogc/iso/19139/20070417/gmd/metadataApplication.xsd:8 IMPORT ns=http://www.isotc211.org/2005/gco sl=../gco/gco.xsd
+  no catalog entry for namespace http://www.isotc211.org/2005/gco
+  schemaLocation resolves to niem/external/ogc/iso/19139/20070417/gco/gco.xsd
+  loading niem/external/ogc/iso/19139/20070417/gco/gco.xsd
+niem/external/ogc/iso/19139/20070417/gmd/metadataEntity.xsd:8 IMPORT ns=http://www.isotc211.org/2005/gco sl=../gco/gco.xsd
+  no catalog entry for namespace http://www.isotc211.org/2005/gco
+  schemaLocation resolves to niem/external/ogc/iso/19139/20070417/gco/gco.xsd
+  already loaded niem/external/ogc/iso/19139/20070417/gco/gco.xsd
+niem/external/ogc/iso/19139/20070417/gco/basicTypes.xsd:8 IMPORT ns=http://www.w3.org/1999/xlink sl=../../../../xlink/1.0.0/xlinks.xsd
+  no catalog entry for namespace http://www.w3.org/1999/xlink
+  schemaLocation resolves to niem/external/ogc/xlink/1.0.0/xlinks.xsd
+  already loaded niem/external/ogc/xlink/1.0.0/xlinks.xsd
+niem/external/ogc/iso/19139/20070417/gco/basicTypes.xsd:9 IMPORT ns=http://www.opengis.net/gml/3.2 sl=../../../../gml/3.2.1/gml.xsd
+  no catalog entry for namespace http://www.opengis.net/gml/3.2
+  schemaLocation resolves to niem/external/ogc/gml/3.2.1/gml.xsd
+  already loaded niem/external/ogc/gml/3.2.1/gml.xsd
+niem/external/ogc/iso/19139/20070417/gmd/spatialRepresentation.xsd:8 IMPORT ns=http://www.isotc211.org/2005/gss sl=../gss/gss.xsd
+  no catalog entry for namespace http://www.isotc211.org/2005/gss
+  schemaLocation resolves to niem/external/ogc/iso/19139/20070417/gss/gss.xsd
+  loading niem/external/ogc/iso/19139/20070417/gss/gss.xsd
+niem/external/ogc/iso/19139/20070417/gmd/spatialRepresentation.xsd:9 IMPORT ns=http://www.isotc211.org/2005/gco sl=../gco/gco.xsd
+  no catalog entry for namespace http://www.isotc211.org/2005/gco
+  schemaLocation resolves to niem/external/ogc/iso/19139/20070417/gco/gco.xsd
+  already loaded niem/external/ogc/iso/19139/20070417/gco/gco.xsd
+niem/external/ogc/iso/19139/20070417/gmd/metadataExtension.xsd:8 IMPORT ns=http://www.isotc211.org/2005/gco sl=../gco/gco.xsd
+  no catalog entry for namespace http://www.isotc211.org/2005/gco
+  schemaLocation resolves to niem/external/ogc/iso/19139/20070417/gco/gco.xsd
+  already loaded niem/external/ogc/iso/19139/20070417/gco/gco.xsd
+niem/external/ogc/iso/19139/20070417/gmd/content.xsd:8 IMPORT ns=http://www.isotc211.org/2005/gco sl=../gco/gco.xsd
+  no catalog entry for namespace http://www.isotc211.org/2005/gco
+  schemaLocation resolves to niem/external/ogc/iso/19139/20070417/gco/gco.xsd
+  already loaded niem/external/ogc/iso/19139/20070417/gco/gco.xsd
+niem/external/ogc/iso/19139/20070417/gmd/applicationSchema.xsd:8 IMPORT ns=http://www.isotc211.org/2005/gco sl=../gco/gco.xsd
+  no catalog entry for namespace http://www.isotc211.org/2005/gco
+  schemaLocation resolves to niem/external/ogc/iso/19139/20070417/gco/gco.xsd
+  already loaded niem/external/ogc/iso/19139/20070417/gco/gco.xsd
+niem/external/ogc/iso/19139/20070417/gmd/portrayalCatalogue.xsd:8 IMPORT ns=http://www.isotc211.org/2005/gco sl=../gco/gco.xsd
+  no catalog entry for namespace http://www.isotc211.org/2005/gco
+  schemaLocation resolves to niem/external/ogc/iso/19139/20070417/gco/gco.xsd
+  already loaded niem/external/ogc/iso/19139/20070417/gco/gco.xsd
+niem/external/ogc/iso/19139/20070417/gmd/dataQuality.xsd:8 IMPORT ns=http://www.isotc211.org/2005/gco sl=../gco/gco.xsd
+  no catalog entry for namespace http://www.isotc211.org/2005/gco
+  schemaLocation resolves to niem/external/ogc/iso/19139/20070417/gco/gco.xsd
+  already loaded niem/external/ogc/iso/19139/20070417/gco/gco.xsd
+niem/external/ogc/iso/19139/20070417/gmd/freeText.xsd:8 IMPORT ns=http://www.isotc211.org/2005/gco sl=../gco/gco.xsd
+  no catalog entry for namespace http://www.isotc211.org/2005/gco
+  schemaLocation resolves to niem/external/ogc/iso/19139/20070417/gco/gco.xsd
+  already loaded niem/external/ogc/iso/19139/20070417/gco/gco.xsd
+niem/external/ogc/iso/19139/20070417/gco/gcoBase.xsd:10 IMPORT ns=http://www.w3.org/1999/xlink sl=../../../../xlink/1.0.0/xlinks.xsd
+  no catalog entry for namespace http://www.w3.org/1999/xlink
+  schemaLocation resolves to niem/external/ogc/xlink/1.0.0/xlinks.xsd
+  already loaded niem/external/ogc/xlink/1.0.0/xlinks.xsd
+niem/external/ogc/iso/19139/20070417/gco/gcoBase.xsd:11 IMPORT ns=http://www.opengis.net/gml/3.2 sl=../../../../gml/3.2.1/gml.xsd
+  no catalog entry for namespace http://www.opengis.net/gml/3.2
+  schemaLocation resolves to niem/external/ogc/gml/3.2.1/gml.xsd
+  already loaded niem/external/ogc/gml/3.2.1/gml.xsd
+niem/external/ogc/iso/19139/20070417/gmd/citation.xsd:8 IMPORT ns=http://www.isotc211.org/2005/gco sl=../gco/gco.xsd
+  no catalog entry for namespace http://www.isotc211.org/2005/gco
+  schemaLocation resolves to niem/external/ogc/iso/19139/20070417/gco/gco.xsd
+  already loaded niem/external/ogc/iso/19139/20070417/gco/gco.xsd
+niem/external/ogc/iso/19139/20070417/gmd/identification.xsd:8 IMPORT ns=http://www.isotc211.org/2005/gco sl=../gco/gco.xsd
+  no catalog entry for namespace http://www.isotc211.org/2005/gco
+  schemaLocation resolves to niem/external/ogc/iso/19139/20070417/gco/gco.xsd
+  already loaded niem/external/ogc/iso/19139/20070417/gco/gco.xsd
+niem/external/ogc/iso/19139/20070417/gss/geometry.xsd:8 IMPORT ns=http://www.opengis.net/gml/3.2 sl=../../../../gml/3.2.1/gml.xsd
+  no catalog entry for namespace http://www.opengis.net/gml/3.2
+  schemaLocation resolves to niem/external/ogc/gml/3.2.1/gml.xsd
+  already loaded niem/external/ogc/gml/3.2.1/gml.xsd
+niem/external/ogc/iso/19139/20070417/gss/geometry.xsd:9 IMPORT ns=http://www.isotc211.org/2005/gco sl=../gco/gco.xsd
+  no catalog entry for namespace http://www.isotc211.org/2005/gco
+  schemaLocation resolves to niem/external/ogc/iso/19139/20070417/gco/gco.xsd
+  already loaded niem/external/ogc/iso/19139/20070417/gco/gco.xsd
+niem/external/ogc/iso/19139/20070417/gmd/referenceSystem.xsd:8 IMPORT ns=http://www.isotc211.org/2005/gco sl=../gco/gco.xsd
+  no catalog entry for namespace http://www.isotc211.org/2005/gco
+  schemaLocation resolves to niem/external/ogc/iso/19139/20070417/gco/gco.xsd
+  already loaded niem/external/ogc/iso/19139/20070417/gco/gco.xsd
+niem/external/ogc/iso/19139/20070417/gmd/constraints.xsd:8 IMPORT ns=http://www.isotc211.org/2005/gco sl=../gco/gco.xsd
+  no catalog entry for namespace http://www.isotc211.org/2005/gco
+  schemaLocation resolves to niem/external/ogc/iso/19139/20070417/gco/gco.xsd
+  already loaded niem/external/ogc/iso/19139/20070417/gco/gco.xsd
+niem/external/ogc/iso/19139/20070417/gmd/distribution.xsd:8 IMPORT ns=http://www.isotc211.org/2005/gco sl=../gco/gco.xsd
+  no catalog entry for namespace http://www.isotc211.org/2005/gco
+  schemaLocation resolves to niem/external/ogc/iso/19139/20070417/gco/gco.xsd
+  already loaded niem/external/ogc/iso/19139/20070417/gco/gco.xsd
+niem/external/ogc/iso/19139/20070417/gmd/maintenance.xsd:8 IMPORT ns=http://www.isotc211.org/2005/gts sl=../gts/gts.xsd
+  no catalog entry for namespace http://www.isotc211.org/2005/gts
+  schemaLocation resolves to niem/external/ogc/iso/19139/20070417/gts/gts.xsd
+  loading niem/external/ogc/iso/19139/20070417/gts/gts.xsd
+niem/external/ogc/iso/19139/20070417/gmd/maintenance.xsd:9 IMPORT ns=http://www.isotc211.org/2005/gco sl=../gco/gco.xsd
+  no catalog entry for namespace http://www.isotc211.org/2005/gco
+  schemaLocation resolves to niem/external/ogc/iso/19139/20070417/gco/gco.xsd
+  already loaded niem/external/ogc/iso/19139/20070417/gco/gco.xsd
+niem/external/ogc/iso/19139/20070417/gmd/extent.xsd:8 IMPORT ns=http://www.isotc211.org/2005/gss sl=../gss/gss.xsd
+  no catalog entry for namespace http://www.isotc211.org/2005/gss
+  schemaLocation resolves to niem/external/ogc/iso/19139/20070417/gss/gss.xsd
+  already loaded niem/external/ogc/iso/19139/20070417/gss/gss.xsd
+niem/external/ogc/iso/19139/20070417/gmd/extent.xsd:9 IMPORT ns=http://www.isotc211.org/2005/gts sl=../gts/gts.xsd
+  no catalog entry for namespace http://www.isotc211.org/2005/gts
+  schemaLocation resolves to niem/external/ogc/iso/19139/20070417/gts/gts.xsd
+  already loaded niem/external/ogc/iso/19139/20070417/gts/gts.xsd
+niem/external/ogc/iso/19139/20070417/gmd/extent.xsd:10 IMPORT ns=http://www.isotc211.org/2005/gco sl=../gco/gco.xsd
+  no catalog entry for namespace http://www.isotc211.org/2005/gco
+  schemaLocation resolves to niem/external/ogc/iso/19139/20070417/gco/gco.xsd
+  already loaded niem/external/ogc/iso/19139/20070417/gco/gco.xsd
+niem/external/ogc/iso/19139/20070417/gmd/extent.xsd:11 IMPORT ns=http://www.isotc211.org/2005/gsr sl=../gsr/gsr.xsd
+  no catalog entry for namespace http://www.isotc211.org/2005/gsr
+  schemaLocation resolves to niem/external/ogc/iso/19139/20070417/gsr/gsr.xsd
+  loading niem/external/ogc/iso/19139/20070417/gsr/gsr.xsd
+niem/external/ogc/iso/19139/20070417/gts/temporalObjects.xsd:8 IMPORT ns=http://www.opengis.net/gml/3.2 sl=../../../../gml/3.2.1/gml.xsd
+  no catalog entry for namespace http://www.opengis.net/gml/3.2
+  schemaLocation resolves to niem/external/ogc/gml/3.2.1/gml.xsd
+  already loaded niem/external/ogc/gml/3.2.1/gml.xsd
+niem/external/ogc/iso/19139/20070417/gts/temporalObjects.xsd:9 IMPORT ns=http://www.isotc211.org/2005/gco sl=../gco/gco.xsd
+  no catalog entry for namespace http://www.isotc211.org/2005/gco
+  schemaLocation resolves to niem/external/ogc/iso/19139/20070417/gco/gco.xsd
+  already loaded niem/external/ogc/iso/19139/20070417/gco/gco.xsd
+niem/external/ogc/iso/19139/20070417/gsr/spatialReferencing.xsd:8 IMPORT ns=http://www.isotc211.org/2005/gco sl=../gco/gco.xsd
+  no catalog entry for namespace http://www.isotc211.org/2005/gco
+  schemaLocation resolves to niem/external/ogc/iso/19139/20070417/gco/gco.xsd
+  already loaded niem/external/ogc/iso/19139/20070417/gco/gco.xsd
+niem/external/ogc/iso/19139/20070417/gsr/spatialReferencing.xsd:9 IMPORT ns=http://www.opengis.net/gml/3.2 sl=../../../../gml/3.2.1/gml.xsd
+  no catalog entry for namespace http://www.opengis.net/gml/3.2
+  schemaLocation resolves to niem/external/ogc/gml/3.2.1/gml.xsd
+  already loaded niem/external/ogc/gml/3.2.1/gml.xsd
+*Construction:
+http://www.w3.org/1999/xlink <- niem/external/ogc/xlink/1.0.0/xlinks.xsd
+http://www.opengis.net/gml/3.2 <- MULTIPLE DOCUMENTS
+  niem/external/ogc/gml/3.2.1/gml.xsd
+  niem/external/ogc/gml/3.2.1/dynamicFeature.xsd
+  niem/external/ogc/gml/3.2.1/feature.xsd
+  niem/external/ogc/gml/3.2.1/geometryAggregates.xsd
+  niem/external/ogc/gml/3.2.1/geometryPrimitives.xsd
+  niem/external/ogc/gml/3.2.1/geometryBasic2d.xsd
+  niem/external/ogc/gml/3.2.1/geometryBasic0d1d.xsd
+  niem/external/ogc/gml/3.2.1/measures.xsd
+  niem/external/ogc/gml/3.2.1/units.xsd
+  niem/external/ogc/gml/3.2.1/dictionary.xsd
+  niem/external/ogc/gml/3.2.1/gmlBase.xsd
+  niem/external/ogc/gml/3.2.1/basicTypes.xsd
+  niem/external/ogc/gml/3.2.1/temporal.xsd
+  niem/external/ogc/gml/3.2.1/direction.xsd
+  niem/external/ogc/gml/3.2.1/topology.xsd
+  niem/external/ogc/gml/3.2.1/geometryComplexes.xsd
+  niem/external/ogc/gml/3.2.1/coverage.xsd
+  niem/external/ogc/gml/3.2.1/valueObjects.xsd
+  niem/external/ogc/gml/3.2.1/grids.xsd
+  niem/external/ogc/gml/3.2.1/coordinateReferenceSystems.xsd
+  niem/external/ogc/gml/3.2.1/coordinateSystems.xsd
+  niem/external/ogc/gml/3.2.1/referenceSystems.xsd
+  niem/external/ogc/gml/3.2.1/datums.xsd
+  niem/external/ogc/gml/3.2.1/coordinateOperations.xsd
+  niem/external/ogc/gml/3.2.1/observation.xsd
+  niem/external/ogc/gml/3.2.1/temporalReferenceSystems.xsd
+  niem/external/ogc/gml/3.2.1/temporalTopology.xsd
+  niem/external/ogc/gml/3.2.1/deprecatedTypes.xsd
+http://example.com/CrashDriver/1.0/ <- extension/CrashDriver.xsd
+http://release.niem.gov/niem/structures/4.0/ <- niem/utility/structures/4.0/structures.xsd
+http://release.niem.gov/niem/proxy/xsd/4.0/ <- niem/proxy/xsd/4.0/xs.xsd
+http://release.niem.gov/niem/adapters/geospatial/4.0/ <- niem/adapters/geospatial/4.0/geospatial.xsd
+http://www.isotc211.org/2005/gco <- MULTIPLE DOCUMENTS
+  niem/external/ogc/iso/19139/20070417/gco/gco.xsd
+  niem/external/ogc/iso/19139/20070417/gco/basicTypes.xsd
+  niem/external/ogc/iso/19139/20070417/gco/gcoBase.xsd
+http://www.isotc211.org/2005/gmd <- MULTIPLE DOCUMENTS
+  niem/external/ogc/iso/19139/20070417/gmd/gmd.xsd
+  niem/external/ogc/iso/19139/20070417/gmd/metadataApplication.xsd
+  niem/external/ogc/iso/19139/20070417/gmd/metadataEntity.xsd
+  niem/external/ogc/iso/19139/20070417/gmd/spatialRepresentation.xsd
+  niem/external/ogc/iso/19139/20070417/gmd/citation.xsd
+  niem/external/ogc/iso/19139/20070417/gmd/referenceSystem.xsd
+  niem/external/ogc/iso/19139/20070417/gmd/extent.xsd
+  niem/external/ogc/iso/19139/20070417/gmd/metadataExtension.xsd
+  niem/external/ogc/iso/19139/20070417/gmd/content.xsd
+  niem/external/ogc/iso/19139/20070417/gmd/applicationSchema.xsd
+  niem/external/ogc/iso/19139/20070417/gmd/portrayalCatalogue.xsd
+  niem/external/ogc/iso/19139/20070417/gmd/dataQuality.xsd
+  niem/external/ogc/iso/19139/20070417/gmd/identification.xsd
+  niem/external/ogc/iso/19139/20070417/gmd/constraints.xsd
+  niem/external/ogc/iso/19139/20070417/gmd/distribution.xsd
+  niem/external/ogc/iso/19139/20070417/gmd/maintenance.xsd
+  niem/external/ogc/iso/19139/20070417/gmd/freeText.xsd
+http://release.niem.gov/niem/niem-core/4.0/ <- niem/niem-core/4.0/niem-core.xsd
+http://www.isotc211.org/2005/gts <- MULTIPLE DOCUMENTS
+  niem/external/ogc/iso/19139/20070417/gts/gts.xsd
+  niem/external/ogc/iso/19139/20070417/gts/temporalObjects.xsd
+http://www.isotc211.org/2005/gsr <- MULTIPLE DOCUMENTS
+  niem/external/ogc/iso/19139/20070417/gsr/gsr.xsd
+  niem/external/ogc/iso/19139/20070417/gsr/spatialReferencing.xsd
+http://release.niem.gov/niem/domains/jxdm/6.0/ <- niem/domains/jxdm/6.0/jxdm.xsd
+http://www.isotc211.org/2005/gss <- MULTIPLE DOCUMENTS
+  niem/external/ogc/iso/19139/20070417/gss/gss.xsd
+  niem/external/ogc/iso/19139/20070417/gss/geometry.xsd
+http://release.niem.gov/niem/codes/unece_rec20/4.0/ <- niem/codes/unece_rec20/4.0/unece_rec20-misc.xsd
+namespace http://www.isotc211.org/2005/gco is external (no NIEM conformance assertion)
+namespace http://www.opengis.net/gml/3.2 is external (no NIEM conformance assertion)
+namespace http://www.isotc211.org/2005/gmd is external (no NIEM conformance assertion)
+namespace http://www.isotc211.org/2005/gts is external (no NIEM conformance assertion)
+namespace http://www.isotc211.org/2005/gsr is external (no NIEM conformance assertion)
+namespace http://www.w3.org/1999/xlink is external (no NIEM conformance assertion)
+namespace http://www.isotc211.org/2005/gss is external (no NIEM conformance assertion)

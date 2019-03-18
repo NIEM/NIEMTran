@@ -12,7 +12,7 @@
             <properties>
                 <exec.args>-classpath %classpath gov.niem.tools.niemtool.NIEMTool check -v -i xml-catalog.xml extension/CrashDriver.xsd</exec.args>
                 <exec.executable>java</exec.executable>
-                <exec.workingdir>C:\Work\NetBeans\NIEMTool\src\test\resources\correct</exec.workingdir>
+                <exec.workingdir>C:\Work\NetBeans\NIEMTool\src\test\resources\include</exec.workingdir>
             </properties>
         </action>
         <action>
@@ -28,7 +28,7 @@
                 <exec.args>-agentlib:jdwp=transport=dt_socket,server=n,address=${jpda.address} -classpath %classpath gov.niem.tools.niemtool.NIEMTool check -v -i xml-catalog.xml extension/CrashDriver.xsd</exec.args>
                 <exec.executable>java</exec.executable>
                 <jpda.listen>true</jpda.listen>
-                <exec.workingdir>C:\Work\NetBeans\NIEMTool\src\test\resources\correct</exec.workingdir>
+                <exec.workingdir>C:\Work\NetBeans\NIEMTool\src\test\resources\include</exec.workingdir>
             </properties>
         </action>
         <action>
@@ -43,7 +43,7 @@
             <properties>
                 <exec.args>-classpath %classpath gov.niem.tools.niemtool.NIEMTool check -v -i xml-catalog.xml extension/CrashDriver.xsd</exec.args>
                 <exec.executable>java</exec.executable>
-                <exec.workingdir>C:\Work\NetBeans\NIEMTool\src\test\resources\correct</exec.workingdir>
+                <exec.workingdir>C:\Work\NetBeans\NIEMTool\src\test\resources\include</exec.workingdir>
             </properties>
         </action>
     </actions>

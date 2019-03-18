@@ -31,18 +31,20 @@ import java.util.Map;
 public class NTSchemaModel {
     private static Gson gson = new GsonBuilder().setPrettyPrinting().create();
        
-    private HashMap<String,String> attributes = null;
-    private HashMap<String,String> simpleElements = null;
-    private HashMap<String,String> namespaceVersion = null;
-    private HashMap<String,String> namespacePrefix = null;
-    private HashMap<String,String> context = null;
+    private final String modelVersion = "1.0";
+    
+    private HashMap<String,String> attributes;
+    private HashMap<String,String> simpleElements;
+    private HashMap<String,String> namespacePrefix;
+    private HashMap<String,String> context;
+    private HashMap<String,String> externalNSHandler;
     
     public NTSchemaModel () {     
         this.attributes       = new HashMap<>();
         this.simpleElements   = new HashMap<>();
-        this.namespaceVersion = new HashMap<>();
         this.namespacePrefix  = new HashMap<>();
         this.context          = new HashMap<>();
+        this.externalNSHandler = new HashMap<>();
     }
     
     public NTSchemaModel(String jsonString) throws FormatException {
@@ -51,9 +53,9 @@ public class NTSchemaModel {
             m = gson.fromJson(jsonString, NTSchemaModel.class);
             this.attributes       = m.attributes;
             this.simpleElements   = m.simpleElements;
-            this.namespaceVersion = m.namespaceVersion;
             this.namespacePrefix  = m.namespacePrefix;
             this.context          = m.context;
+            this.externalNSHandler = m.externalNSHandler;
         } catch (RuntimeException ex) {
             throw (new FormatException("Can't initialize NTSchemaModel", ex)); 
         }
@@ -65,9 +67,9 @@ public class NTSchemaModel {
             m = gson.fromJson(r, NTSchemaModel.class);
             this.attributes       = m.attributes;
             this.simpleElements   = m.simpleElements;
-            this.namespaceVersion = m.namespaceVersion;
             this.namespacePrefix  = m.namespacePrefix;
             this.context          = m.context;
+            this.externalNSHandler = m.externalNSHandler;
         } catch (RuntimeException ex) {
             throw (new FormatException("Can't initialize NTSchemaModel", ex));            
         }
@@ -89,12 +91,16 @@ public class NTSchemaModel {
         return simpleElements;
     }
     
-    public Map<String,String> namespaceVersion () {
-        return namespaceVersion;
+    public Map<String,String> namespacePrefix () {
+        return namespacePrefix;
     }
     
-    public boolean isExternalNamespace (String uri) {
-        return namespaceVersion.get(uri).length() < 1;
+    public Map<String,String> context () {
+        return context;
+    }
+    
+    public Map<String,String> externalNSHandler () {
+        return externalNSHandler;
     }
     
     public void addAttribute(String uri, String type) {
@@ -105,16 +111,16 @@ public class NTSchemaModel {
         simpleElements.put(uri, type);    
     }
     
-    public void addNamespaceVersion(String uri, String version) {
-        namespaceVersion.put(uri, version);
-    }
-    
     public void addNamespacePrefix (String namespace, String prefix) {
         namespacePrefix.put(namespace, prefix);
     }
     
     public void addContext (String prefix, String namespace) {
         context.put(prefix, namespace);
+    }
+    
+    public void addExternalNS (String ns) {
+        externalNSHandler.put(ns, "");
     }
     
     public String toJson () {

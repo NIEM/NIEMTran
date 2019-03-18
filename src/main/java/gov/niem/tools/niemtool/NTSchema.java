@@ -263,7 +263,7 @@ public class NTSchema {
 
         // Check and save the catalog files as canonical file URIs
         for (String cn : catalogFiles) {
-            catalogFiles.add(canonicalFileURI(cn));
+            this.catalogFiles.add(canonicalFileURI(cn));
         }
         // Check and save the schema file names as canonical file URIs
         // Save schema namespace URIs separately
@@ -755,7 +755,7 @@ public class NTSchema {
                     lds.add(nr);
                     // Xerces can't handle include and redefine elements in a namespace that has a catalog entry
                     if (r.nsRes != null) {
-                        r.warn("%s \"%s\" found in a namespace that has a catalog entry\n", local, nr.sloc);
+                        r.warn("<%s \"%s\"> found in a namespace that has a catalog entry\n", local, nr.sloc);
                     }                    
                 }
             }
@@ -977,11 +977,11 @@ public class NTSchema {
                     StringBuilder msg = new StringBuilder();
                     msg.append(String.format("%s <- MULTIPLE DOCUMENTS\n", ns));
                     for (int di = 0; di < docs.getLength(); di++) {
-                        msg.append(String.format("  %s\n", docs.item(di)));
+                        msg.append(String.format("  %s\n", pileRelativePath(docs.item(di))));
                     }
                     xsNamespaces.add(msg.toString());
                 } else if (docs.getLength() == 1) {
-                    xsNamespaces.add(String.format("%s <- %s\n", ns, docs.item(0)));
+                    xsNamespaces.add(String.format("%s <- %s\n", ns, pileRelativePath(docs.item(0))));
                 } else {
                     xsNamespaces.add(String.format("%s <- NOTHING???\n", ns));
                 }               
@@ -1027,7 +1027,7 @@ public class NTSchema {
                 value.forEach((mr) -> {
                     if (!ep.equals(mr.val)) {
                         xsNIEMWarnings.add(
-                                String.format("namespace %s mapped to non-standard prefix %s (in namespace %s)",
+                                String.format("namespace %s mapped to non-standard prefix %s (in namespace %s)\n",
                                         uri, mr.val, mr.ns));
                     }
                 });
@@ -1112,7 +1112,7 @@ public class NTSchema {
             }
         }        
     }
-
+    
     protected class MapRec {
         String ns = null;       // namespace in which mapping appears
         String val = null;      // mapped namespace prefix or namespace URI 
@@ -1131,11 +1131,12 @@ public class NTSchema {
             if (!this.initializationErrorMessages().isEmpty()) {
                 FileUtils.writeStringToFile(f, "*Initialization:\n", "utf-8", false);
                 FileUtils.writeLines(f, "utf-8", this.initializationErrorMessages(), "", true);
-            } else if (!this.assemblyWarningMessages().isEmpty()) {
-                FileUtils.writeStringToFile(f, "*Assembly:\n", "utf-8", false);
-                FileUtils.writeLines(f, "utf-8", this.assemblyWarningMessages(), "", true);
             } else {
-                FileUtils.writeStringToFile(f, "*Construction:\n", "utf-8", false);
+                FileUtils.writeStringToFile(
+                        f, String.format("*Schema root: %s\n", this.schemaRootDirectory()), "utf-8", false);
+                FileUtils.writeStringToFile(f, "*Assembly:\n", "utf-8", true);
+                FileUtils.writeLines(f, "utf-8", this.assemblyWarningMessages(), "", true);
+                FileUtils.writeStringToFile(f, "*Construction:\n", "utf-8", true);
                 FileUtils.writeLines(f, "utf-8", this.xsConstructionMessages(), "", true);
                 FileUtils.writeLines(f, "utf-8", this.xsNamespaceList(), "", true);
                 FileUtils.writeLines(f, "utf-8", this.xsWarningMessages(), "", true);

@@ -1,6 +1,10 @@
+*Schema root: file:/C:/Work/NetBeans/NIEMTool/target/test-classes/invalid-schema-1/
 *Assembly:
 extension/CrashDriver.xsd:22 IMPORT ns=http://release.niem.gov/niem/domains/jxdm/6.0/ sl=../niem/domains/jxdm/6.0/jxdm.xsd
   namespace resolves to niem/domains/jxdm/6.0/jxdm.xsd
   schemaLocation resolves to niem/domains/jxdm/6.0/jxdm.xsd
   loading niem/domains/jxdm/6.0/jxdm.xsd
   can't parse schema document niem/domains/jxdm/6.0/jxdm.xsd: The element type "xs:complexTypeXX" must be terminated by the matching end-tag "</xs:complexTypeXX>".
+*Construction:
+xerces[fatal]  -1:-1 The element type "xs:complexTypeXX" must be terminated by the matching end-tag "</xs:complexTypeXX>".
+xerces xsloader returned null
