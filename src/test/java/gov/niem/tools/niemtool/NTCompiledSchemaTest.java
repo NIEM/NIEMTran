@@ -27,10 +27,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.RegexFileFilter;
 import org.apache.commons.io.filefilter.SuffixFileFilter;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -45,61 +41,66 @@ public class NTCompiledSchemaTest {
     
    // @ParameterizedTest would be cool, but it's not working
 
-    @Test
-    public void testCatalogSchemalocMismatch () {
-        testModelCreate("/catalog-schemaloc-mismatch");
-    }
+//    @Test
+//    public void testCatalogSchemalocMismatch () {
+//        testModelCreate("/catalog-schemaloc-mismatch");
+//    }
    
     @Test
     public void testCorrect () {
         testModelCreate("/correct");
     }
 
+//    @Test
+//    public void testInclude () {
+//        testModelCreate("/include");
+//    }
+//        
+//    @Test
+//    public void testInvalidCatalog () {
+//        testModelCreate("/invalid-catalog");
+//    }
+//        
+//    @Test
+//    public void testInvalidSchema1 () {
+//        testModelCreate("/invalid-schema-1");
+//    }
+//    
+//    @Test
+//    public void testInvalidSchema2 () {
+//        testModelCreate("/invalid-schema-2");
+//    }
+//    
+//    @Test
+//    public void testMissingCatalog () {
+//        testModelCreate("/missing-catalog");
+//    }
+//    
+//    @Test
+//    public void testMissingCatalogEntry () {
+//        testModelCreate("/missing-catalog-entry");
+//    }
+//        
+//    @Test
+//    public void testMissingSchema () {
+//        testModelCreate("/missing-schema");
+//    }  
+//    
+//    @Test
+//    public void testNoGMLCatalog () {
+//        testModelCreate("/no-gml-catalog");
+//    } 
+//    
+//    @Test
+//    public void testNonlocalCatalogEntry () {
+//        testModelCreate("/nonlocal-catalog-entry");
+//    } 
+//    
     @Test
-    public void testInclude () {
-        testModelCreate("/include");
-    }
+    public void testNstdPrefix () {
+        testModelCreate("/nstd-prefix");
         
-    @Test
-    public void testInvalidCatalog () {
-        testModelCreate("/invalid-catalog");
     }
-        
-    @Test
-    public void testInvalidSchema1 () {
-        testModelCreate("/invalid-schema-1");
-    }
-    
-    @Test
-    public void testInvalidSchema2 () {
-        testModelCreate("/invalid-schema-2");
-    }
-    
-    @Test
-    public void testMissingCatalog () {
-        testModelCreate("/missing-catalog");
-    }
-    
-    @Test
-    public void testMissingCatalogEntry () {
-        testModelCreate("/missing-catalog-entry");
-    }
-        
-    @Test
-    public void testMissingSchema () {
-        testModelCreate("/missing-schema");
-    }  
-    
-    @Test
-    public void testNoGMLCatalog () {
-        testModelCreate("/no-gml-catalog");
-    } 
-    
-    @Test
-    public void testNonlocalCatalogEntry () {
-        testModelCreate("/nonlocal-catalog-entry");
-    } 
-    
     @Test
     public void testPrefixMismatch () {
         testModelCreate("/prefix-mismatch");

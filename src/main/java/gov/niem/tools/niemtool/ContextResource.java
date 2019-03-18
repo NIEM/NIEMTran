@@ -30,7 +30,7 @@ import org.apache.commons.io.FileUtils;
  *
  * @author Scott Renner <sar@mitre.org>
  */
-public class NIEMContext {
+public class ContextResource {
     
     private static final String NIEM_CONTEXT_RESOURCE = "/NIEM4.0context.json";
     private static HashMap<String,String> niemContextPrefix = null; // map ns URI -> usual prefix   
@@ -38,7 +38,7 @@ public class NIEMContext {
     public static String stdPrefix (String uri) {
         if (niemContextPrefix == null) {
             try {
-                URL niemContext = NIEMContext.class.getResource(NIEM_CONTEXT_RESOURCE);
+                URL niemContext = ContextResource.class.getResource(NIEM_CONTEXT_RESOURCE);
                 File contextFile = FileUtils.toFile(niemContext);
                 String contextData = FileUtils.readFileToString(contextFile, "utf-8");
                 Gson gson = new Gson();
@@ -53,11 +53,12 @@ public class NIEMContext {
                     niemContextPrefix.put(nss, key);
                 }  
             } catch (IOException ex) {
-                Logger.getLogger(NIEMContext.class.getName()).log(Level.SEVERE, "Can't read NIEM context resource", ex);
+                Logger.getLogger(ContextResource.class.getName()).log(Level.SEVERE, "Can't read NIEM context resource", ex);
             }
         }   
         String key = removeNamespaceVersion(uri);
         String res = niemContextPrefix.get(key);
+        if (res == null) { return ""; }
         return res;
     }
     

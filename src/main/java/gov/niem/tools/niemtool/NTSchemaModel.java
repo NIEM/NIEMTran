@@ -36,14 +36,12 @@ public class NTSchemaModel {
     private HashMap<String,String> attributes;
     private HashMap<String,String> simpleElements;
     private HashMap<String,String> namespacePrefix;
-    private HashMap<String,String> context;
     private HashMap<String,String> externalNSHandler;
     
     public NTSchemaModel () {     
         this.attributes       = new HashMap<>();
         this.simpleElements   = new HashMap<>();
         this.namespacePrefix  = new HashMap<>();
-        this.context          = new HashMap<>();
         this.externalNSHandler = new HashMap<>();
     }
     
@@ -54,7 +52,6 @@ public class NTSchemaModel {
             this.attributes       = m.attributes;
             this.simpleElements   = m.simpleElements;
             this.namespacePrefix  = m.namespacePrefix;
-            this.context          = m.context;
             this.externalNSHandler = m.externalNSHandler;
         } catch (RuntimeException ex) {
             throw (new FormatException("Can't initialize NTSchemaModel", ex)); 
@@ -68,7 +65,6 @@ public class NTSchemaModel {
             this.attributes       = m.attributes;
             this.simpleElements   = m.simpleElements;
             this.namespacePrefix  = m.namespacePrefix;
-            this.context          = m.context;
             this.externalNSHandler = m.externalNSHandler;
         } catch (RuntimeException ex) {
             throw (new FormatException("Can't initialize NTSchemaModel", ex));            
@@ -95,10 +91,6 @@ public class NTSchemaModel {
         return namespacePrefix;
     }
     
-    public Map<String,String> context () {
-        return context;
-    }
-    
     public Map<String,String> externalNSHandler () {
         return externalNSHandler;
     }
@@ -113,10 +105,6 @@ public class NTSchemaModel {
     
     public void addNamespacePrefix (String namespace, String prefix) {
         namespacePrefix.put(namespace, prefix);
-    }
-    
-    public void addContext (String prefix, String namespace) {
-        context.put(prefix, namespace);
     }
     
     public void addExternalNS (String ns) {

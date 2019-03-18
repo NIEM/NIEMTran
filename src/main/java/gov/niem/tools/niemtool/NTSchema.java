@@ -192,8 +192,8 @@ public class NTSchema {
     private List<String> xsNamespaces = null;               // namespace & contributing documents from XSModel
     private List<String> xsWarnings = null;                 // schema warnings derived from XSModel
     private List<String> xsNIEMWarnings = null;             // niem-specific schema warnings from XSModel
-    private HashMap<String,List<MapRec>> nsPrefix = null;   // nsPrefix.get(P) -> list of URIs mapped to prefix P
-    private HashMap<String,List<MapRec>> nsURI    = null;   // nsURI.get(U)    -> list of prefixes mapped to namespace U
+    private HashMap<String,List<MapRec>> nsPrefix = null;   // nsPrefixMaps.get(P) -> list of URIs mapped to prefix P
+    private HashMap<String,List<MapRec>> nsURI    = null;   // nsURIMaps.get(U)    -> list of prefixes mapped to namespace U
     private HashMap<String,String> nsNDRversion = null;     // from ct:conformanceTargets; "" for external namespace
     
     /**
@@ -838,12 +838,12 @@ public class NTSchema {
         return xsNIEMWarnings;
     }
     
-    protected Map<String,List<MapRec>> nsPrefix() {
+    protected Map<String,List<MapRec>> nsPrefixMaps() {
         processNamespaceItems();
         return nsPrefix;
     }
     
-    protected Map<String,List<MapRec>> nsURI() {
+    protected Map<String,List<MapRec>> nsURIMaps() {
         processNamespaceItems();
         return nsURI;
     }
@@ -941,7 +941,7 @@ public class NTSchema {
             XSNamespaceItem nsi = nsil.item(i);   
             String ns = nsi.getSchemaNamespace();
             if (!W3C_XML_SCHEMA_NS_URI.equals(ns)) {
-                // Process annnotatons, generate nsPrefix, nsURI, nsNDRversion
+                // Process annnotatons, generate nsPrefixMaps, nsURIMaps, nsNDRversion
                 XSObjectList annl = nsi.getAnnotations();
                 for (int ai = 0; ai < annl.getLength(); ai++) {
                     XSAnnotation an = (XSAnnotation)annl.get(ai);
@@ -965,7 +965,6 @@ public class NTSchema {
             }
         }  
         // Iterate through the prefix mappings, generate multiple-map warnings
-        processNamespaceItems();
         nsPrefix.forEach((prefix,value) -> {
            boolean same = true;
            String first = value.get(0).val;
@@ -998,8 +997,8 @@ public class NTSchema {
                xsWarnings.add(msg.toString());
            }
            // Find non-standard prefixes
-            String ep  = NIEMContext.stdPrefix(uri);
-            if (ep != null) {
+            String ep  = ContextResource.stdPrefix(uri);
+            if (!"".equals(ep)) {
                 value.forEach((mr) -> {
                     if (!ep.equals(mr.val)) {
                         xsNIEMWarnings.add(
@@ -1090,8 +1089,8 @@ public class NTSchema {
     }
     
     protected class MapRec {
-        String ns = null;       // namespace in which mapping appears
-        String val = null;      // mapped namespace prefix or namespace URI 
+        String ns = null;       // namespace in which this mapping appears
+        String val = null;      // the mapped namespace prefix or namespace URI 
         MapRec(String ns, String val) {
             this.ns = ns;
             this.val = val;

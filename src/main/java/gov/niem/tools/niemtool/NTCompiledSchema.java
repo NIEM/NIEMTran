@@ -17,6 +17,8 @@ package gov.niem.tools.niemtool;
 
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.List;
 import javax.xml.parsers.ParserConfigurationException;
 import org.apache.xerces.xs.XSAttributeDeclaration;
@@ -61,32 +63,48 @@ public class NTCompiledSchema extends NTSchema {
         }        
         ntmodel =  new NTSchemaModel();        
         
-        // Collect the unique prefix mappings to generate a context
-        nsPrefix().forEach((prefix,value) -> {
-           boolean same = true;
-           String first = value.get(0).val;
-           for (int i = 1; same && i < value.size(); i++) {
-               same = (first.equals(value.get(i).val));
-           }            
-           if (same)  {
-               if (!first.endsWith("#")) {
-                   ntmodel.addContext(prefix, first + "#");
-               }
-               else {
-                   ntmodel.addContext(prefix, first);
-               }
-           }
-        });
-        // Collect the unique namespace mappings
-        nsURI().forEach((ns, value) -> {
-           boolean same = true;
-           String first = value.get(0).val;
-           for (int i = 1; same && i < value.size(); i++) {
-               same = (first.equals(value.get(i).val));
-           }
-           if (same) {
-               ntmodel.addNamespacePrefix(ns, first);
-           }
+        // Generate unique prefix mapping for each namespace declared in the schema
+        HashSet<String> assigned = new HashSet<>();
+        Map<String,List<MapRec>> umap = nsURIMaps();
+        umap.forEach((ns, value) -> {
+            String stdPrefix = ContextResource.stdPrefix(ns);
+            String firstPrefix = value.get(0).val;
+            boolean isStd = false;
+            boolean same = true;
+            // Examine every prefix mapped to ns; All the same? Any the std?
+            for (int i = 0; i < value.size(); i++) {
+                String p = value.get(i).val;
+                isStd = isStd || stdPrefix.equals(p);
+                same = same && firstPrefix.equals(p);
+            }
+            // If namespace always mapped to one prefix, try that prefix
+            // Otherwise, if namespace ever mapped to standard prefix, try that
+            // Otherwise, try the first prefix
+            String usePrefix = firstPrefix;
+            if (!same && isStd){
+                usePrefix = stdPrefix;
+            }
+            // If the first-choice prefix is already assigned, try all the others
+            if (assigned.contains(usePrefix)) {
+                for (int i = 0; i < value.size(); i++) {
+                    String p = value.get(i).val;
+                    if (!assigned.contains(p)) {
+                        usePrefix = p;
+                        break;
+                    }
+                }
+            }
+            // If every mapped prefix is assigned, mung until successful
+            if (assigned.contains(usePrefix)) {
+                String base = usePrefix;
+                int ct = 1;
+                do {
+                    usePrefix = String.format("%s_%d", base, ct++);
+                } while (assigned.contains(usePrefix));
+            }
+            // Record the prefix mapping
+            ntmodel.addNamespacePrefix(ns, usePrefix);
+            assigned.add(usePrefix);
         });
         // Find external namespaces
         nsNDRversion().forEach((ns, ver) -> {

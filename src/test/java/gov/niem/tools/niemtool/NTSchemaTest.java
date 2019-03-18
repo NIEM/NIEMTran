@@ -91,6 +91,11 @@ public class NTSchemaTest {
     }  
     
     @Test
+    public void testNstdPrefix () {
+        testSchemaLoad("/nstd-prefix");
+    } 
+    
+    @Test
     public void testNonlocalCatalogEntry () {
         testSchemaLoad("/nonlocal-catalog-entry");
     } 
