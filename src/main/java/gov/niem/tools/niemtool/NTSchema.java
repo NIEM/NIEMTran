@@ -995,7 +995,7 @@ public class NTSchema {
                xsWarnings.add(msg.toString());
            }
            // Find non-standard prefixes
-            String ep  = ContextResource.stdPrefix(uri);
+            String ep  = ContextMapping.commonPrefix(uri);
             if (!"".equals(ep)) {
                 value.forEach((mr) -> {
                     if (!ep.equals(mr.val)) {

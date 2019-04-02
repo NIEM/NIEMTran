@@ -15,10 +15,7 @@
  */
 package gov.niem.tools.niemtool;
 
-import java.io.StringReader;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.List;
 import javax.xml.parsers.ParserConfigurationException;
 import org.apache.xerces.xs.XSAttributeDeclaration;
@@ -30,8 +27,6 @@ import org.apache.xerces.xs.XSNamedMap;
 import org.apache.xerces.xs.XSObject;
 import org.apache.xerces.xs.XSSimpleTypeDefinition;
 import org.apache.xerces.xs.XSTypeDefinition;
-import org.xml.sax.Attributes;
-import org.xml.sax.InputSource;
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import static gov.niem.tools.niemtool.NTConstants.*;
 import java.io.IOException;
@@ -64,7 +59,8 @@ public class NTCompiledSchema extends NTSchema {
         ntmodel =  new NTSchemaModel();        
         
         // Generate unique prefix mapping for each namespace declared in the schema
-        // Reserve rdf prefix
+        // Prefer standard prefix for NIEM model namespace
+        // Reserve rdf prefix for RDF
         HashSet<String> assigned = new HashSet<>();
         assigned.add("rdf");
         ntmodel.addNamespacePrefix(RDF_NS_URI, "rdf");
@@ -72,7 +68,7 @@ public class NTCompiledSchema extends NTSchema {
             if (RDF_NS_URI.equals(ns)) { 
                 return;     // skip to next ns,value pair 
             }
-            String stdPrefix = ContextResource.stdPrefix(ns);
+            String stdPrefix = ContextMapping.commonPrefix(ns);
             String firstPrefix = value.get(0).val;
             boolean isStd = false;
             boolean same = true;

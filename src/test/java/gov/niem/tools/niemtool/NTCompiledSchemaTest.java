@@ -107,9 +107,15 @@ public class NTCompiledSchemaTest {
         testModelCreate("/nstd-prefix");
         
     }
+    
     @Test
     public void testPrefixMismatch () {
         testModelCreate("/prefix-mismatch");
+    }
+    
+    @Test
+    public void testWildcard () {
+        testModelCreate("/wildcard");
     }
 
     public void testModelCreate (String resource) {

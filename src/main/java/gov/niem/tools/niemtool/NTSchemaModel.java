@@ -24,7 +24,7 @@ import java.util.Map;
 /**
  *
  * A class to represent the aspects of a NIEM schema needed to drive translation
- * between NIEM XML, NIEM JSON, and NIEM RDF.
+ * between NIEM XML, NIEM JSON, and NIEM RDF. 
  * 
  * @author Scott Renner <sar@mitre.org>
  */
@@ -33,10 +33,10 @@ public class NTSchemaModel {
        
     private final String modelVersion = "1.0";
     
-    private HashMap<String,String> attributes;
-    private HashMap<String,String> simpleElements;
-    private HashMap<String,String> namespacePrefix;
-    private HashMap<String,String> externalNSHandler;
+    private HashMap<String,String> attributes;          // attribute URI -> XSD type (string, list/IDREF, etc.)
+    private HashMap<String,String> simpleElements;      // element URI   -> XSD type
+    private HashMap<String,String> namespacePrefix;     // namespace URI -> prefix string
+    private HashMap<String,String> externalNSHandler;   // namespace URI -> name of class implementing xxx interface
     
     public NTSchemaModel () {     
         this.attributes       = new HashMap<>();
