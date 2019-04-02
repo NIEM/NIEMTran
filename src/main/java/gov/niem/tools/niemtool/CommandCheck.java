@@ -190,7 +190,7 @@ public class CommandCheck implements JCCommand {
         }
         else if (!quiet) {
             if (sc.assemblyWarningMessages().isEmpty()) {
-                System.out.println("Schema root directory= " + schemaRoot);                
+                System.out.println("Schema root directory: " + schemaRoot);                
             }
             System.out.println(xs == null ? "Schema contruction: FAILED" : "Schema construction: OK");
             printMessages("Schema construction messages:", sc.xsConstructionMessages());
@@ -202,8 +202,8 @@ public class CommandCheck implements JCCommand {
         }
      }
     
-    static void printMessages (String header, List<String> msgs) {
-        if (msgs.isEmpty()) {
+    private void printMessages (String header, List<String> msgs) {
+        if (msgs.isEmpty() && !verbose) {
             return;
         }
         System.out.println(header);

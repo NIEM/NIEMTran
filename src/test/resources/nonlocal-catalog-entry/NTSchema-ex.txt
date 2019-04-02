@@ -1,15 +1,14 @@
-*Schema root: unknown
+*Schema root: file:/C:/Work/NetBeans/NIEMTool/target/test-classes/nonlocal-catalog-entry/
 *Assembly:
-file:/C:/Work/NetBeans/NIEMTool/target/test-classes/nonlocal-catalog-entry/extension/CrashDriver.xsd:22 IMPORT ns=http://release.niem.gov/niem/domains/jxdm/6.0/ sl=../niem/domains/jxdm/6.0/jxdm.xsd
+extension/CrashDriver.xsd:22 IMPORT ns=http://release.niem.gov/niem/domains/jxdm/6.0/ sl=../niem/domains/jxdm/6.0/jxdm.xsd
   namespace http://release.niem.gov/niem/domains/jxdm/6.0/ resolves to non-local resource
-  namespace resolves to http://example.com/non/local/entry
-  schemaLocation resolves to file:/C:/Work/NetBeans/NIEMTool/target/test-classes/nonlocal-catalog-entry/niem/domains/jxdm/6.0/jxdm.xsd
-  resolved namespace != resolved schemaLocation
-  loading file:/C:/Work/NetBeans/NIEMTool/target/test-classes/nonlocal-catalog-entry/niem/domains/jxdm/6.0/jxdm.xsd
+  schemaLocation resolves to niem/domains/jxdm/6.0/jxdm.xsd
+  loading niem/domains/jxdm/6.0/jxdm.xsd
 *Construction:
 xerces[warn] CrashDriver.xsd: 22:127 schema_reference.4: Failed to read schema document 'http://example.com/non/local/entry', because 1) could not find the document; 2) the document could not be read; 3) the root element of the document is not <xsd:schema>.
-http://example.com/CrashDriver/1.0/ <- file:/C:/Work/NetBeans/NIEMTool/target/test-classes/nonlocal-catalog-entry/extension/CrashDriver.xsd
-http://release.niem.gov/niem/structures/4.0/ <- file:/C:/Work/NetBeans/NIEMTool/target/test-classes/nonlocal-catalog-entry/niem/utility/structures/4.0/structures.xsd
-http://release.niem.gov/niem/proxy/xsd/4.0/ <- file:/C:/Work/NetBeans/NIEMTool/target/test-classes/nonlocal-catalog-entry/niem/proxy/xsd/4.0/xs.xsd
-http://release.niem.gov/niem/niem-core/4.0/ <- file:/C:/Work/NetBeans/NIEMTool/target/test-classes/nonlocal-catalog-entry/niem/niem-core/4.0/niem-core.xsd
-http://release.niem.gov/niem/codes/unece_rec20/4.0/ <- file:/C:/Work/NetBeans/NIEMTool/target/test-classes/nonlocal-catalog-entry/niem/codes/unece_rec20/4.0/unece_rec20-misc.xsd
+xerces[error] CrashDriver.xsd: 50:133 src-resolve: Cannot resolve the name 'j:DriverLicenseAugmentationPoint' to a(n) 'element declaration' component.
+http://example.com/CrashDriver/1.0/ <- extension/CrashDriver.xsd
+http://release.niem.gov/niem/structures/4.0/ <- niem/utility/structures/4.0/structures.xsd
+http://release.niem.gov/niem/proxy/xsd/4.0/ <- niem/proxy/xsd/4.0/xs.xsd
+http://release.niem.gov/niem/niem-core/4.0/ <- niem/niem-core/4.0/niem-core.xsd
+http://release.niem.gov/niem/codes/unece_rec20/4.0/ <- niem/codes/unece_rec20/4.0/unece_rec20-misc.xsd

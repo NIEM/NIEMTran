@@ -29,8 +29,6 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 import java.util.Stack;
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_INSTANCE_NS_URI;
 import javax.xml.parsers.ParserConfigurationException;
@@ -69,8 +67,11 @@ public class NTXMLtoJSON {
     
     NTXMLtoJSON (String s) throws FormatException {
         model = new NTSchemaModel(s);
+        model.externalNSHandler().forEach((key,val) -> {
+            
+        });
     }
-        
+         
     public String xml2jsonString (InputStream is) {
         return null;
     }

@@ -27,6 +27,7 @@
     "http://release.niem.gov/niem/domains/jxdm/6.0/#JuvenileAsAdultIndicator": "boolean"
   },
   "namespacePrefix": {
+    "http://www.w3.org/1999/02/22-rdf-syntax-ns#": "rdf",
     "http://release.niem.gov/niem/niem-core/4.0/": "xnc",
     "http://release.niem.gov/niem/domains/jxdm/6.0/": "j",
     "http://release.niem.gov/niem/codes/unece_rec20/4.0/": "unece",

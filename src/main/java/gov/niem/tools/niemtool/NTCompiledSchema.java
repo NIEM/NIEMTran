@@ -64,9 +64,14 @@ public class NTCompiledSchema extends NTSchema {
         ntmodel =  new NTSchemaModel();        
         
         // Generate unique prefix mapping for each namespace declared in the schema
+        // Reserve rdf prefix
         HashSet<String> assigned = new HashSet<>();
-        Map<String,List<MapRec>> umap = nsURIMaps();
-        umap.forEach((ns, value) -> {
+        assigned.add("rdf");
+        ntmodel.addNamespacePrefix(RDF_NS_URI, "rdf");
+        nsURIMaps().forEach((ns, value) -> {
+            if (RDF_NS_URI.equals(ns)) { 
+                return;     // skip to next ns,value pair 
+            }
             String stdPrefix = ContextResource.stdPrefix(ns);
             String firstPrefix = value.get(0).val;
             boolean isStd = false;

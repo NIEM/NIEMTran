@@ -41,6 +41,12 @@ public class NTCompiledSchemaTest {
     
    // @ParameterizedTest would be cool, but it's not working
 
+    
+    @Test
+    public void testBogusRdf () {
+        testModelCreate("/bogus-rdf");
+    }
+    
 //    @Test
 //    public void testCatalogSchemalocMismatch () {
 //        testModelCreate("/catalog-schemaloc-mismatch");

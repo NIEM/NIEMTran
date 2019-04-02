@@ -7,7 +7,6 @@ extension/CrashDriver.xsd:22 IMPORT ns=http://release.niem.gov/niem/domains/jxdm
   can't read niem/domains/jxdm/6.0/jxdm.xsd: (The system cannot find the file specified)
 *Construction:
 xerces[warn] CrashDriver.xsd: 22:127 schema_reference.4: Failed to read schema document 'file:/C:/Work/NetBeans/NIEMTool/target/test-classes/missing-schema/niem/domains/jxdm/6.0/jxdm.xsd', because 1) could not find the document; 2) the document could not be read; 3) the root element of the document is not <xsd:schema>.
-xerces[error] CrashDriver.xsd: 50:133 src-resolve: Cannot resolve the name 'j:DriverLicenseAugmentationPoint' to a(n) 'element declaration' component.
 http://example.com/CrashDriver/1.0/ <- extension/CrashDriver.xsd
 http://release.niem.gov/niem/structures/4.0/ <- niem/utility/structures/4.0/structures.xsd
 http://release.niem.gov/niem/proxy/xsd/4.0/ <- niem/proxy/xsd/4.0/xs.xsd

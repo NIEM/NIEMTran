@@ -10,30 +10,30 @@
     "http://release.niem.gov/niem/structures/4.0/#relationshipMetadata": "list/IDREF"
   },
   "simpleElements": {
-    "http://release.niem.gov/niem/niem-core/4.0/#LengthUnitCode": "token",
-    "http://release.niem.gov/niem/niem-core/4.0/#PersonGivenName": "string",
-    "http://example.com/CrashDriver/1.0/#PersonFictionalCharacterIndicator": "boolean",
-    "http://release.niem.gov/niem/niem-core/4.0/#IdentificationID": "string",
+    "http://release.niem.gov/niem/domains/jxdm/6.0/#ChargeDescriptionText": "string",
     "http://release.niem.gov/niem/niem-core/4.0/#LongitudeDegreeValue": "decimal",
     "http://release.niem.gov/niem/niem-core/4.0/#PersonMiddleName": "string",
+    "http://release.niem.gov/niem/niem-core/4.0/#LatitudeDegreeValue": "decimal",
+    "http://release.niem.gov/niem/niem-core/4.0/#Date": "date",
+    "http://release.niem.gov/niem/niem-core/4.0/#LengthUnitCode": "token",
+    "http://release.niem.gov/niem/niem-core/4.0/#PersonGivenName": "string",
+    "http://release.niem.gov/niem/domains/jxdm/6.0/#IntelligenceInformationIndicator": "boolean",
+    "http://example.com/CrashDriver/1.0/#PersonFictionalCharacterIndicator": "boolean",
+    "http://release.niem.gov/niem/niem-core/4.0/#IdentificationID": "string",
     "http://release.niem.gov/niem/niem-core/4.0/#MeasureDecimalValue": "decimal",
     "http://release.niem.gov/niem/niem-core/4.0/#PersonSurName": "string",
-    "http://release.niem.gov/niem/niem-core/4.0/#LatitudeDegreeValue": "decimal",
-    "http://release.niem.gov/niem/niem-core/4.0/#Date": "date"
+    "http://release.niem.gov/niem/domains/jxdm/6.0/#CriminalInformationIndicator": "boolean",
+    "http://release.niem.gov/niem/domains/jxdm/6.0/#ChargeFelonyIndicator": "boolean",
+    "http://release.niem.gov/niem/domains/jxdm/6.0/#JuvenileAsAdultIndicator": "boolean"
   },
   "namespacePrefix": {
+    "http://www.w3.org/1999/02/22-rdf-syntax-ns#": "rdf",
     "http://release.niem.gov/niem/niem-core/4.0/": "nc",
     "http://release.niem.gov/niem/domains/jxdm/6.0/": "j",
     "http://release.niem.gov/niem/codes/unece_rec20/4.0/": "unece",
     "http://example.com/CrashDriver/1.0/": "exch",
+    "http://do/not/do/this": "rdf_1",
     "http://release.niem.gov/niem/structures/4.0/": "structures"
-  },
-  "context": {
-    "nc": "http://release.niem.gov/niem/niem-core/4.0/#",
-    "exch": "http://example.com/CrashDriver/1.0/#",
-    "structures": "http://release.niem.gov/niem/structures/4.0/#",
-    "j": "http://release.niem.gov/niem/domains/jxdm/6.0/#",
-    "unece": "http://release.niem.gov/niem/codes/unece_rec20/4.0/#"
   },
   "externalNSHandler": {}
 }

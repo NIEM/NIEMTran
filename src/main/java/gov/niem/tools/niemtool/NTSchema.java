@@ -15,19 +15,15 @@
  */
 package gov.niem.tools.niemtool;
 
-import com.google.gson.Gson;
-import com.google.gson.stream.JsonReader;
 import static gov.niem.tools.niemtool.NTConstants.APPINFO_NS_URI_PREFIX;
 import static gov.niem.tools.niemtool.NTConstants.CONFORMANCE_ATTRIBUTE_NAME;
 import static gov.niem.tools.niemtool.NTConstants.CONFORMANCE_TARGET_NS_URI_PREFIX;
 import static gov.niem.tools.niemtool.NTConstants.NDR_NS_URI_PREFIX;
 import static gov.niem.tools.niemtool.NTConstants.NIEM_XS_PREFIX;
-import static gov.niem.tools.niemtool.NTConstants.STRUCTURES_NS_URI_PREFIX;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import static java.lang.Math.min;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -605,6 +601,7 @@ public class NTSchema {
                 r.warn("no catalog entry for namespace %s\n", r.ns);
             } else if (!r.nsRes.startsWith("file:")) {
                 r.warn("namespace %s resolves to non-local resource\n", r.ns);
+                r.nsRes = null;
             }
         } else {
             if ("import".equals(r.fkind)) {
@@ -615,6 +612,7 @@ public class NTSchema {
             if (r.slocRes != null) {
                 if (!r.slocRes.startsWith("file:")) {
                     r.warn("schemaLocation %s resolves to non-local resource\n", r.sloc);
+                    r.slocRes = null;
                 }
             } else {
                 r.slocRes = canonicalFileURI(r.fileURI, r.sloc);
@@ -869,7 +867,7 @@ public class NTSchema {
         config.setParameter("resource-resolver", resolver());
         config.setParameter("error-handler",ehandler);
         resolver().resetResolutions();
-        StringListImpl slist = new StringListImpl(
+        StringList slist = new StringListImpl(
                 allSchemaFileURIs.toArray(new String[0]),
                 allSchemaFileURIs.size());
         xsmodel = xsloader.loadURIList(slist);
