@@ -15,11 +15,8 @@
  */
 package gov.niem.tools.niemtool;
 
-import com.google.gson.Gson;
 import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.MalformedJsonException;
 import java.io.File;
-import java.io.IOException;
 import java.io.StringReader;
 import java.net.URL;
 import java.util.HashMap;
@@ -32,7 +29,7 @@ import org.apache.commons.io.FileUtils;
  * files, providing a mapping from a namespace URI to its common prefix string.
  * @author Scott Renner <sar@mitre.org>
  */
-public class ContextMapping {
+public class ContextMap {
     
     private static final String CONTEXT_RESOURCE_DIR = "/contexts";
     private static HashMap<String,String> contextPrefix = null; // map namespace URI -> common prefix   
@@ -43,17 +40,17 @@ public class ContextMapping {
      * in the context resource directory (OONTEXT_RESOURCE_DIR) as containing
      * a JSON-LD context. Comments are allowed, and the outer "@context" key is 
      * optional.
-     * @param namespase uri
+     * @param uri namespace
      * @return common prefix string for namespace
      */
     public static String commonPrefix (String uri) {
         if (contextPrefix == null) {
             contextPrefix = new HashMap<>();
-            URL contextDir = ContextMapping.class.getResource(CONTEXT_RESOURCE_DIR);
+            URL contextDir = ContextMap.class.getResource(CONTEXT_RESOURCE_DIR);
             File dir = FileUtils.toFile(contextDir);
             File[] files = null;
             if (dir == null || (files = dir.listFiles()) == null) {
-                Logger.getLogger(ContextMapping.class.getName()).log(
+                Logger.getLogger(ContextMap.class.getName()).log(
                         Level.SEVERE, String.format("Can't read context resource directory %s", CONTEXT_RESOURCE_DIR));
                 return "";
             }
@@ -71,15 +68,25 @@ public class ContextMapping {
                     }
                     else {
                         nsURI = jr.nextString();
+                        nsURI = nsURI.substring(0, nsURI.length()-1);
                         contextPrefix.put(nsURI, prefixKey);
                     }
                     while (jr.hasNext()) {
                         prefixKey = jr.nextName();
                         nsURI = jr.nextString();
-                        contextPrefix.put(nsURI, prefixKey);
+                        String cp = contextPrefix.get(nsURI);
+                        if (cp != null && !cp.equals(prefixKey)) {
+                            Logger.getLogger(ContextMap.class.getName()).log(Level.WARNING,
+                                    String.format("Conflicting context resources in %s for %s",
+                                            dir.getPath(), nsURI));
+                        }
+                        else {
+                            nsURI = nsURI.substring(0, nsURI.length()-1);                            
+                            contextPrefix.put(nsURI, prefixKey);
+                        }
                     }
                 } catch (Exception ex) {
-                    Logger.getLogger(ContextMapping.class.getName()).log(Level.SEVERE, 
+                    Logger.getLogger(ContextMap.class.getName()).log(Level.SEVERE, 
                             String.format("Can't process context resource file %s", f.getPath()), ex);
                 } 
             } 
@@ -89,16 +96,4 @@ public class ContextMapping {
         return res;
     }
     
-    
-    /**
-     * Removes the version from a NIEM namespace URI or context value
-     * For example, 
-     *     http://release.niem.gov/niem/codes/hl7/4.0/# becomes
-     *     http://release.niem.gov/niem/codes/hl7/
-     * @param ns
-     * @return 
-     */
-    private static String removeNamespaceVersion (String ns) {
-        return ns.replaceFirst("\\d+\\.\\d+/#?$", "");
-    }    
 }

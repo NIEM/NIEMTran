@@ -18,7 +18,8 @@ package gov.niem.tools.niemtool;
 import static gov.niem.tools.niemtool.NTConstants.APPINFO_NS_URI_PREFIX;
 import static gov.niem.tools.niemtool.NTConstants.CONFORMANCE_ATTRIBUTE_NAME;
 import static gov.niem.tools.niemtool.NTConstants.CONFORMANCE_TARGET_NS_URI_PREFIX;
-import static gov.niem.tools.niemtool.NTConstants.NDR_NS_URI_PREFIX;
+import static gov.niem.tools.niemtool.NTConstants.NDR_CT_URI_PREFIX;
+import static gov.niem.tools.niemtool.NTConstants.NIEM_RELEASE_PREFIX;
 import static gov.niem.tools.niemtool.NTConstants.NIEM_XS_PREFIX;
 import java.io.File;
 import java.io.IOException;
@@ -188,6 +189,8 @@ public class NTSchema {
     private List<String> xsNamespaces = null;               // namespace & contributing documents from XSModel
     private List<String> xsWarnings = null;                 // schema warnings derived from XSModel
     private List<String> xsNIEMWarnings = null;             // niem-specific schema warnings from XSModel
+    private List<String> nsList = null;                     // list of namespaces in schema
+    private HashMap<String,List<MapRec>> nsDecls = null;    // nsDecls.get(U)      -> list of ns maps declared in ns U
     private HashMap<String,List<MapRec>> nsPrefix = null;   // nsPrefixMaps.get(P) -> list of URIs mapped to prefix P
     private HashMap<String,List<MapRec>> nsURI    = null;   // nsURIMaps.get(U)    -> list of prefixes mapped to namespace U
     private HashMap<String,String> nsNDRversion = null;     // from ct:conformanceTargets; "" for external namespace
@@ -836,6 +839,23 @@ public class NTSchema {
         return xsNIEMWarnings;
     }
     
+    /**
+     * Returns an ordered list of namespaces declared in the schema.
+     * NIEM-conforming extension schemas are first.
+     * NIEM reference schemas in the release are next.
+     * External schemas come last.
+     * @return ordered namespace list
+     */
+    protected List<String> nsList() {
+        processNamespaceItems();
+        return nsList;
+    }
+    
+    protected Map<String,List<MapRec>> nsDecls() {
+        processNamespaceItems();
+        return nsDecls;
+    }
+    
     protected Map<String,List<MapRec>> nsPrefixMaps() {
         processNamespaceItems();
         return nsPrefix;
@@ -922,6 +942,8 @@ public class NTSchema {
         if (nsPrefix != null) {
             return;
         }
+        nsList       = new ArrayList<>();
+        nsDecls      = new HashMap<>();
         nsPrefix     = new HashMap<>();
         nsURI        = new HashMap<>();
         nsNDRversion = new HashMap<>();
@@ -961,7 +983,11 @@ public class NTSchema {
                     xsNamespaces.add(String.format("%s <- NOTHING???\n", ns));
                 }               
             }
-        }  
+        }
+        // Sort namespace list, then strip ordering prefix character
+        nsList.sort((s1,s2) -> s1.compareTo(s2));
+        nsList.replaceAll((s) -> s.substring(1));             
+                
         // Iterate through the prefix mappings, generate multiple-map warnings
         nsPrefix.forEach((prefix,value) -> {
            boolean same = true;
@@ -995,7 +1021,7 @@ public class NTSchema {
                xsWarnings.add(msg.toString());
            }
            // Find non-standard prefixes
-            String ep  = ContextMapping.commonPrefix(uri);
+            String ep  = ContextMap.commonPrefix(uri);
             if (!"".equals(ep)) {
                 value.forEach((mr) -> {
                     if (!ep.equals(mr.val)) {
@@ -1028,11 +1054,15 @@ public class NTSchema {
             // IGNORE
         }
         nsNDRversion.put(ns, h.ndrVersion);
+        // Going to sort the namespace list when complete
+        if ("".equals(h.ndrVersion))                 { nsList.add("3"+ns); }    // externals last
+        else if (ns.startsWith(NIEM_RELEASE_PREFIX)) { nsList.add("2"+ns); }    // NIEM release namespaces middle
+        else                                         { nsList.add("1"+ns); }    // NIEM extensions first
     }        
     
     private class AnnotationHandler extends DefaultHandler {
-        private NTSchema obj;
-        private String namespace;
+        private final NTSchema obj;
+        private final String namespace;
         private String ndrVersion = "";
         AnnotationHandler (NTSchema obj, String ns) {
             super();
@@ -1047,13 +1077,21 @@ public class NTSchema {
                     && !uri.startsWith(CONFORMANCE_TARGET_NS_URI_PREFIX)
                     && !uri.startsWith(W3C_XML_SCHEMA_INSTANCE_NS_URI)
                     && !uri.startsWith(NIEM_XS_PREFIX)) {
+                // Record the declaration in the namespace declaration map
+                List<MapRec> mlist = obj.nsDecls.get(namespace);
+                if (mlist == null) {
+                    mlist = new ArrayList<>();
+                    obj.nsDecls.put(namespace, mlist);
+                }
+                MapRec nr = new MapRec(uri, prefix);
+                mlist.add(nr);
                 // Record the declared namespace uri in the prefix map
-                List<MapRec> mlist = obj.nsPrefix.get(prefix);
+                mlist = obj.nsPrefix.get(prefix);
                 if (mlist == null) {
                     mlist = new ArrayList<>();
                     obj.nsPrefix.put(prefix, mlist);
                 }
-                MapRec nr = new MapRec(namespace, uri);
+                nr = new MapRec(namespace, uri);
                 mlist.add(nr);
                 // Record the declared prefix in the namespace uri map
                 mlist = obj.nsURI.get(uri);
@@ -1066,6 +1104,7 @@ public class NTSchema {
             }
         } 
         @Override
+        // Extract NDR version from NDR conformance target attribute
         public void startElement (String ens, String ename, String raw, Attributes atts) {
             if ("".equals(ndrVersion)) {
                 for (int i = 0; i < atts.getLength(); i++) {
@@ -1073,12 +1112,16 @@ public class NTSchema {
                     String av = atts.getValue(i);
                     String aln = atts.getLocalName(i);
                     if (auri.startsWith(CONFORMANCE_TARGET_NS_URI_PREFIX) && CONFORMANCE_ATTRIBUTE_NAME.equals(aln)) {
-                        av = av.substring(NDR_NS_URI_PREFIX.length());
-                        int sp = av.indexOf('/');
-                        if (sp >= 0) {
-                            av = av.substring(0, sp);
-                            ndrVersion = av;
-                            return;
+                        for (String ctv : av.split("\\s+")) {
+                            if (ctv.startsWith(NDR_CT_URI_PREFIX)) {
+                                ctv = ctv.substring(NDR_CT_URI_PREFIX.length());
+                                int sp = ctv.indexOf('/');
+                                if (sp >= 0) {
+                                    ctv = ctv.substring(0, sp);
+                                    ndrVersion = av;
+                                    return;
+                                }
+                            }
                         }
                     }
                 }
@@ -1087,8 +1130,8 @@ public class NTSchema {
     }
     
     protected class MapRec {
-        String ns = null;       // namespace in which this mapping appears
-        String val = null;      // the mapped namespace prefix or namespace URI 
+        String ns;       // namespace in which this mapping appears
+        String val;      // the mapped namespace prefix or namespace URI 
         MapRec(String ns, String val) {
             this.ns = ns;
             this.val = val;

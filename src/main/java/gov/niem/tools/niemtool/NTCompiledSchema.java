@@ -30,6 +30,7 @@ import org.apache.xerces.xs.XSTypeDefinition;
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import static gov.niem.tools.niemtool.NTConstants.*;
 import java.io.IOException;
+import java.util.ArrayList;
 
 /**
  *
@@ -57,56 +58,21 @@ public class NTCompiledSchema extends NTSchema {
             return null;
         }        
         ntmodel =  new NTSchemaModel();        
-        
-        // Generate unique prefix mapping for each namespace declared in the schema
-        // Prefer standard prefix for NIEM model namespace
-        // Reserve rdf prefix for RDF
-        HashSet<String> assigned = new HashSet<>();
-        assigned.add("rdf");
-        ntmodel.addNamespacePrefix(RDF_NS_URI, "rdf");
-        nsURIMaps().forEach((ns, value) -> {
-            if (RDF_NS_URI.equals(ns)) { 
-                return;     // skip to next ns,value pair 
-            }
-            String stdPrefix = ContextMapping.commonPrefix(ns);
-            String firstPrefix = value.get(0).val;
-            boolean isStd = false;
-            boolean same = true;
-            // Examine every prefix mapped to ns; All the same? Any the std?
-            for (int i = 0; i < value.size(); i++) {
-                String p = value.get(i).val;
-                isStd = isStd || stdPrefix.equals(p);
-                same = same && firstPrefix.equals(p);
-            }
-            // If namespace always mapped to one prefix, try that prefix
-            // Otherwise, if namespace ever mapped to standard prefix, try that
-            // Otherwise, try the first prefix
-            String usePrefix = firstPrefix;
-            if (!same && isStd){
-                usePrefix = stdPrefix;
-            }
-            // If the first-choice prefix is already assigned, try all the others
-            if (assigned.contains(usePrefix)) {
-                for (int i = 0; i < value.size(); i++) {
-                    String p = value.get(i).val;
-                    if (!assigned.contains(p)) {
-                        usePrefix = p;
-                        break;
-                    }
-                }
-            }
-            // If every mapped prefix is assigned, mung until successful
-            if (assigned.contains(usePrefix)) {
-                String base = usePrefix;
-                int ct = 1;
-                do {
-                    usePrefix = String.format("%s_%d", base, ct++);
-                } while (assigned.contains(usePrefix));
-            }
-            // Record the prefix mapping
-            ntmodel.addNamespacePrefix(ns, usePrefix);
-            assigned.add(usePrefix);
+               
+        // Now determine a unique prefix for each namespace in schema
+        // using the namespace ordering for priorty in case of prefix conflict.
+        NamespaceMap nsmap = new NamespaceMap();
+        nsmap.assignPrefix(RDF_NS_URI, "rdf"); 
+        nsList().forEach((namespace) -> {
+            List<MapRec> maps = nsDecls().get(namespace);
+            maps.forEach((rec) -> { 
+                nsmap.assignPrefix(rec.ns, rec.val);
+            });
         });
+        nsmap.nsmap().forEach((ns, prefix) -> {
+            ntmodel.addNamespacePrefix(ns, prefix);
+        });
+
         // Find external namespaces
         nsNDRversion().forEach((ns, ver) -> {
             if ("".equals(ver)){
