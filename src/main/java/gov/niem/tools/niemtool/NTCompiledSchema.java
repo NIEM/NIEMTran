@@ -15,7 +15,6 @@
  */
 package gov.niem.tools.niemtool;
 
-import java.util.HashSet;
 import java.util.List;
 import javax.xml.parsers.ParserConfigurationException;
 import org.apache.xerces.xs.XSAttributeDeclaration;
@@ -30,7 +29,6 @@ import org.apache.xerces.xs.XSTypeDefinition;
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import static gov.niem.tools.niemtool.NTConstants.*;
 import java.io.IOException;
-import java.util.ArrayList;
 
 /**
  *

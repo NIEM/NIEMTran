@@ -144,7 +144,6 @@ public class NTCompiledSchemaTest {
             ofw.write(m.toJson());
             ofw.close();
             assertTrue(FileUtils.contentEquals(expected, out));
-            out.delete();
         } catch (IOException ex) {
             Logger.getLogger(NTSchemaTest.class.getName()).log(Level.SEVERE, null, ex);
         } catch (ParserConfigurationException ex) {

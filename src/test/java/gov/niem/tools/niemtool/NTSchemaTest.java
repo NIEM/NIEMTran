@@ -125,9 +125,9 @@ public class NTSchemaTest {
                 File f = efiles.next();
                 s.addSchemaFile(f.getPath());
             }
-            s.testOutput(out);            
+            String ts = s.testOutput();
+            FileUtils.writeStringToFile(out, ts, "utf-8");
             assertTrue(FileUtils.contentEquals(expected, out));
-            out.delete();
         } catch (IOException ex) {
             Logger.getLogger(NTSchemaTest.class.getName()).log(Level.SEVERE, null, ex);
         } catch (ParserConfigurationException ex) {

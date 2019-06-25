@@ -180,10 +180,12 @@ public class NTCatalogResolver
      */
     public List<String>allCatalogFiles() {
         List<String> res = new ArrayList<>();
-        for (String s : fCatalog.parsingResults()) {
-            int idx = s.indexOf(": ");
-            String furi = s.substring(idx+2);   
-            res.add(furi);
+        if (fCatalog != null && fCatalog.parsingResults() != null) {
+            for (String s : fCatalog.parsingResults()) {
+                int idx = s.indexOf(": ");
+                String furi = s.substring(idx + 2);
+                res.add(furi);
+            }
         }
         return res;
     }

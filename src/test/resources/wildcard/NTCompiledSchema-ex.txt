@@ -28,7 +28,7 @@
   },
   "namespacePrefix": {
     "http://www.w3.org/1999/02/22-rdf-syntax-ns#": "rdf",
-    "http://release.niem.gov/niem/niem-core/4.0/": "nc_1",
+    "http://release.niem.gov/niem/niem-core/4.0/": "nc",
     "http://release.niem.gov/niem/domains/jxdm/6.0/": "j",
     "http://release.niem.gov/niem/codes/unece_rec20/4.0/": "unece",
     "http://example.com/CrashDriver/1.0/": "exch",

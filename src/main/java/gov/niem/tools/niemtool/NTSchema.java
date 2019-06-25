@@ -63,15 +63,15 @@ import org.xml.sax.helpers.DefaultHandler;
  * A class to represent an XML schema defined by local resources that are
  * specified by two lists: <ul>
  * <li>a list of initial XML Schema documents (or namespace URIs)
- * <li> a list of XML Catalog documents</ul>
+ * <li>a list of XML Catalog documents</ul>
  * The schema thus specified is the schema constructed by:
  * <ul><li> Loading each initial schema document, and
  * <li>Resolving each initial namespace URI and loading the resulting local file, and
  * <li>Recursively loading the local resource (non-local resources are flagged
  * as errors) described by every <code>import</code>, <code>include</code>, and 
  * <code>redefine</code> element encountered, while
- * <li>Using the list of XML Catalog documents to resolve each namespace and
- * schemaLocation URI.</ul>
+ * <li>Using the catalog resolver constructed from the list of XML Catalog 
+ * documents to resolve each namespace and schemaLocation URI.</ul>
  *
  * <p>
  * The class is intended for development, not production. It supplies details about 
@@ -165,7 +165,6 @@ public class NTSchema {
     private static SAXParser saxp = null;                   // reusable SAX parser, for schema assembly checking
     private static DOMImplementationRegistry direg = null;  // bootstrap for XML Schema loader
     private static XSImplementation xsimpl = null;          // more bootstrap
-    private static XSLoader xsloader = null;                // reusable XML Schema loader, produces XSModel
        
     private List<String> catalogFiles = new ArrayList<>();  // list of initial catalog files for resolver (as provided)
     private List<String> schemaFiles = new ArrayList<>();   // list of initial schema documents to load (as provided)
@@ -218,9 +217,8 @@ public class NTSchema {
             try {
                 direg = DOMImplementationRegistry.newInstance();
                 xsimpl = (XSImplementation) direg.getDOMImplementation("XS-Loader");
-                xsloader = xsimpl.createXSLoader(null);
             } catch (Exception ex) {
-                throw (new ParserConfigurationException("Can't initializte XML Schema parser" + ex.getMessage()));
+                throw (new ParserConfigurationException("Can't initializte XML Schema parser implementation" + ex.getMessage()));
             }
         }
     }
@@ -267,46 +265,37 @@ public class NTSchema {
     /**
      * Add one catalog file to the list of catalogs used to resolve URIs. This
      * may change the schema, so initialization, assembly checking, and schema
-     * validation may also change.
+     * validation must be reset.
      * @param cfn catalog file path
      */
     public void addCatalogFile(String cfn) {
         catalogFiles.add(canonicalFileURI(cfn));
-        resolver = null;
-        initErrors = null;
-        loadDocs = null;
-        xsmodel = null;
-        xsNamespaces = null;
-        xsConstructionErrors = null;
-        xsWarnings = null;
-        xsNIEMWarnings = null;
+        reset();
     }
 
     /**
      * Add one file to the list of initial schema documents. This changes the
-     * schema, so initialization, assembly checking, and schema validation may
-     * also change.
+     * schema, so initialization, assembly checking, and schema validation must
+     * be reset.
      * @param sfn schema file path
      */
     public void addSchemaFile(String sfn) {
         schemaFiles.add(sfn);
-        initErrors = null;
-        loadDocs = null;
-        xsmodel = null;
-        xsNamespaces = null;        
-        xsConstructionErrors = null;
-        xsWarnings = null;
-        xsNIEMWarnings = null;        
+        reset();
     }
 
     /**
      * Add one URI to the list of initial namespace URIs specifying initial schema
      * documents. This changes the schema, so initialization, assembly checking,
-     * and schema validation may also change.
+     * and schema validation must be reset.
      * @param sns namespace URI string
      */
     public void addSchemaNamespaceURI(String sns) {
         initialNSs.add(sns);
+        reset();
+    }
+    
+    private void reset() {
         initErrors = null;
         loadDocs = null;
         xsmodel = null;
@@ -368,7 +357,7 @@ public class NTSchema {
     
     /**
      * Returns a list of file: URIs, one for each initial schema document 
-     * provided as a file name or namespace URI.
+     * that was provided as a file name or namespace URI.
      * @return list of initial schema document file URIs
      */
     public List<String> getAllInitialSchemaURIs() {
@@ -485,6 +474,7 @@ public class NTSchema {
      * @return list of assembled schema documents
      */
     public List<String> assembledSchemaDocuments () {
+        assemblyCheck();
         List<String> res = new ArrayList<>();
         for (String s : loadedFiles) {
             res.add(s);
@@ -602,8 +592,8 @@ public class NTSchema {
         if (r.ns != null) {
             if (r.nsRes == null && catalogFiles.size() > 0) {
                 r.warn("no catalog entry for namespace %s\n", r.ns);
-            } else if (!r.nsRes.startsWith("file:")) {
-                r.warn("namespace %s resolves to non-local resource\n", r.ns);
+            } else if (r.nsRes != null && !r.nsRes.startsWith("file:")) {
+                r.warn("namespace %s resolves to non-local resource %s\n", r.ns, r.nsRes);
                 r.nsRes = null;
             }
         } else {
@@ -614,7 +604,7 @@ public class NTSchema {
         if (r.sloc != null) {
             if (r.slocRes != null) {
                 if (!r.slocRes.startsWith("file:")) {
-                    r.warn("schemaLocation %s resolves to non-local resource\n", r.sloc);
+                    r.warn("schemaLocation %s resolves to non-local resource %s\n", r.sloc, r.slocRes);
                     r.slocRes = null;
                 }
             } else {
@@ -628,7 +618,9 @@ public class NTSchema {
         if (r.nsRes != null) {
             r.log("namespace resolves to *%s\n", r.nsRes);
         }
-        r.log("schemaLocation resolves to *%s\n", r.slocRes);
+        if (r.slocRes != null) {
+            r.log("schemaLocation resolves to *%s\n", r.slocRes);
+        }
         if (r.nsRes != null && r.slocRes != null) {
             if (r.nsRes.equals(r.slocRes)) {
                 loadDocumentFromURI(r, r.nsRes);
@@ -780,7 +772,12 @@ public class NTSchema {
             warnFlag = true;
             log(fmt, args);
         }
-        
+
+        /**
+         * Put a * character before the string format (i.e. "*%s") if the
+         * string is a file URI that you want converted into a path 
+         * relative to schemaRootDirectory.
+         */        
         private void log (String fmt, Object... args) {
             msgs.add(String.format(fmt, args));             
         }
@@ -882,7 +879,8 @@ public class NTSchema {
         initialize();
         xsConstructionErrors = new ArrayList<>();
         SchemaErrorHandler ehandler = new SchemaErrorHandler(xsConstructionErrors);
-        DOMConfiguration config = xsloader.getConfig();
+        XSLoader loader = xsimpl.createXSLoader(null); // don't use this twice, it keeps state        
+        DOMConfiguration config = loader.getConfig();
         config.setParameter("validate", true);
         config.setParameter("resource-resolver", resolver());
         config.setParameter("error-handler",ehandler);
@@ -890,7 +888,7 @@ public class NTSchema {
         StringList slist = new StringListImpl(
                 allSchemaFileURIs.toArray(new String[0]),
                 allSchemaFileURIs.size());
-        xsmodel = xsloader.loadURIList(slist);
+        xsmodel = loader.loadURIList(slist);
         if (xsmodel == null) {
             xsConstructionErrors.add("xerces xsloader returned null");
         }
@@ -909,7 +907,7 @@ public class NTSchema {
             String sevstr;
             if (sevCode == DOMError.SEVERITY_FATAL_ERROR) { sevstr = "[fatal]"; } 
             else if (sevCode == DOMError.SEVERITY_ERROR)  { sevstr = "[error]"; } 
-            else { sevstr = "[warn]"; }
+            else { sevstr = "[warn] "; }
 
             DOMLocator loc = error.getLocation();
             String uri = loc.getUri();
@@ -1142,24 +1140,28 @@ public class NTSchema {
         }
     } 
     
-    public void testOutput (File f) {
-        try {
-            if (!this.initializationErrorMessages().isEmpty()) {
-                FileUtils.writeStringToFile(f, "*Initialization:\n", "utf-8", false);
-                FileUtils.writeLines(f, "utf-8", this.initializationErrorMessages(), "", true);
-            } else {
-                FileUtils.writeStringToFile(
-                        f, String.format("*Schema root: %s\n", this.schemaRootDirectory()), "utf-8", false);
-                FileUtils.writeStringToFile(f, "*Assembly:\n", "utf-8", true);
-                FileUtils.writeLines(f, "utf-8", this.assemblyWarningMessages(), "", true);
-                FileUtils.writeStringToFile(f, "*Construction:\n", "utf-8", true);
-                FileUtils.writeLines(f, "utf-8", this.xsConstructionMessages(), "", true);
-                FileUtils.writeLines(f, "utf-8", this.xsNamespaceList(), "", true);
-                FileUtils.writeLines(f, "utf-8", this.xsWarningMessages(), "", true);
-                FileUtils.writeLines(f, "utf-8", this.xsNIEMWarningMessages(), "", true);
-            }
-        } catch (IOException ex) {
-            Logger.getLogger(NTSchema.class.getName()).log(Level.SEVERE, null, ex);
+    public String testOutput () {
+        StringBuilder sb = new StringBuilder(512);
+        if (!this.initializationErrorMessages().isEmpty()) {
+            sb.append("*Initialization:");
+            concat(sb,this.initializationErrorMessages());
+        }
+        else {
+            sb.append(String.format("*Schema root: %s\n", this.schemaRootDirectory()));
+            sb.append("*Assembly:\n");
+            concat(sb,this.assemblyWarningMessages());
+            sb.append("*Construction:\n");
+            concat(sb,this.xsConstructionMessages());
+            concat(sb,this.xsNamespaceList());
+            concat(sb,this.xsWarningMessages());
+            concat(sb,this.xsNIEMWarningMessages());
+        }
+        return(sb.toString());
+    }
+    
+    private void concat (StringBuilder sb, List<String> sl) {
+        for (String s : sl) {
+            sb.append(s);
         }
     }
     

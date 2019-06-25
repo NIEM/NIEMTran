@@ -18,13 +18,7 @@ Any value defined here will override the pom.xml file value but is only applicab
     <config-data xmlns="http://www.netbeans.org/ns/maven-config-data/1">
         <configurations>
             <configuration id="debug" profiles=""/>
-            <configuration id="nt" profiles="">
-                <archive>
-                    <manifest>
-                        <mainclass>gov.niem.tools.niemtool.NIEMTool</mainclass>
-                    </manifest>
-                </archive>
-            </configuration>
+            <configuration id="nt" profiles=""/>
         </configurations>
     </config-data>
 </project-shared-configuration>

@@ -29,7 +29,7 @@ import org.apache.xerces.xs.XSModel;
  * @author Scott Renner <sar@mitre.org>
  */    
 
-@Parameters(commandDescription = "check NIEM schema for assembly errors")
+@Parameters(commandDescription = "check XML schema for assembly errors")
 public class CommandCheck implements JCCommand {
    
     @Parameter(names = "-s", description = "filename separator character")
@@ -137,7 +137,7 @@ public class CommandCheck implements JCCommand {
         if (verbose) {
             System.out.println("== Schema initialization ==");
             printMessages("Catalog validation results:", sc.resolver().validationResults());
-            printMessages("Initial schema documents:", sc.getAllInitialSchemaURIs());
+            printItems("Initial schema documents:", sc.getAllInitialSchemaURIs());
         }
         if (!schemasFound) {
             System.out.println("No initial schema documents provided");   
@@ -201,7 +201,7 @@ public class CommandCheck implements JCCommand {
             System.exit(1);
         }
      }
-    
+       
     private void printMessages (String header, List<String> msgs) {
         if (msgs.isEmpty() && !verbose) {
             return;
@@ -209,6 +209,16 @@ public class CommandCheck implements JCCommand {
         System.out.println(header);
         for (String s : msgs) {
             System.out.print("  " + s);
+        }
+    }
+ 
+    private void printItems (String header, List<String> msgs) {
+        if (msgs.isEmpty() && !verbose) {
+            return;
+        }
+        System.out.println(header);
+        for (String s : msgs) {
+            System.out.println("  " + s);
         }
     }
 }    

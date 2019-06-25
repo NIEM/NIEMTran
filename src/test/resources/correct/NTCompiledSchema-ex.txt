@@ -52,11 +52,11 @@
     "http://release.niem.gov/niem/adapters/geospatial/4.0/": "geo",
     "http://release.niem.gov/niem/domains/jxdm/6.0/": "j",
     "http://release.niem.gov/niem/codes/unece_rec20/4.0/": "unece",
-    "http://purl.oclc.org/dsdl/schematron": "sch",
     "http://example.com/CrashDriver/1.0/": "exch",
-    "http://www.w3.org/1999/xlink": "xlink",
+    "http://purl.oclc.org/dsdl/schematron": "sch",
     "http://www.opengis.net/gml/3.2": "gml",
-    "http://release.niem.gov/niem/structures/4.0/": "structures"
+    "http://release.niem.gov/niem/structures/4.0/": "structures",
+    "http://www.w3.org/1999/xlink": "xlink"
   },
   "externalNSHandler": {
     "http://www.w3.org/1999/xlink": "",
