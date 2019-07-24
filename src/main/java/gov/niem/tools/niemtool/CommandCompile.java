@@ -138,7 +138,7 @@ public class CommandCompile implements JCCommand {
         
         // Arguments processed; determine file for compiled output, if not specified
         if ("".equals(objFile)) {
-            List<String> schemaURIs = sc.getAllInitialSchemaURIs();
+            List<String> schemaURIs = sc.getAllInitialSchemas();
             if (schemaURIs.size() > 0) {
                 File sf  = uriToFile(schemaURIs.get(0));
                 Path sfp = sf.toPath().getFileName();

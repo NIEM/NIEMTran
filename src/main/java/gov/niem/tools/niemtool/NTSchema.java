@@ -15,53 +15,24 @@
  */
 package gov.niem.tools.niemtool;
 
-import static gov.niem.tools.niemtool.NTConstants.APPINFO_NS_URI_PREFIX;
-import static gov.niem.tools.niemtool.NTConstants.CONFORMANCE_ATTRIBUTE_NAME;
-import static gov.niem.tools.niemtool.NTConstants.CONFORMANCE_TARGET_NS_URI_PREFIX;
-import static gov.niem.tools.niemtool.NTConstants.NDR_CT_URI_PREFIX;
-import static gov.niem.tools.niemtool.NTConstants.NIEM_RELEASE_PREFIX;
-import static gov.niem.tools.niemtool.NTConstants.NIEM_XS_PREFIX;
 import java.io.File;
 import java.io.IOException;
-import java.io.StringReader;
-import static java.lang.Math.min;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import static javax.xml.XMLConstants.W3C_XML_SCHEMA_INSTANCE_NS_URI;
-import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-import org.apache.commons.io.FileUtils;
 import org.apache.xerces.impl.xs.util.StringListImpl;
 import org.apache.xerces.util.URI;
 import org.apache.xerces.xs.StringList;
-import org.apache.xerces.xs.XSAnnotation;
-import org.apache.xerces.xs.XSImplementation;
 import org.apache.xerces.xs.XSLoader;
 import org.apache.xerces.xs.XSModel;
-import org.apache.xerces.xs.XSNamespaceItem;
-import org.apache.xerces.xs.XSNamespaceItemList;
-import org.apache.xerces.xs.XSObjectList;
 import org.w3c.dom.DOMConfiguration;
 import org.w3c.dom.DOMError;
 import org.w3c.dom.DOMErrorHandler;
 import org.w3c.dom.DOMLocator;
-import org.w3c.dom.bootstrap.DOMImplementationRegistry;
-import org.xml.sax.Attributes;
-import org.xml.sax.InputSource;
-import org.xml.sax.Locator;
-import org.xml.sax.SAXException;
-import org.xml.sax.helpers.DefaultHandler;
 
 /**
- * A class to represent an XML schema defined by local resources that are
- * specified by two lists: <ul>
+ * A class to construct a Xerces XSModel object for an XML schema defined
+ * by local resources that are specified by two lists: <ul>
  * <li>a list of initial XML Schema documents (or namespace URIs)
  * <li>a list of XML Catalog documents</ul>
  * The schema thus specified is the schema constructed by:
@@ -74,58 +45,12 @@ import org.xml.sax.helpers.DefaultHandler;
  * documents to resolve each namespace and schemaLocation URI.</ul>
  *
  * <p>
- * The class is intended for development, not production. It supplies details about 
- * the operation of the Xerces parser and the Apache Commons XML resolver during 
- * schema construction.  It also reports inconsistencies and ambiguities in the 
- * <code>import</code>, <code>include</code>, and <code>redefine</code> elements,
- * under the assumption that <ul>
- * <li>the schema should be entirely constructed from local schema documents 
- * <li>each schema component should have a namespace
- * <li>each namespace should be constructed from a single schema document
- * <li>in <code>import</code> elements, the resolved <code>namespace</code> and
- * <code>schemaLocation</code> attributes should point to the same document</ul>
- * 
- * <p>
- * This class can be used for schema checking in three ways: <ol>
- *
- * <li> Initialization checking:
- *
- * <ul><li>Can all of the initial schema document files be read?
- * <li>Can all of the initial namespaces be resolved to a readable file?
- * <li>Are all of the catalog files readable and valid XML Catalog documents
- * (including subordinate catalogs)?</ul>
- *
- * <p>
- * <li> Schema assembly. Parses each schema document (using vanilla
- * SAX, not the Xerces XML Scheme API), following every <code>import</code>,
- * <code>include</code>, and <code>redefine</code> element. Checks each of
- * those elements for completeness and consistency. Reports the following 
- * findings:<ul>
- *
- * <lI>namespace URI resolves to non-local resource
- * <li>schemaLocation URI resolves to non-local resource
- * <li>resolved namespace != resolved schemaLocation
- * <li>can't determine a schema document to load
- * <li>can't parse schema document
- * <li>can't read schema document file
- * <li>target namespace != expected namespace
- * <li>namespace already loaded from a different file
- * <li>no catalog entry for namespace URI
- * <li>no namespace attribute in import element
- * <li>no schemaLocation attribute in element
- * <li>include element found in namespace that has a catalog entry</ul>
- *
- * <p>
- * <li> Schema construction. Uses the Xerces XML Schema API to construct
- * the XSModel object. Reports: <ul>
- * 
- * <li>any errors or warnings returned by Xerces
- * <li>namespace prefix or namespace URI with more than one binding
- * <li>non-standard prefix for a NIEM namespace
- * <li>external namespaces (those without a NIEM conformance assertion)
- * <li>each namespace constructed, with list of documents contributing to its content
- * <li>result of all XML Catalog resolutions performed during construction</ol>
- *
+ * In addition to error and warning messages returned by Xerces, this class
+ * reports the following initialization errors:<ul>
+ * <li>Initial schema document files that cannot be read
+ * <li>Initial namespace URIs that cannot be resolved to a readable file
+ * <li>Catalog documents that are not valid XML Catalog documents
+ * (including subordinate catalogs)?</ul> *
  * <p>
  * Example usage:
  * <pre><code>
@@ -141,12 +66,6 @@ import org.xml.sax.helpers.DefaultHandler;
  if (!s.initializationErrorMessages().isEmpty()) {
      System.out.println("Schema initialization errors");
      System.out.print(s.initializationErrorMessages();
-     System.exit(1);
- }
- System.out.println("Schema root directory: " + s.schemaRootDirectory();
- if (!s.assemblyWarningMessages().isEmpty()) {
-     System.out.println("Schema assembly findings:");
-     System.out.print(s.assemblyWarningMessages());
  }
  XSModel xs = s.xmodel();
  System.out.println(xs == null ? "Schema construction FAILED" : "Schema construction SUCCEDED");
@@ -160,12 +79,8 @@ import org.xml.sax.helpers.DefaultHandler;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class NTSchema {
-    
-    private static SAXParserFactory sfact = null;           // bootstrap for SAX parser
-    private static SAXParser saxp = null;                   // reusable SAX parser, for schema assembly checking
-    private static DOMImplementationRegistry direg = null;  // bootstrap for XML Schema loader
-    private static XSImplementation xsimpl = null;          // more bootstrap
-       
+
+    protected ParserBootstrap parsers;
     private List<String> catalogFiles = new ArrayList<>();  // list of initial catalog files for resolver (as provided)
     private List<String> schemaFiles = new ArrayList<>();   // list of initial schema documents to load (as provided)
     private List<String> initialNSs = new ArrayList<>();    // list of namespaces to resolve for initial schema documents (as provided)
@@ -174,25 +89,8 @@ public class NTSchema {
     private List<String> allSchemaFileURIs = null;          // list of initial schema documents & initial namespace URI resolutions
     private List<String> initErrors = null;                 // initialization errors; eg. schema document not found
     private NTCatalogResolver resolver = null;              // catalog resolver used for load checking & schema generation
-
-    private String schemaRootDirectory = "";                // file URI for root directory of all schema documents 
-    private int schemaRootDirectoryLength = 0;              // length of root directory URI
-    private List<LoadRec> loadDocs = null;                  // results of each document load attempt
-    private HashSet<String> attemptedFiles = null;          // schema document load attempts
-    private HashSet<String> loadedFiles = null;             // schema documents successfully loaded
-    private HashMap<String, String> namespaceFile = null;   // map of namespace URI to schema document
-
     private XSModel xsmodel = null;                         // constructed XML schema object from Xerces
     private List<String> xsConstructionErrors = null;       // error messages from Xerces
-
-    private List<String> xsNamespaces = null;               // namespace & contributing documents from XSModel
-    private List<String> xsWarnings = null;                 // schema warnings derived from XSModel
-    private List<String> xsNIEMWarnings = null;             // niem-specific schema warnings from XSModel
-    private List<String> nsList = null;                     // list of namespaces in schema
-    private HashMap<String,List<MapRec>> nsDecls = null;    // nsDecls.get(U)      -> list of ns maps declared in ns U
-    private HashMap<String,List<MapRec>> nsPrefix = null;   // nsPrefixMaps.get(P) -> list of URIs mapped to prefix P
-    private HashMap<String,List<MapRec>> nsURI    = null;   // nsURIMaps.get(U)    -> list of prefixes mapped to namespace U
-    private HashMap<String,String> nsNDRversion = null;     // from ct:conformanceTargets; "" for external namespace
     
     /**
      * Constructs an empty Schema object. Add schema documents, namespace URIs,
@@ -201,26 +99,9 @@ public class NTSchema {
      * throwing an exception if any of it fails.
      * @throws ParserConfigurationException
      */
-    public NTSchema() throws ParserConfigurationException, IOException {
+    public NTSchema() throws ParserConfigurationException {
         // Bootstrap the parsers when the first object is created
-        if (sfact == null) {
-            try {
-                sfact = SAXParserFactory.newInstance();
-                sfact.setNamespaceAware(true);
-                sfact.setValidating(false);
-                saxp = sfact.newSAXParser();
-            } catch (SAXException ex) {
-                throw (new ParserConfigurationException("Can't initialize suitable SAX parser" + ex.getMessage()));
-            }
-        }
-        if (direg == null) {
-            try {
-                direg = DOMImplementationRegistry.newInstance();
-                xsimpl = (XSImplementation) direg.getDOMImplementation("XS-Loader");
-            } catch (Exception ex) {
-                throw (new ParserConfigurationException("Can't initializte XML Schema parser implementation" + ex.getMessage()));
-            }
-        }
+        parsers = new ParserBootstrap();
     }
 
     /**
@@ -231,7 +112,7 @@ public class NTSchema {
      * @throws ParserConfigurationException
      */
     public NTSchema(List<String> catalogFiles, List<String> schemaOrNamespace)
-            throws ParserConfigurationException, IOException {
+            throws ParserConfigurationException {
 
         this();
 
@@ -264,8 +145,7 @@ public class NTSchema {
 
     /**
      * Add one catalog file to the list of catalogs used to resolve URIs. This
-     * may change the schema, so initialization, assembly checking, and schema
-     * validation must be reset.
+     * may change the schema, so initialization and schema construction must be reset.
      * @param cfn catalog file path
      */
     public void addCatalogFile(String cfn) {
@@ -275,8 +155,7 @@ public class NTSchema {
 
     /**
      * Add one file to the list of initial schema documents. This changes the
-     * schema, so initialization, assembly checking, and schema validation must
-     * be reset.
+     * schema, so initialization and schema construction must be reset.
      * @param sfn schema file path
      */
     public void addSchemaFile(String sfn) {
@@ -286,8 +165,8 @@ public class NTSchema {
 
     /**
      * Add one URI to the list of initial namespace URIs specifying initial schema
-     * documents. This changes the schema, so initialization, assembly checking,
-     * and schema validation must be reset.
+     * documents. This changes the schema, so initialization and schema
+     * assembly must be reset.
      * @param sns namespace URI string
      */
     public void addSchemaNamespaceURI(String sns) {
@@ -297,12 +176,7 @@ public class NTSchema {
     
     private void reset() {
         initErrors = null;
-        loadDocs = null;
-        xsmodel = null;
-        xsNamespaces = null;        
-        xsConstructionErrors = null;      
-        xsWarnings = null;        
-        xsNIEMWarnings = null;        
+        xsmodel = null;                  
     }
 
     /**
@@ -360,9 +234,19 @@ public class NTSchema {
      * that was provided as a file name or namespace URI.
      * @return list of initial schema document file URIs
      */
-    public List<String> getAllInitialSchemaURIs() {
+    public List<String> getAllInitialSchemas() {
         initialize();
         return allSchemaFileURIs;
+    }
+    
+    public List<String> getInitialSchemaFileURIs () {
+        initialize();
+        return initialSchemaFileURIs;
+    }
+    
+    public List<String> getInitialNSURIs () {
+        initialize();
+        return initialNSURIs;
     }
 
     /**
@@ -452,337 +336,7 @@ public class NTSchema {
             initErrors.add("no readable schema documents provided\n");
         }
     }
-
-    // ------------- SCHEMA ASSEMBLY CHECKING -------------------------------
-
-    /**
-     * Returns the root directory for catalog and schema documents as a file
-     * URI. All catalog and schema documents are located somewhere in this tree.
-     * @return schema root directory URI
-     */
-    public String schemaRootDirectory() {
-        assemblyCheck();
-        if (schemaRootDirectory.length() < 1) {
-            return "unknown";
-        }
-        return schemaRootDirectory;
-    }
     
-    /**
-     * Returns a list of the schema documents actually loaded during the
-     * schema assembly check.
-     * @return list of assembled schema documents
-     */
-    public List<String> assembledSchemaDocuments () {
-        assemblyCheck();
-        List<String> res = new ArrayList<>();
-        for (String s : loadedFiles) {
-            res.add(s);
-        }
-        return res;
-    }
-    
-    /**
-     * Returns a list of messages describing each document load attempt during the
-     * schema assembly check. Each entry in the list is formatted as follows:
-     * <pre><code>
-     filename:line# IMPORT path/to/file ns=http://namespace/uri sl=schema/location/path
-       resolved namespace != resolved schemaLocation
-       namespace URI resolves to non-local resource</code></pre> 
-     * <p>
-     * Returns an empty list if no errors encountered.
-     * @return list of assembly log messages
-     */
-    public List<String> assemblyLogMessages() {
-        return assemblyMessages(true);
-    }
-    
-    /**
-     * Returns a string describing document load attempts with warnings. 
-     * Documents loaded with no checked error, inconsistency, or ambiguity
-     * are not listed.
-     * @return string of assembly warnings
-     */
-    public List<String> assemblyWarningMessages() {
-        return assemblyMessages(false);
-    }
-    
-    private List<String> assemblyMessages(boolean allMsgs) {
-        assemblyCheck();
-        String pilePrefix = "*" + schemaRootDirectory;
-        List<String> res = new ArrayList<>();       
-        if (loadDocs.size() < 1) {
-            res.add("No initial schema document\n");
-            return res;
-        }
-        for (LoadRec r : loadDocs) {
-            if (allMsgs || r.warnFlag) {
-                res.add(r.msgHeader());
-                for (String m : r.msgs) {
-                    m = m.replace(pilePrefix, ""); // convert absolute file URI to relative path
-                    res.add("  " + m);
-                }
-            }
-        }
-        return res;
-    }
-
-    private String pileRelativePath(String u) {
-        return u.substring(schemaRootDirectoryLength);
-    }
-
-    /*
-     * Xerces assembles schema documents depth-first.  
-     * We check them breadth-first.
-     * Doesn't matter because we check all the import and include elements in 
-     * all the documents.
-    */
-    private void assemblyCheck() {
-        if (loadDocs != null) {
-            return;
-        }
-        initialize();
-        namespaceFile = new HashMap<>();
-        attemptedFiles = new HashSet<>();
-        loadedFiles = new HashSet<>();
-        loadDocs = new ArrayList<>();
-        for (String furi : initialSchemaFileURIs) {
-            LoadRec lr = new LoadRec();
-            lr.fkind = "load";
-            lr.slocRes = furi;
-            loadDocs.add(lr);
-        }
-        for (String ns : initialNSURIs) {
-            LoadRec lr = new LoadRec();
-            lr.fkind = "load";
-            lr.ens = lr.ns = ns;
-            loadDocs.add(lr);
-        }
-        int idx = 0;
-        while (idx < loadDocs.size()) {
-            LoadRec r = loadDocs.get(idx);
-            loadDocument(r);
-            idx++;
-            // System.out.println(idx);
-            // System.out.println(r.toString());
-        }
-        if (loadDocs.size() > 0) {
-            schemaRootDirectory = loadDocs.get(0).fileURI;
-            for (LoadRec r : loadDocs) {
-                schemaRootDirectory = commonPrefix(schemaRootDirectory, r.fileURI);
-                schemaRootDirectory = commonPrefix(schemaRootDirectory, r.fileURI_2);
-            }
-            for (String cf : getAllCatalogFiles()) {
-                schemaRootDirectory = commonPrefix(schemaRootDirectory, cf);
-            }
-            schemaRootDirectoryLength = schemaRootDirectory.length();
-        }
-    }
-
-    private void loadDocument(LoadRec r) {
-        try {
-            r.nsRes = resolver().resolveURI(r.ns);
-            if (r.sloc != null) {    // could be initial schema doc
-                r.sloc = r.sloc.trim();
-                r.slocRes = resolver().resolveURI(r.sloc);
-            }
-        } catch (Exception ex) {
-            /* ignore */
-        }
-        if (r.ns != null) {
-            if (r.nsRes == null && catalogFiles.size() > 0) {
-                r.warn("no catalog entry for namespace %s\n", r.ns);
-            } else if (r.nsRes != null && !r.nsRes.startsWith("file:")) {
-                r.warn("namespace %s resolves to non-local resource %s\n", r.ns, r.nsRes);
-                r.nsRes = null;
-            }
-        } else {
-            if ("import".equals(r.fkind)) {
-                r.warn("no namespace attribute in import element\n");
-            }
-        }
-        if (r.sloc != null) {
-            if (r.slocRes != null) {
-                if (!r.slocRes.startsWith("file:")) {
-                    r.warn("schemaLocation %s resolves to non-local resource %s\n", r.sloc, r.slocRes);
-                    r.slocRes = null;
-                }
-            } else {
-                r.slocRes = canonicalFileURI(r.fileURI, r.sloc);
-            }
-        } else {
-            if (!"load".equals(r.fkind)) {
-                r.warn("no schemaLocation attribute in %s element\n", r.fkind);
-            }
-        }
-        if (r.nsRes != null) {
-            r.log("namespace resolves to *%s\n", r.nsRes);
-        }
-        if (r.slocRes != null) {
-            r.log("schemaLocation resolves to *%s\n", r.slocRes);
-        }
-        if (r.nsRes != null && r.slocRes != null) {
-            if (r.nsRes.equals(r.slocRes)) {
-                loadDocumentFromURI(r, r.nsRes);
-            } else {
-                r.warn("resolved namespace != resolved schemaLocation\n");
-                loadDocumentFromURI(r, r.nsRes);
-                loadDocumentFromURI(r, r.slocRes);  // load both files
-                r.fileURI = r.nsRes;
-                r.fileURI_2 = r.slocRes;            // remember both files for schema root determination later
-            }
-        } else if (r.nsRes != null) {
-            loadDocumentFromURI(r, r.nsRes);
-        } else if (r.slocRes != null) {
-            loadDocumentFromURI(r, r.slocRes);
-        } else {
-            r.warn("can't determine a schema document to load");
-        }
-    }
-
-    private void loadDocumentFromURI(LoadRec r, String furi) {
-        if (!furi.startsWith("file:")) {
-            return;
-        }
-        r.fileURI = furi;
-        if (attemptedFiles.contains(furi)) {
-            if (loadedFiles.contains(furi)) {
-                r.log("already loaded *%s\n", furi);
-            }
-            else {
-                r.log("already failed to load *%s\n", furi);
-            }
-        }
-        else {
-            r.log("loading *%s\n", furi);
-            if (r.ns != null) {
-                String lns = namespaceFile.getOrDefault(r.ns, furi);
-                if (!lns.equals(furi)) {
-                    r.warn("namespace %s also loaded from *%s\n", r.ns, lns);
-                }
-            }
-            namespaceFile.put(r.ns, furi);
-            attemptedFiles.add(furi);
-            Handler myhandler = new Handler(this.loadDocs, r);
-            try {
-                saxp.parse(furi, myhandler);
-                loadedFiles.add(furi);
-            } catch (SAXException ex) {
-                String em = exceptionReason(ex);
-                r.warn("can't parse schema document *%s: %s\n", furi, em);
-            } catch (IOException ex) {
-                String em = exceptionReason(ex);
-                r.warn("can't read *%s: %s\n", furi, em);
-            }
-        }
-    }
-
-    /**
-     * A callback class for SAX parsing of schema documents
-     */
-    private class Handler extends DefaultHandler {
-
-        private final LoadRec r;
-        private final List<LoadRec> lds;
-        private Locator loc;
-
-        Handler(List<LoadRec> lds, LoadRec r) {
-            super();
-            this.lds = lds;
-            this.r = r;
-        }
-
-        @Override
-        public void setDocumentLocator(Locator locator) {
-            this.loc = locator; //Save the locator, so that it can be used later for line tracking when traversing nodes.
-        }
-
-        @Override
-        public void startElement(String ens, String local, String raw, Attributes attrs) throws SAXException {
-            if (W3C_XML_SCHEMA_NS_URI.equals(ens)) {
-                if ("schema".equals(local)) {
-                    String tns = attrs.getValue("targetNamespace");
-                    if (tns != null && r.ens != null && !tns.equals(r.ens)) {
-                        r.warn("targetNamespace %s != expected namespace %s\n", tns, r.ens);
-                    }
-                } else if ("import".equals(local)) {
-                    LoadRec nr = new LoadRec();
-                    nr.fkind = "import";
-                    nr.parent = r.fileURI;
-                    nr.pline = loc.getLineNumber();
-                    nr.fileURI = r.fileURI;
-                    nr.ns = nr.ens = attrs.getValue("namespace");
-                    nr.sloc = attrs.getValue("schemaLocation");
-                    lds.add(nr);
-                } else if ("include".equals(local) || "redefine".equals(local)) {
-                    LoadRec nr = new LoadRec();
-                    nr.fkind = local;
-                    nr.parent = r.fileURI;
-                    nr.pline = loc.getLineNumber();
-                    nr.fileURI = r.fileURI;
-                    nr.ens = r.ens;
-                    nr.sloc = attrs.getValue("schemaLocation");
-                    lds.add(nr);
-                    // Xerces can't handle include and redefine elements in a namespace that has a catalog entry
-                    if (r.nsRes != null) {
-                        r.warn("<%s \"%s\"> found in a namespace that has a catalog entry\n", local, nr.sloc);
-                    }                    
-                }
-            }
-        }
-    }
-
-    /**
-     * A class for recording the results of a schema document load attempt
-     */
-    private class LoadRec {
-        private String fkind;            // operation attempting the load: import, include, redefine, or initial load
-        private String parent;           // canonical file URI of parent document (or null for initial load)
-        private int pline;               // line number of import/include/redefine element in parent document
-        private String ens;              // expected document namespace (needed for include & redefine)
-        private String ns;               // namespace attribute from import element
-        private String sloc;             // schemaLocation attribute from import/include/redefine element
-        private String nsRes;            // namespace resolution URI (or null if not resolved)
-        private String slocRes;          // schemaLocation resolution or path (or null if no schemaLocation)
-        private String fileURI;          // canonical file URI of the document to be loaded        
-        private String fileURI_2;        // other file URI to be loaded (if namespace != schemaLocation)
-        private boolean warnFlag;        // false if all messages are log entries
-        private List<String> msgs;       // empty list if no messages for this document load attempt
-
-        LoadRec() {
-            fkind = parent = ens = ns = sloc = nsRes = slocRes = fileURI = fileURI_2 = null;
-            pline = 0;
-            warnFlag = false;
-            msgs = new ArrayList<>();
-        }
-        
-        private String msgHeader () {
-            String prp;
-            if (parent == null) {
-                prp = "[initial load]";
-            } else {
-                prp = pileRelativePath(parent);
-            }
-            String h = String.format("%s:%d %s ns=%s sl=%s\n",
-                    prp, pline, fkind.toUpperCase(), ns, sloc);
-            return h;           
-        }
-        
-        private void warn (String fmt, Object... args  ) {
-            warnFlag = true;
-            log(fmt, args);
-        }
-
-        /**
-         * Put a * character before the string format (i.e. "*%s") if the
-         * string is a file URI that you want converted into a path 
-         * relative to schemaRootDirectory.
-         */        
-        private void log (String fmt, Object... args) {
-            msgs.add(String.format(fmt, args));             
-        }
-    }
-
     // ------------ SCHEMA XSMODEL CONSTRUCTION -----------------------------
     
     /**
@@ -803,71 +357,7 @@ public class NTSchema {
         xsmodel();
         return xsConstructionErrors;
     }
-    
-    /**
-     * Return list of namespaces processed by Xerces. Each entry shows
-     * the namespace URI plus list of document that contributed to the namespace.
-     * @return list of namespaces and contributing documents
-     */
-    public List<String> xsNamespaceList () {
-        processNamespaceItems();
-        return xsNamespaces;
-    } 
-    
-    /**
-     * Return warnings derived from Xerces XSModel. Complains about <ul>
-     * <li> Namespace prefix mapped to more than one URI
-     * <li> Namespace URI mapped to more than one prefix</ul>
-     * @return list of warnings
-     */
-    public List<String> xsWarningMessages() {
-        processNamespaceItems();
-        return xsWarnings;
-    }
-    
-    /**
-     * Return NIEM-specific warnings derived from Xerces XSModel.<ul>
-     * <li>External namespaces
-     * <li>Non-standard prefix for namespace in NIEM model</ul>
-     * @return list of NIEM-specfic warnings
-     */
-    public List<String> xsNIEMWarningMessages() {
-        processNamespaceItems();
-        return xsNIEMWarnings;
-    }
-    
-    /**
-     * Returns an ordered list of namespaces declared in the schema.
-     * NIEM-conforming extension schemas are first.
-     * NIEM reference schemas in the release are next.
-     * External schemas come last.
-     * @return ordered namespace list
-     */
-    protected List<String> nsList() {
-        processNamespaceItems();
-        return nsList;
-    }
-    
-    protected Map<String,List<MapRec>> nsDecls() {
-        processNamespaceItems();
-        return nsDecls;
-    }
-    
-    protected Map<String,List<MapRec>> nsPrefixMaps() {
-        processNamespaceItems();
-        return nsPrefix;
-    }
-    
-    protected Map<String,List<MapRec>> nsURIMaps() {
-        processNamespaceItems();
-        return nsURI;
-    }
-    
-    protected Map<String,String> nsNDRversion() {
-        processNamespaceItems();
-        return nsNDRversion;
-    }
-    
+   
     /**
      * Returns the XSModel constructed by Xerces for this schema.
      * @return schema XSModel object
@@ -879,7 +369,7 @@ public class NTSchema {
         initialize();
         xsConstructionErrors = new ArrayList<>();
         SchemaErrorHandler ehandler = new SchemaErrorHandler(xsConstructionErrors);
-        XSLoader loader = xsimpl.createXSLoader(null); // don't use this twice, it keeps state        
+        XSLoader loader = parsers.xsLoader();   // don't reuse these, they keep state    
         DOMConfiguration config = loader.getConfig();
         config.setParameter("validate", true);
         config.setParameter("resource-resolver", resolver());
@@ -931,239 +421,7 @@ public class NTSchema {
             return msgs.toString();
         }     
     }
-    
-    /**
-     * Extract information from the Xerces XSModel namespace information items.
-     * Generate the warning messages.
-     */
-    private void processNamespaceItems () {
-        if (nsPrefix != null) {
-            return;
-        }
-        nsList       = new ArrayList<>();
-        nsDecls      = new HashMap<>();
-        nsPrefix     = new HashMap<>();
-        nsURI        = new HashMap<>();
-        nsNDRversion = new HashMap<>();
-        xsNamespaces = new ArrayList<>();
-        xsWarnings   = new ArrayList<>();
-        xsNIEMWarnings = new ArrayList<>();
-        if (xsmodel() == null) {
-            return;
-        }
-        // Each namespace in the schema model has a synthetic annotation contatining
-        // the namespace declarations and attributes from the xs:schema element
-        // Process it to construct the prefix and namespace mappings, and the NDR version        
-        XSNamespaceItemList nsil = xsmodel.getNamespaceItems();
-        for (int i = 0; i < nsil.getLength(); i++) {
-            XSNamespaceItem nsi = nsil.item(i);   
-            String ns = nsi.getSchemaNamespace();
-            if (!W3C_XML_SCHEMA_NS_URI.equals(ns)) {
-                // Process annnotatons, generate nsPrefixMaps, nsURIMaps, nsNDRversion
-                XSObjectList annl = nsi.getAnnotations();
-                for (int ai = 0; ai < annl.getLength(); ai++) {
-                    XSAnnotation an = (XSAnnotation)annl.get(ai);
-                    String as = an.getAnnotationString();
-                    processAnnotation(ns, as);
-                }
-                // Also process list of documents contributing to this namespace
-                StringList docs = nsi.getDocumentLocations();
-                if (docs.getLength() > 1) {
-                    StringBuilder msg = new StringBuilder();
-                    msg.append(String.format("%s <- MULTIPLE DOCUMENTS\n", ns));
-                    for (int di = 0; di < docs.getLength(); di++) {
-                        msg.append(String.format("  %s\n", pileRelativePath(docs.item(di))));
-                    }
-                    xsNamespaces.add(msg.toString());
-                } else if (docs.getLength() == 1) {
-                    xsNamespaces.add(String.format("%s <- %s\n", ns, pileRelativePath(docs.item(0))));
-                } else {
-                    xsNamespaces.add(String.format("%s <- NOTHING???\n", ns));
-                }               
-            }
-        }
-        // Sort namespace list, then strip ordering prefix character
-        nsList.sort((s1,s2) -> s1.compareTo(s2));
-        nsList.replaceAll((s) -> s.substring(1));             
-                
-        // Iterate through the prefix mappings, generate multiple-map warnings
-        nsPrefix.forEach((prefix,value) -> {
-           boolean same = true;
-           String first = value.get(0).val;
-           for (int i = 1; same && i < value.size(); i++) {
-               same = (first.equals(value.get(i).val));
-           }            
-           if (!same) {
-               StringBuilder msg = new StringBuilder();
-               msg.append(String.format("prefix \"%s\" is mapped to multiple namespaces\n", prefix));
-               value.forEach((mr) -> {
-                   msg.append(String.format("  mapped to %s in namespace %s\n", mr.val, mr.ns));
-               });
-               xsWarnings.add(msg.toString());
-           }
-        });
-        // Iterate through the namespace mappings, generate warnings for
-        // multiple-map and non-standard namespace prefix
-        nsURI.forEach((uri,value) -> {
-           boolean same = true;
-           String first = value.get(0).val;
-           for (int i = 1; same && i < value.size(); i++) {
-               same = (first.equals(value.get(i).val));
-           }
-           if (!same) {
-               StringBuilder msg = new StringBuilder();
-               msg.append(String.format("multiple prefixes are mapped to namespace %s\n", uri));
-               value.forEach((mr) -> {
-                   msg.append(String.format("  prefix \"%s\" mapped in namespace %s\n", mr.val, mr.ns));
-               });
-               xsWarnings.add(msg.toString());
-           }
-           // Find non-standard prefixes
-            String ep  = ContextMap.commonPrefix(uri);
-            if (!"".equals(ep)) {
-                value.forEach((mr) -> {
-                    if (!ep.equals(mr.val)) {
-                        xsNIEMWarnings.add(
-                                String.format("namespace %s mapped to non-standard prefix %s (in namespace %s)\n",
-                                        uri, mr.val, mr.ns));
-                    }
-                });
-            }        
-        });       
-        // Iterate through the namespace versions, find external namespaces
-        nsNDRversion.forEach((ns, ver) -> {
-            if ("".equals(ver)) {
-                xsNIEMWarnings.add(String.format("namespace %s is external (no NIEM conformance assertion)\n", ns));
-            }
-        });
-    }
 
-    /**
-     * Parse the synthetic xs:annotation from a schema namespace item.
-     * Adds the prefix mappings and namespace URI mappings for this namespace.
-     * Determines the NDR version of this namespace.
-     */    
-    private void processAnnotation (String ns, String annotation) {
-        AnnotationHandler h = new AnnotationHandler(this, ns);
-        InputSource is = new InputSource(new StringReader(annotation));
-        try {
-            saxp.parse(is, h);
-        } catch (Exception ex) {
-            // IGNORE
-        }
-        nsNDRversion.put(ns, h.ndrVersion);
-        // Going to sort the namespace list when complete
-        if ("".equals(h.ndrVersion))                 { nsList.add("3"+ns); }    // externals last
-        else if (ns.startsWith(NIEM_RELEASE_PREFIX)) { nsList.add("2"+ns); }    // NIEM release namespaces middle
-        else                                         { nsList.add("1"+ns); }    // NIEM extensions first
-    }        
-    
-    private class AnnotationHandler extends DefaultHandler {
-        private final NTSchema obj;
-        private final String namespace;
-        private String ndrVersion = "";
-        AnnotationHandler (NTSchema obj, String ns) {
-            super();
-            this.obj = obj;
-            this.namespace = ns;
-        }
-        @Override
-        public void startPrefixMapping(String prefix, String uri) {
-            if (!"".equals(prefix) 
-                    && !W3C_XML_SCHEMA_NS_URI.equals(uri)
-                    && !uri.startsWith(APPINFO_NS_URI_PREFIX)
-                    && !uri.startsWith(CONFORMANCE_TARGET_NS_URI_PREFIX)
-                    && !uri.startsWith(W3C_XML_SCHEMA_INSTANCE_NS_URI)
-                    && !uri.startsWith(NIEM_XS_PREFIX)) {
-                // Record the declaration in the namespace declaration map
-                List<MapRec> mlist = obj.nsDecls.get(namespace);
-                if (mlist == null) {
-                    mlist = new ArrayList<>();
-                    obj.nsDecls.put(namespace, mlist);
-                }
-                MapRec nr = new MapRec(uri, prefix);
-                mlist.add(nr);
-                // Record the declared namespace uri in the prefix map
-                mlist = obj.nsPrefix.get(prefix);
-                if (mlist == null) {
-                    mlist = new ArrayList<>();
-                    obj.nsPrefix.put(prefix, mlist);
-                }
-                nr = new MapRec(namespace, uri);
-                mlist.add(nr);
-                // Record the declared prefix in the namespace uri map
-                mlist = obj.nsURI.get(uri);
-                if (mlist == null) {
-                    mlist = new ArrayList<>();
-                    obj.nsURI.put(uri, mlist);
-                }
-                nr = new MapRec(namespace, prefix);
-                mlist.add(nr);
-            }
-        } 
-        @Override
-        // Extract NDR version from NDR conformance target attribute
-        public void startElement (String ens, String ename, String raw, Attributes atts) {
-            if ("".equals(ndrVersion)) {
-                for (int i = 0; i < atts.getLength(); i++) {
-                    String auri = atts.getURI(i);
-                    String av = atts.getValue(i);
-                    String aln = atts.getLocalName(i);
-                    if (auri.startsWith(CONFORMANCE_TARGET_NS_URI_PREFIX) && CONFORMANCE_ATTRIBUTE_NAME.equals(aln)) {
-                        for (String ctv : av.split("\\s+")) {
-                            if (ctv.startsWith(NDR_CT_URI_PREFIX)) {
-                                ctv = ctv.substring(NDR_CT_URI_PREFIX.length());
-                                int sp = ctv.indexOf('/');
-                                if (sp >= 0) {
-                                    ctv = ctv.substring(0, sp);
-                                    ndrVersion = av;
-                                    return;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }        
-    }
-    
-    protected class MapRec {
-        String ns;       // namespace in which this mapping appears
-        String val;      // the mapped namespace prefix or namespace URI 
-        MapRec(String ns, String val) {
-            this.ns = ns;
-            this.val = val;
-        }
-        @Override
-        public String toString () {
-            return String.format("[%s,%s]", val, ns);
-        }
-    } 
-    
-    public String testOutput () {
-        StringBuilder sb = new StringBuilder(512);
-        if (!this.initializationErrorMessages().isEmpty()) {
-            sb.append("*Initialization:");
-            concat(sb,this.initializationErrorMessages());
-        }
-        else {
-            sb.append(String.format("*Schema root: %s\n", this.schemaRootDirectory()));
-            sb.append("*Assembly:\n");
-            concat(sb,this.assemblyWarningMessages());
-            sb.append("*Construction:\n");
-            concat(sb,this.xsConstructionMessages());
-            concat(sb,this.xsNamespaceList());
-            concat(sb,this.xsWarningMessages());
-            concat(sb,this.xsNIEMWarningMessages());
-        }
-        return(sb.toString());
-    }
-    
-    private void concat (StringBuilder sb, List<String> sl) {
-        for (String s : sl) {
-            sb.append(s);
-        }
-    }
     
     // ------------ STATIC HELPER METHODS  ----------------------------------    
 
@@ -1205,26 +463,6 @@ public class NTSchema {
             f = new File(uri);
         }
         return f;
-    }
-
-    static String commonPrefix(String s1, String s2) {
-        if (s2 == null) { return s1; }
-        int len1 = s1.length();
-        int len2 = s2.length();
-        int lim = min(len1, len2);
-        int i = 0;
-        while (i < lim && (s1.charAt(i) == s2.charAt(i))) {
-            i++;
-        }
-        if (i == len1) {
-            return s1;
-        } else if (i == len2) {
-            return s2;
-        } else if (i == 0) {
-            return "";
-        } else {
-            return s1.substring(0, i);
-        }
     }
     
     // Extract exception reason in parenthesis, if it's there

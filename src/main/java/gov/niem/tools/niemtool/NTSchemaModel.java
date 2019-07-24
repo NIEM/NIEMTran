@@ -37,6 +37,7 @@ public class NTSchemaModel {
     private HashMap<String,String> simpleElements;      // element URI   -> XSD type
     private HashMap<String,String> namespacePrefix;     // namespace URI -> prefix string
     private HashMap<String,String> externalNSHandler;   // namespace URI -> name of class implementing xxx interface
+    private boolean hasWildcard = false;
     
     public NTSchemaModel () {     
         this.attributes       = new HashMap<>();
@@ -53,6 +54,7 @@ public class NTSchemaModel {
             this.simpleElements   = m.simpleElements;
             this.namespacePrefix  = m.namespacePrefix;
             this.externalNSHandler = m.externalNSHandler;
+            this.hasWildcard       = m.hasWildcard;
         } catch (RuntimeException ex) {
             throw (new FormatException("Can't initialize NTSchemaModel", ex)); 
         }
@@ -66,6 +68,7 @@ public class NTSchemaModel {
             this.simpleElements   = m.simpleElements;
             this.namespacePrefix  = m.namespacePrefix;
             this.externalNSHandler = m.externalNSHandler;
+            this.hasWildcard       = m.hasWildcard;
         } catch (RuntimeException ex) {
             throw (new FormatException("Can't initialize NTSchemaModel", ex));            
         }
@@ -93,6 +96,14 @@ public class NTSchemaModel {
     
     public Map<String,String> externalNSHandler () {
         return externalNSHandler;
+    }
+    
+    public boolean hasWildcard() {
+        return hasWildcard;
+    }
+    
+    public void setHasWildcard(boolean val) {
+        hasWildcard = val;
     }
     
     public void addAttribute(String uri, String type) {

@@ -29,14 +29,22 @@ import org.apache.xerces.xs.XSTypeDefinition;
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import static gov.niem.tools.niemtool.NTConstants.*;
 import java.io.IOException;
+import java.util.ArrayList;
+import org.apache.xerces.xs.XSModelGroup;
+import org.apache.xerces.xs.XSObjectList;
+import org.apache.xerces.xs.XSParticle;
+import org.apache.xerces.xs.XSTerm;
 
 /**
- *
+ * A class for producing a NTSchemaModel object from an XML schema, in order
+ * to drive translation between NIEM XML, NIEM JSON, and NIEM RDF. 
+ * 
  * @author Scott Renner <sar@mitre.org>
  */
 public class NTCompiledSchema extends NTSchema {
         
     private NTSchemaModel ntmodel = null;
+    private XSNamespaceInfo nsInfo = null;
     
     public NTCompiledSchema () throws ParserConfigurationException, IOException {
         super();
@@ -55,24 +63,29 @@ public class NTCompiledSchema extends NTSchema {
         if (xs == null) {
             return null;
         }        
-        ntmodel =  new NTSchemaModel();        
-               
-        // Now determine a unique prefix for each namespace in schema
-        // using the namespace ordering for priorty in case of prefix conflict.
-        NamespaceMap nsmap = new NamespaceMap();
-        nsmap.assignPrefix(RDF_NS_URI, "rdf"); 
-        nsList().forEach((namespace) -> {
-            List<MapRec> maps = nsDecls().get(namespace);
-            maps.forEach((rec) -> { 
-                nsmap.assignPrefix(rec.ns, rec.val);
+        NamespaceBindings nsbind = new NamespaceBindings();
+        ntmodel =  new NTSchemaModel();   
+        nsInfo  = new XSNamespaceInfo(xs);
+    
+        // Assign unique prefix for each namespace in schema.
+        // Start with declarations in the extension schemas, on the assumption
+        // that the message designer knew what he was doing.
+        // Follow with declarations in NIEM model schemas, to get the usual
+        // namespace prefixes (unless the designer chose something else).
+        // Declarations in external schemas come last.
+        // rdf: prefix always means RDF, no matter what crazy-ass thing
+        // may be in the extension or external schemas.
+        nsbind.assignPrefix(RDF_NS_URI, "rdf");
+        nsInfo.nsList().forEach((ns) -> {
+            nsInfo.nsDecls().get(ns).forEach((uri,prefix) -> {
+                nsbind.assignPrefix(uri, prefix);
             });
         });
-        nsmap.nsmap().forEach((ns, prefix) -> {
-            ntmodel.addNamespacePrefix(ns, prefix);
+        nsbind.getDecls().forEach((uri,prefix) -> {
+            ntmodel.addNamespacePrefix(uri, prefix);
         });
-
         // Find external namespaces
-        nsNDRversion().forEach((ns, ver) -> {
+        nsInfo.nsNDRversion().forEach((ns, ver) -> {
             if ("".equals(ver)){
                 ntmodel.addExternalNS(ns);
             }
@@ -103,10 +116,43 @@ public class NTCompiledSchema extends NTSchema {
             String ts = genTypeString(stype);
             ntmodel.addAttribute(buildURI(item), ts);
         }
+        // Find wildcards
+        map = xs.getComponents(XSTypeDefinition.COMPLEX_TYPE);
+        for (int i = 0; i < map.getLength(); i++) {
+            XSComplexTypeDefinition ctype = (XSComplexTypeDefinition)map.item(i);
+            if (ctype.getAttributeWildcard() != null) {
+                ntmodel.setHasWildcard(true);
+            }
+            else if (ctype.getContentType() == XSComplexTypeDefinition.CONTENTTYPE_ELEMENT) {
+                XSParticle part = ctype.getParticle();
+                ArrayList<XSTerm> terms = new ArrayList<>();
+                collectTerms(terms, part);
+                for (XSTerm t : terms) {
+                    if (t.getType() == XSConstants.WILDCARD) {
+                        ntmodel.setHasWildcard(true);
+                    }
+                }
+            }
+        }
         return ntmodel;
     }
     
-    private String genTypeString (XSSimpleTypeDefinition stype) {
+    private void collectTerms(List<XSTerm> terms, XSParticle p) {
+        XSTerm t = p.getTerm();
+        if (t.getType() != XSConstants.MODEL_GROUP) {
+            terms.add(t);
+        }
+        else {
+            XSModelGroup mg = (XSModelGroup) t;
+            XSObjectList pl = mg.getParticles();
+            for (int i = 0; i < pl.getLength(); i++) {
+                XSParticle np = (XSParticle)pl.item(i);
+                collectTerms(terms, np);
+            }
+        }
+    }
+    
+    private static String genTypeString (XSSimpleTypeDefinition stype) {
         String result = "";
         if (stype == null) {
             int k = 0;

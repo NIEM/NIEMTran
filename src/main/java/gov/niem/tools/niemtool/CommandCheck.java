@@ -124,20 +124,20 @@ public class CommandCheck implements JCCommand {
         for (String s : mainArgs) {
             schemas.addAll(Arrays.asList(s.split(fsep)));
         }
-        NTSchema sc = null;
+        NTCheckedSchema sc = null;
         try {
-            sc = new NTSchema(catalogs, schemas);
+            sc = new NTCheckedSchema(catalogs, schemas);
         } catch (Exception ex) {
             System.out.println(ex.getMessage());
             System.exit(2);
         }
         
         // Initialization checking
-        boolean schemasFound = (sc.getAllInitialSchemaURIs().size() > 0);
+        boolean schemasFound = (sc.getAllInitialSchemas().size() > 0);
         if (verbose) {
             System.out.println("== Schema initialization ==");
             printMessages("Catalog validation results:", sc.resolver().validationResults());
-            printItems("Initial schema documents:", sc.getAllInitialSchemaURIs());
+            printItems("Initial schema documents:", sc.getAllInitialSchemas());
         }
         if (!schemasFound) {
             System.out.println("No initial schema documents provided");   

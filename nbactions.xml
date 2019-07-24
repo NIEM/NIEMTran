@@ -1,19 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <actions>
         <action>
-            <actionName>CUSTOM-assemboe</actionName>
-            <displayName>assemboe</displayName>
-            <goals>
-                <goal>appassembler:assemble</goal>
-            </goals>
-        </action>
-        <action>
             <actionName>CUSTOM-assemble</actionName>
             <displayName>assemble</displayName>
             <goals>
                 <goal>clean</goal>
                 <goal>package</goal>
+                <goal>jar:jar</goal>
                 <goal>appassembler:assemble</goal>
+                
             </goals>
         </action>
+        
     </actions>
