@@ -145,9 +145,9 @@ public class NTCompiledSchemaTest {
             ofw.close();
             assertTrue(FileUtils.contentEquals(expected, out));
         } catch (IOException ex) {
-            Logger.getLogger(NTSchemaTest.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(NTCheckedSchemaTest.class.getName()).log(Level.SEVERE, null, ex);
         } catch (ParserConfigurationException ex) {
-            Logger.getLogger(NTSchemaTest.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(NTCheckedSchemaTest.class.getName()).log(Level.SEVERE, null, ex);
         }
     }   
     

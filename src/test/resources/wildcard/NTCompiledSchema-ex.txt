@@ -34,5 +34,6 @@
     "http://example.com/CrashDriver/1.0/": "exch",
     "http://release.niem.gov/niem/structures/4.0/": "structures"
   },
-  "externalNSHandler": {}
+  "externalNSHandler": {},
+  "hasWildcard": true
 }

@@ -61,5 +61,6 @@
   "externalNSHandler": {
     "http://www.w3.org/1999/xlink": "",
     "http://www.opengis.net/gml/3.2": ""
-  }
+  },
+  "hasWildcard": true
 }

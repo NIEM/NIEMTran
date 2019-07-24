@@ -170,19 +170,21 @@ public class XSNamespaceInfo {
         schemaRootLen = schemaRoot.length();
         for (int i = 0; i < nsil.getLength(); i++) {
             XSNamespaceItem nsi = nsil.item(i);
-            String ns = nsi.getSchemaNamespace();            
-            StringList docs = nsi.getDocumentLocations();
-            if (docs.getLength() > 1) {
-                StringBuilder msg = new StringBuilder();
-                msg.append(String.format("%s <- MULTIPLE DOCUMENTS\n", ns));
-                for (int di = 0; di < docs.getLength(); di++) {
-                    msg.append(String.format("  %s\n", docs.item(di).substring(schemaRootLen)));
+            String ns = nsi.getSchemaNamespace();  
+            if (!W3C_XML_SCHEMA_NS_URI.equals(ns)) {
+                StringList docs = nsi.getDocumentLocations();
+                if (docs.getLength() > 1) {
+                    StringBuilder msg = new StringBuilder();
+                    msg.append(String.format("%s <- MULTIPLE DOCUMENTS\n", ns));
+                    for (int di = 0; di < docs.getLength(); di++) {
+                        msg.append(String.format("  %s\n", docs.item(di).substring(schemaRootLen)));
+                    }
+                    xsNamespaceDocs.add(msg.toString());
+                } else if (docs.getLength() == 1) {
+                    xsNamespaceDocs.add(String.format("%s <- %s\n", ns, docs.item(0).substring(schemaRootLen)));
+                } else {
+                    xsNamespaceDocs.add(String.format("%s <- NOTHING???\n", ns));
                 }
-                xsNamespaceDocs.add(msg.toString());
-            } else if (docs.getLength() == 1) {
-                xsNamespaceDocs.add(String.format("%s <- %s\n", ns, docs.item(0).substring(schemaRootLen)));
-            } else {
-                xsNamespaceDocs.add(String.format("%s <- NOTHING???\n", ns));
             }
         }
         // Sort namespace list, then strip ordering character
@@ -195,19 +197,21 @@ public class XSNamespaceInfo {
                 StringBuilder msg = new StringBuilder();
                 msg.append(String.format("prefix \"%s\" is mapped to multiple namespaces\n", prefix));
                 map.forEach((uri,ns) -> {
-                    msg.append(String.format("  mapped to %s in namespace %s\n", uri, ns));
+                    msg.append(String.format("  to %s in namespace %s\n", uri, ns));
                 });
+                xsWarnings.add(msg.toString());
             }
         });
         // Iterate through the namespace mappings
         // Generate warnings for multiple-map and non-standard namespace prefix
         nsURI.forEach((uri,map) -> {
-            if (map.values().size() > 1) {
+            if (map.values().stream().distinct().count() > 1) {
                 StringBuilder msg = new StringBuilder();
                 msg.append(String.format("multiple prefixes are mapped to namespace %s\n", uri));
                 map.forEach((ns,prefix) -> {
-                    msg.append(String.format("  prefix \"%s\" mapped in namespace %s\n", prefix, ns));
+                    msg.append(String.format("  prefix \"%s\" in namespace %s\n", prefix, ns));
                 });
+                xsWarnings.add(msg.toString());
             }
             String expected = ContextMap.commonPrefix(uri);   // expected prefix
             if (!expected.isEmpty()) {

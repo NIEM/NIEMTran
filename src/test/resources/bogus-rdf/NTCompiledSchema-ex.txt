@@ -35,5 +35,6 @@
     "http://do/not/do/this": "rdf_1",
     "http://release.niem.gov/niem/structures/4.0/": "structures"
   },
-  "externalNSHandler": {}
+  "externalNSHandler": {},
+  "hasWildcard": true
 }

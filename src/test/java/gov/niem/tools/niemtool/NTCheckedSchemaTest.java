@@ -33,9 +33,9 @@ import org.junit.jupiter.api.Test;
  *
  * @author Scott Renner <sar@mitre.org>
  */
-public class NTSchemaTest {
+public class NTCheckedSchemaTest {
     
-    public NTSchemaTest() {
+    public NTCheckedSchemaTest() {
     }
     
     // @ParameterizedTest would be cool, but it's not working
@@ -111,10 +111,10 @@ public class NTSchemaTest {
         File edir = new File(dir, "extension");
         IOFileFilter dfilter = new RegexFileFilter("^.*catalog.xml$");
         IOFileFilter efilter = new SuffixFileFilter(".xsd");        
-        File expected = new File(dir, "NTSchema-ex.txt");
+        File expected = new File(dir, "NTCheckedSchema-ex.txt");
         try {
-            File out = new File(dir, "NTSchema-out.txt");
-            NTSchema s = new NTSchema();
+            File out = new File(dir, "NTCheckedSchema-out.txt");
+            NTCheckedSchema s = new NTCheckedSchema();
             Iterator<File> dfiles = FileUtils.iterateFiles(dir, dfilter, null);
             while (dfiles.hasNext()) {
                 File f = dfiles.next();
@@ -129,9 +129,9 @@ public class NTSchemaTest {
             FileUtils.writeStringToFile(out, ts, "utf-8");
             assertTrue(FileUtils.contentEquals(expected, out));
         } catch (IOException ex) {
-            Logger.getLogger(NTSchemaTest.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(NTCheckedSchemaTest.class.getName()).log(Level.SEVERE, null, ex);
         } catch (ParserConfigurationException ex) {
-            Logger.getLogger(NTSchemaTest.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(NTCheckedSchemaTest.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 }
