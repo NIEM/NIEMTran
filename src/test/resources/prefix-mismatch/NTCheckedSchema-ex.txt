@@ -11,14 +11,14 @@ prefix "exch" is mapped to multiple namespaces
   to http://release.niem.gov/niem/niem-core/4.0/ in namespace http://release.niem.gov/niem/domains/jxdm/6.0/
   to http://example.com/CrashDriver/1.0/ in namespace http://example.com/CrashDriver/1.0/
 multiple prefixes are mapped to namespace http://release.niem.gov/niem/niem-core/4.0/
+  prefix "nc" in namespace http://example.com/CrashDriver/1.0/
   prefix "nc" in namespace http://release.niem.gov/niem/niem-core/4.0/
   prefix "exch" in namespace http://release.niem.gov/niem/domains/jxdm/6.0/
-  prefix "nc" in namespace http://example.com/CrashDriver/1.0/
 multiple prefixes are mapped to namespace http://release.niem.gov/niem/structures/4.0/
+  prefix "s" in namespace http://example.com/CrashDriver/1.0/
+  prefix "structures" in namespace http://release.niem.gov/niem/proxy/xsd/4.0/
   prefix "structures" in namespace http://release.niem.gov/niem/niem-core/4.0/
   prefix "structures" in namespace http://release.niem.gov/niem/domains/jxdm/6.0/
   prefix "structures" in namespace http://release.niem.gov/niem/codes/unece_rec20/4.0/
-  prefix "s" in namespace http://example.com/CrashDriver/1.0/
-  prefix "structures" in namespace http://release.niem.gov/niem/proxy/xsd/4.0/
 namespace http://release.niem.gov/niem/niem-core/4.0/ mapped to non-standard prefix exch (in namespace http://release.niem.gov/niem/domains/jxdm/6.0/)
 namespace http://release.niem.gov/niem/structures/4.0/ mapped to non-standard prefix s (in namespace http://example.com/CrashDriver/1.0/)

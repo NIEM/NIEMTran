@@ -54,13 +54,25 @@ public class XSNamespaceInfo {
     private String schemaRoot;                              // common prefix of schema document absolute file URIs
     private int schemaRootLen;                              // length of common prefix    
     private final List<String> xsNamespaceDocs;             // namespace & contributing documents from XSModel
-    private final List<String> xsWarnings;                  // schema warnings derived from XSModel
-    private final List<String> xsNIEMWarnings;              // niem-specific schema warnings from XSModel
     private final List<String> nsList;                      // sorted list of namespaces in schema (extension, NIEM model, external)
     private final Map<String,String> nsNDRversion;          // from ct:conformanceTargets; "" for external namespace
-    private final Map<String,HashMap<String,String>> nsDecls;     // nsDecls.get(N).get(U)   -> P, where namespace N contains xmlns:P=U
-    private final Map<String,HashMap<String,String>> nsPrefix;    // nsPrefixs.get(P).get(U) -> N, a namespace containing xmlns:P=U
-    private final Map<String,HashMap<String,String>> nsURI;       // nsURIs.get(U).get(N)    -> P, the prefix bound to U in namespace N
+    private List<String> xsWarnings;                  // schema warnings derived from XSModel
+    private List<String> xsNIEMWarnings;              // niem-specific schema warnings from XSModel    
+    
+    // For each namespace, record mapping of namespace prefix to URI declared
+    // nsDecls.get(N).get(P)==U, where namespace N contains xmlns:P=U
+    // Within a namespace, P can only be mapped to a single U
+    private final Map<String,HashMap<String,String>> nsDecls;   
+  
+    // For each prefix, record how it is mapped in each namespace
+    // nsPrefixs.get(P).get(N)==U, a namespace containing xmlns:P=U
+    // For a prefix P, N can only map P to a single U
+    private final Map<String,HashMap<String,String>> nsPrefix;    
+    
+    // For each URI, record how each namespace maps it to a prefix
+    // nsURIs.get(U)->list of (P,N) tuples, where P is mapped to U in namespace N
+    // A uri U can be mapped to any number of prefix Ps in a single namespace N
+    private final Map<String,List<MapRec>> nsURI;       
 
     XSNamespaceInfo (XSModel xs) {
         try {
@@ -74,8 +86,8 @@ public class XSNamespaceInfo {
         nsURI           = new HashMap<>();
         nsNDRversion    = new HashMap<>();
         xsNamespaceDocs = new ArrayList<>();
-        xsWarnings      = new ArrayList<>();
-        xsNIEMWarnings  = new ArrayList<>();
+        xsWarnings      = null;
+        xsNIEMWarnings  = null;
         processNamespaceItems(xs);
     }
 
@@ -84,9 +96,9 @@ public class XSNamespaceInfo {
      * the namespace URI plus list of document that contributed to the namespace.
      * @return list of namespaces and contributing documents
      */
-    public List<String> xsNamespaceList () {
+    public List<String> xsNamespaceList() {
         return xsNamespaceDocs;
-    } 
+    }
     
     /**
      * Return warnings derived from Xerces XSModel. Complains about <ul>
@@ -95,6 +107,35 @@ public class XSNamespaceInfo {
      * @return list of warnings
      */
     public List<String> xsWarningMessages() {
+        if (xsWarnings == null) {
+            xsWarnings = new ArrayList<>();
+            // Iterate through the prefix mappings, 
+            // generate warning when a prefix is mapped to >1 URI
+            nsPrefix.forEach((prefix, map) -> {
+                long ctURIsMappedToPrefix = map.values().stream().distinct().count();
+                if (ctURIsMappedToPrefix > 1) {
+                    StringBuilder msg = new StringBuilder();
+                    msg.append(String.format("prefix \"%s\" is mapped to multiple namespaces\n", prefix));
+                    map.forEach((ns, uri) -> {
+                        msg.append(String.format("  to %s in namespace %s\n", uri, ns));
+                    });
+                    xsWarnings.add(msg.toString());
+                }
+            });
+            // Iterate through the URI mappings,
+            // generate warning when a URI is mapped to >1 prefix
+            nsURI.forEach((uri, nlst) -> {
+                long ctPrefixMappedToURI = nlst.stream().map(MapRec::getPrefix).distinct().count();
+                if (ctPrefixMappedToURI > 1) {
+                    StringBuilder msg = new StringBuilder();
+                    msg.append(String.format("multiple prefixes are mapped to namespace %s\n", uri));
+                    nlst.forEach((mr) -> {
+                        msg.append(String.format("  prefix \"%s\" in namespace %s\n", mr.prefix, mr.ns));
+                    });
+                    xsWarnings.add(msg.toString());
+                }
+            });  
+        }
         return xsWarnings;
     }
     
@@ -105,6 +146,29 @@ public class XSNamespaceInfo {
      * @return list of NIEM-specfic warnings
      */
     public List<String> xsNIEMWarningMessages() {
+        if (xsNIEMWarnings == null) {
+            xsNIEMWarnings = new ArrayList<>();
+            // Iterate through the URI mappings,
+            // Generate warning for non-standard prefix mappings        
+            nsURI.forEach((uri, nlst) -> {
+                String expected = ContextMap.commonPrefix(uri);   // expected prefix
+                if (!expected.isEmpty()) {
+                    nlst.forEach((mr) -> {
+                        if (!expected.equals(mr.prefix)) {
+                            xsNIEMWarnings.add(
+                                    String.format("namespace %s mapped to non-standard prefix %s (in namespace %s)\n",
+                                            uri, mr.prefix, mr.ns));
+                        }
+                    });
+                }
+            });
+            // Iterate through the namespace versions, find external namespaces
+            nsNDRversion.forEach((ns, ver) -> {
+                if ("".equals(ver)) {
+                    xsNIEMWarnings.add(String.format("namespace %s is external (no NIEM conformance assertion)\n", ns));
+                }
+            });
+        }
         return xsNIEMWarnings;
     }
     
@@ -123,14 +187,6 @@ public class XSNamespaceInfo {
           return nsDecls;
     }
     
-    public Map<String,HashMap<String,String>> nsPrefixMaps() {
-        return nsPrefix;
-    }
-    
-    public Map<String,HashMap<String,String>> nsURIMaps() {
-        return nsURI;
-    }
-    
     public Map<String,String> nsNDRversion() {
         return nsNDRversion;
     }    
@@ -140,7 +196,6 @@ public class XSNamespaceInfo {
      * Each namespace in the schema model has a synthetic annotation contatining
      * the namespace declarations and attributes from the xs:schema element
      * Process it to construct the prefix and namespace mappings, and the NDR version 
-     * Generate the warning messages.
      */
     private void processNamespaceItems (XSModel xs) {
         if (xs == null) { return; }
@@ -187,49 +242,9 @@ public class XSNamespaceInfo {
                 }
             }
         }
-        // Sort namespace list, then strip ordering character
+        // Sort namespace list, then strip ordering character prepended by processAnnotation
         nsList.sort((s1,s2) -> s1.compareTo(s2));
         nsList.replaceAll((s) -> s.substring(1));             
-                
-        // Iterate through the prefix mappings, generate multiple-map warnings
-        nsPrefix.forEach((prefix,map) -> {
-            if (map.keySet().size() > 1) {
-                StringBuilder msg = new StringBuilder();
-                msg.append(String.format("prefix \"%s\" is mapped to multiple namespaces\n", prefix));
-                map.forEach((uri,ns) -> {
-                    msg.append(String.format("  to %s in namespace %s\n", uri, ns));
-                });
-                xsWarnings.add(msg.toString());
-            }
-        });
-        // Iterate through the namespace mappings
-        // Generate warnings for multiple-map and non-standard namespace prefix
-        nsURI.forEach((uri,map) -> {
-            if (map.values().stream().distinct().count() > 1) {
-                StringBuilder msg = new StringBuilder();
-                msg.append(String.format("multiple prefixes are mapped to namespace %s\n", uri));
-                map.forEach((ns,prefix) -> {
-                    msg.append(String.format("  prefix \"%s\" in namespace %s\n", prefix, ns));
-                });
-                xsWarnings.add(msg.toString());
-            }
-            String expected = ContextMap.commonPrefix(uri);   // expected prefix
-            if (!expected.isEmpty()) {
-                map.forEach((ns,prefix) -> {
-                    if (!expected.equals(prefix)) {
-                        xsNIEMWarnings.add(
-                            String.format("namespace %s mapped to non-standard prefix %s (in namespace %s)\n",
-                                    uri, prefix, ns));
-                    }
-                });
-            }
-        });
-        // Iterate through the namespace versions, find external namespaces
-        nsNDRversion.forEach((ns, ver) -> {
-            if ("".equals(ver)) {
-                xsNIEMWarnings.add(String.format("namespace %s is external (no NIEM conformance assertion)\n", ns));
-            }
-        });
     }
 
     /**
@@ -255,7 +270,7 @@ public class XSNamespaceInfo {
     
     // SAX handler to parse a Xerces namespace annotation
     private class AnnotationHandler extends DefaultHandler {
-        private final XSNamespaceInfo obj;
+        private final XSNamespaceInfo obj;  // the XSNamespaceInfo object doing the processing
         private final String ns;            // URI of namespace annotation being processed
         private String ndrVersion = "";     // from ct:conformanceTarget attribute in namespace being processed
         AnnotationHandler (XSNamespaceInfo obj, String ns) {
@@ -273,29 +288,29 @@ public class XSNamespaceInfo {
                     && !u.startsWith(W3C_XML_SCHEMA_INSTANCE_NS_URI)
                     && !u.startsWith(NIEM_XS_PREFIX)) {
                 
-                // Record: namespace ns declares uri u is mapped to prefix p
-                HashMap<String,String> m = obj.nsDecls.get(ns);
-                if (m == null) {
-                    m = new HashMap<>();
-                    obj.nsDecls.put(ns, m);
+                // Record: namespace ns declares prefix p is mapped to URI u
+                HashMap<String,String> map = obj.nsDecls.get(ns);
+                if (map == null) {
+                    map = new HashMap<>();
+                    obj.nsDecls.put(ns, map);
                 }
-                m.put(u, p);
+                map.put(p, u);
                 
                 // Record: prefix p is mapped to uri u in namespace ns
-                m = obj.nsPrefix.get(p);
-                if (m == null) {
-                    m = new HashMap<>();
-                    obj.nsPrefix.put(p, m);
+                map = obj.nsPrefix.get(p);
+                if (map == null) {
+                    map = new HashMap<>();
+                    obj.nsPrefix.put(p, map);
                 }
-                m.put(u, ns);
+                map.put(ns, u);
                 
                 // Record: uri u in namespace ns is bound to prefix p
-                m = obj.nsURI.get(u);
-                if (m == null) {
-                    m = new HashMap<>();
-                    obj.nsURI.put(u, m);
+                List mlst = obj.nsURI.get(u);
+                if (mlst == null) {
+                    mlst = new ArrayList<>();
+                    obj.nsURI.put(u, mlst);
                 }
-                m.put(ns, p);
+                mlst.add(new MapRec(p, ns));
             }
         } 
         @Override
@@ -322,6 +337,18 @@ public class XSNamespaceInfo {
                 }
             }
         }        
+    }
+    
+    private class MapRec {
+        String prefix;
+        String ns;
+        MapRec (String p, String n) {
+            prefix = p;
+            ns = n ;
+        }
+        String getPrefix() {
+            return prefix;
+        }
     }
 
     public static String commonPrefix(String s1, String s2) {

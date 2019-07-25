@@ -36,10 +36,11 @@ import org.apache.xerces.xs.XSParticle;
 import org.apache.xerces.xs.XSTerm;
 
 /**
- * A class for producing a NTSchemaModel object from an XML schema, in order
- * to drive translation between NIEM XML, NIEM JSON, and NIEM RDF. 
+ * A class for producing a NTSchemaModel object from an XML schema; that 
+ * object holds the information needed to drive translation between NIEM XML, 
+ * NIEM JSON, and NIEM RDF. 
  * 
- * @author Scott Renner <sar@mitre.org>
+ * @author Scott Renner, The MITRE Corporation
  */
 public class NTCompiledSchema extends NTSchema {
         
@@ -73,11 +74,11 @@ public class NTCompiledSchema extends NTSchema {
         // Follow with declarations in NIEM model schemas, to get the usual
         // namespace prefixes (unless the designer chose something else).
         // Declarations in external schemas come last.
-        // rdf: prefix always means RDF, no matter what crazy-ass thing
+        // rdf: prefix always means RDF, no matter what crazy-ass decls
         // may be in the extension or external schemas.
         nsbind.assignPrefix(RDF_NS_URI, "rdf");
         nsInfo.nsList().forEach((ns) -> {
-            nsInfo.nsDecls().get(ns).forEach((uri,prefix) -> {
+            nsInfo.nsDecls().get(ns).forEach((prefix,uri) -> {
                 nsbind.assignPrefix(uri, prefix);
             });
         });
