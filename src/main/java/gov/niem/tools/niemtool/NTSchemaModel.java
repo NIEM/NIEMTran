@@ -33,26 +33,27 @@ public class NTSchemaModel {
        
     private final String modelVersion = "1.0";
     
+    private NamespaceBindings nsbind;                   // namespace declarations in schema
     private HashMap<String,String> attributes;          // attribute URI -> XSD type (string, list/IDREF, etc.)
     private HashMap<String,String> simpleElements;      // element URI   -> XSD type
-    private HashMap<String,String> namespacePrefix;     // namespace URI -> prefix string
     private HashMap<String,String> externalNSHandler;   // namespace URI -> name of class implementing xxx interface
-    private boolean hasWildcard = false;
+    private boolean hasWildcard;
     
     public NTSchemaModel () {     
+        this.nsbind           = new NamespaceBindings();
         this.attributes       = new HashMap<>();
         this.simpleElements   = new HashMap<>();
-        this.namespacePrefix  = new HashMap<>();
         this.externalNSHandler = new HashMap<>();
+        this.hasWildcard = false;
     }
     
     public NTSchemaModel(String jsonString) throws FormatException {
         NTSchemaModel m = null;
         try {
             m = gson.fromJson(jsonString, NTSchemaModel.class);
+            this.nsbind           = m.nsbind;
             this.attributes       = m.attributes;
             this.simpleElements   = m.simpleElements;
-            this.namespacePrefix  = m.namespacePrefix;
             this.externalNSHandler = m.externalNSHandler;
             this.hasWildcard       = m.hasWildcard;
         } catch (RuntimeException ex) {
@@ -64,14 +65,24 @@ public class NTSchemaModel {
         NTSchemaModel m = null;
         try {
             m = gson.fromJson(r, NTSchemaModel.class);
+            this.nsbind           = m.nsbind;
             this.attributes       = m.attributes;
             this.simpleElements   = m.simpleElements;
-            this.namespacePrefix  = m.namespacePrefix;
             this.externalNSHandler = m.externalNSHandler;
             this.hasWildcard       = m.hasWildcard;
         } catch (RuntimeException ex) {
             throw (new FormatException("Can't initialize NTSchemaModel", ex));            
         }
+    }
+    
+    /**
+     * Return the object for the prefix-namespace bindings in this schema.
+     * Callers must make a shallow copy of this object if they need to modify
+     * any of the bindings.
+     * @return namespace binding object
+     */
+    public NamespaceBindings namespaceBindings() {
+        return nsbind;
     }
     
     public String attributeType(String uri) {
@@ -88,10 +99,6 @@ public class NTSchemaModel {
     
     public Map<String,String> simpleElements () {
         return simpleElements;
-    }
-    
-    public Map<String,String> namespacePrefix () {
-        return namespacePrefix;
     }
     
     public Map<String,String> externalNSHandler () {
@@ -115,7 +122,7 @@ public class NTSchemaModel {
     }
     
     public void addNamespacePrefix (String namespace, String prefix) {
-        namespacePrefix.put(namespace, prefix);
+        nsbind.assignPrefix(prefix, namespace);
     }
     
     public void addExternalNS (String ns) {

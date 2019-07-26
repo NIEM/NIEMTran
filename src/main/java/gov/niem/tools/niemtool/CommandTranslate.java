@@ -152,21 +152,26 @@ public class CommandTranslate implements JCCommand {
         }
         
         // Set up the translator object, collect results, write to output
-        NTXMLtoJSON trans = new NTXMLtoJSON(model);
-        JsonObject json = null;
+        Translate trans = new Translate(model);
+        JsonObject data = new JsonObject();
+        JsonObject cxt  = new JsonObject();
+        int rflag = -1;
         try {
-            json = trans.xml2jsonObject(inST);
-        } catch (ParserConfigurationException ex) {
+            rflag = trans.xml2json(inST, data, cxt);
+        } catch (IOException ex) {
             Logger.getLogger(CommandTranslate.class.getName()).log(Level.SEVERE, null, ex);
         } catch (SAXException ex) {
             Logger.getLogger(CommandTranslate.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException ex) {
+        } catch (ParserConfigurationException ex) {
             Logger.getLogger(CommandTranslate.class.getName()).log(Level.SEVERE, null, ex);
         }
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        outPW.println("\noutput!");
-        outPW.print(gson.toJson(json));
-        outPW.close();
+        System.out.println("translate returns "+rflag);
+        System.out.println("data:");
+        System.out.println(gson.toJson(data));
+        System.out.println("context:");
+        System.out.println(gson.toJson(cxt));
+        
     }
 }
 

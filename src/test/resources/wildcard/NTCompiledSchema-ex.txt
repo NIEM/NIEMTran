@@ -1,5 +1,21 @@
 {
   "modelVersion": "1.0",
+  "nsbind": {
+    "prefixOf": {
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#": "rdf",
+      "http://release.niem.gov/niem/niem-core/4.0/": "nc",
+      "http://release.niem.gov/niem/domains/jxdm/6.0/": "j",
+      "http://release.niem.gov/niem/codes/unece_rec20/4.0/": "unece",
+      "http://example.com/CrashDriver/1.0/": "exch"
+    },
+    "uriOf": {
+      "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+      "nc": "http://release.niem.gov/niem/niem-core/4.0/",
+      "exch": "http://example.com/CrashDriver/1.0/",
+      "j": "http://release.niem.gov/niem/domains/jxdm/6.0/",
+      "unece": "http://release.niem.gov/niem/codes/unece_rec20/4.0/"
+    }
+  },
   "attributes": {
     "http://release.niem.gov/niem/structures/4.0/#uri": "anyURI",
     "http://release.niem.gov/niem/structures/4.0/#id": "ID",
@@ -25,14 +41,6 @@
     "http://release.niem.gov/niem/domains/jxdm/6.0/#CriminalInformationIndicator": "boolean",
     "http://release.niem.gov/niem/domains/jxdm/6.0/#ChargeFelonyIndicator": "boolean",
     "http://release.niem.gov/niem/domains/jxdm/6.0/#JuvenileAsAdultIndicator": "boolean"
-  },
-  "namespacePrefix": {
-    "http://www.w3.org/1999/02/22-rdf-syntax-ns#": "rdf",
-    "http://release.niem.gov/niem/niem-core/4.0/": "nc",
-    "http://release.niem.gov/niem/domains/jxdm/6.0/": "j",
-    "http://release.niem.gov/niem/codes/unece_rec20/4.0/": "unece",
-    "http://example.com/CrashDriver/1.0/": "exch",
-    "http://release.niem.gov/niem/structures/4.0/": "structures"
   },
   "externalNSHandler": {},
   "hasWildcard": true

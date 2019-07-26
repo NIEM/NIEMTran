@@ -255,8 +255,8 @@ public class XSNamespaceInfo {
     private void processAnnotation (String ns, String annotation) {
         AnnotationHandler h = new AnnotationHandler(this, ns);
         InputSource is = new InputSource(new StringReader(annotation));
-        SAXParser saxp = parsers.sax2Parser();        
         try {
+            SAXParser saxp = parsers.sax2Parser();  
             saxp.parse(is, h);
         } catch (Exception ex) {
             // IGNORE

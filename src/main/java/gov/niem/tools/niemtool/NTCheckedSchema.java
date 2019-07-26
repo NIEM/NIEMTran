@@ -21,6 +21,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -365,11 +367,11 @@ public class NTCheckedSchema extends NTSchema {
             namespaceFile.put(r.ns, furi);
             attemptedFiles.add(furi);
             Handler myhandler = new Handler(this.loadDocs, r);
-            SAXParser saxp = parsers.sax2Parser();
             try {
+                SAXParser saxp = parsers.sax2Parser();
                 saxp.parse(furi, myhandler);
                 loadedFiles.add(furi);
-            } catch (SAXException ex) {
+            } catch (SAXException | ParserConfigurationException ex) {
                 String em = exceptionReason(ex);
                 r.warn("can't parse schema document *%s: %s\n", furi, em);
             } catch (IOException ex) {

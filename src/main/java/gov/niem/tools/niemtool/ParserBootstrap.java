@@ -21,37 +21,47 @@ import javax.xml.parsers.SAXParserFactory;
 import org.apache.xerces.xs.XSImplementation;
 import org.apache.xerces.xs.XSLoader;
 import org.w3c.dom.bootstrap.DOMImplementationRegistry;
+import org.xml.sax.SAXException;
 
 /**
  *
  * A class for bootstrapping the Xerces XML Schema parser and the
- * default SAX parser.
+ * default SAX parser.  Useful if you want to bootstrap once, perhaps
+ * at the start of execution, and handle the possible exceptions then
+ * and there.
  * @author Scott Renner, The MITRE Corporation
  */
 public class ParserBootstrap {
+    public static final int BOOTSTRAP_XERCES_XS = 1;
+    public static final int BOOTSTRAP_SAX2 = 2;
+    public static final int BOOTSTRAP_ALL = 3;
+    
     private static SAXParserFactory sfact = null;
-    private static SAXParser saxp = null;                   // reusable SAX2 parser object, for schema assembly checking
     private static XSImplementation xsimpl = null;          // Xerces XSImplementation, for creating XSLoader object
 
-    ParserBootstrap() throws ParserConfigurationException {
-        if (sfact == null) {
+    ParserBootstrap () throws ParserConfigurationException {
+        this(BOOTSTRAP_ALL);
+    }
+    
+    ParserBootstrap(int which) throws ParserConfigurationException {
+        if (0 != (which | BOOTSTRAP_SAX2) && sfact == null) {
             try {
                 sfact = SAXParserFactory.newInstance();
                 sfact.setNamespaceAware(true);
                 sfact.setValidating(false);
-                saxp = sfact.newSAXParser();
+                SAXParser saxp = sfact.newSAXParser();
             } catch (Exception ex) {
-                throw (new ParserConfigurationException("Can't initialize suitable SAX parser" + ex.getMessage()));
+                throw (new ParserConfigurationException("Can't initialize suitable SAX2 parser" + ex.getMessage()));
             }
         }
-        if (xsimpl == null) {
+        if (0 != (which | BOOTSTRAP_XERCES_XS) && xsimpl == null) {
             System.setProperty(DOMImplementationRegistry.PROPERTY, "org.apache.xerces.dom.DOMXSImplementationSourceImpl");
             DOMImplementationRegistry direg;
             try {
                 direg = DOMImplementationRegistry.newInstance();
                 xsimpl = (XSImplementation) direg.getDOMImplementation("XS-Loader");
             } catch (Exception ex) {
-                throw (new ParserConfigurationException("Can't initializte XML Schema parser implementation" + ex.getMessage()));
+                throw (new ParserConfigurationException("Can't initializte Xerces XML Schema parser implementation" + ex.getMessage()));
             }
         }
     }
@@ -59,8 +69,8 @@ public class ParserBootstrap {
     /**
      * Returns a SAXParser object.  OK to reuse these.
      */
-    SAXParser sax2Parser () {
-        return saxp;
+    SAXParser sax2Parser () throws ParserConfigurationException, SAXException {
+        return sfact.newSAXParser();
     }
     
     /**

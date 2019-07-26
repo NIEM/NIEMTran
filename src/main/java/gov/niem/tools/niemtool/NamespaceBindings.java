@@ -15,6 +15,7 @@
  */
 package gov.niem.tools.niemtool;
 
+import com.google.gson.JsonObject;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -28,16 +29,46 @@ public class NamespaceBindings {
     
     private final HashMap<String,String> prefixOf;  // prefixOf.get(U) -> P, where namespace U is bound to prefix P
     private final HashMap<String,String> uriOf;     // uriOf.get(P)    -> U, where prefix P is bound to namespace U
+    private JsonObject contextObj = null;           // cached JsonObject with context bindings
+    private String contextString = null;            // cached JSON string with context bindings
     
     public NamespaceBindings () {
         prefixOf = new HashMap<>();
         uriOf    = new HashMap<>();
     }
     
+    public NamespaceBindings (HashMap<String,String>p, HashMap<String,String>u) {
+        prefixOf = p;
+        uriOf = u;
+    }
+    
+    public NamespaceBindings copyOf() {
+        HashMap<String,String> np = (HashMap<String,String>)prefixOf.clone();
+        HashMap<String,String> nu = (HashMap<String,String>)uriOf.clone();
+        return new NamespaceBindings(np, nu);
+    }
+    
+    public JsonObject contextObj () {
+        if (contextObj == null) {
+            contextObj = new JsonObject();
+            uriOf.forEach((prefix,nsuri) -> {
+                contextObj.addProperty(prefix, nsuri);
+            });
+        }
+        return contextObj;
+    }
+    
+    public String contextString () {
+        if (contextString == null) {
+            contextString = contextObj().toString();
+        }
+        return contextString;
+    }
+    
     /**
      * Returns the namespace prefix bound to the specified URI in this map.
      * @param uri
-     * @return 
+     * @return prefix bound to uri
      */
     public String getPrefix (String uri) {
         return prefixOf.get(uri);
@@ -46,22 +77,14 @@ public class NamespaceBindings {
     /**
      * Returns the namespace URI bound to the specified prefix in this map.
      * @param prefix
-     * @return 
+     * @return uri bound to prefix
      */
     public String getURI (String prefix) {
         return uriOf.get(prefix);
     }
     
     /**
-     * Generates a JSON-LD context object for the map.
-     * @return 
-     */
-    public String getContext () {
-        return "";
-    }
-    
-    /**
-     * 
+     * Returns the map of uri -> prefix
      * @return 
      */
     public Map<String,String> getDecls () {
@@ -72,10 +95,10 @@ public class NamespaceBindings {
      * Assign a namespace prefix to a namespace URI.
      * Does nothing if URI is already bound.
      * Creates a unique synthetic prefix if the prefix is already bound.
-     * @param uri namespace URI
-     * @param prefix namespace prefix
+     * @param prefix of namespace declaration
+     * @param uri of namespace declaration
      */
-    public void assignPrefix(String uri, String prefix) {
+    public void assignPrefix(String prefix, String uri) {
 
         // Is this URI already bound?  If so, do nothing
         String uriPrefix = prefixOf.getOrDefault(uri, "");
@@ -91,6 +114,8 @@ public class NamespaceBindings {
             }
             uriOf.put(prefix, uri);
             prefixOf.put(uri, prefix);
+            contextObj = null;
+            contextString = null;
         }
     }
     

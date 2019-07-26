@@ -64,7 +64,6 @@ public class NTCompiledSchema extends NTSchema {
         if (xs == null) {
             return null;
         }        
-        NamespaceBindings nsbind = new NamespaceBindings();
         ntmodel =  new NTSchemaModel();   
         nsInfo  = new XSNamespaceInfo(xs);
     
@@ -76,14 +75,13 @@ public class NTCompiledSchema extends NTSchema {
         // Declarations in external schemas come last.
         // rdf: prefix always means RDF, no matter what crazy-ass decls
         // may be in the extension or external schemas.
-        nsbind.assignPrefix(RDF_NS_URI, "rdf");
+        ntmodel.namespaceBindings().assignPrefix("rdf", RDF_NS_URI); 
         nsInfo.nsList().forEach((ns) -> {
-            nsInfo.nsDecls().get(ns).forEach((prefix,uri) -> {
-                nsbind.assignPrefix(uri, prefix);
+            nsInfo.nsDecls().get(ns).forEach((prefix, uri) -> {
+                if (!uri.startsWith(STRUCTURES_NS_URI_PREFIX)) {
+                    ntmodel().namespaceBindings().assignPrefix(prefix, uri);
+                }
             });
-        });
-        nsbind.getDecls().forEach((uri,prefix) -> {
-            ntmodel.addNamespacePrefix(uri, prefix);
         });
         // Find external namespaces
         nsInfo.nsNDRversion().forEach((ns, ver) -> {
