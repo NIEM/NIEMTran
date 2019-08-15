@@ -1,18 +1,15 @@
-/*
- * Copyright 2019 The MITRE Corporation. All rights reserved.
+/* 
+ * NOTICE
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * This software was produced for the U. S. Government
+ * under Basic Contract No. W56KGU-18-D-0004, and is
+ * subject to the Rights in Noncommercial Computer Software
+ * and Noncommercial Computer Software Documentation
+ * Clause 252.227-7014 (FEB 2012)
+ * 
+ * Copyright 2019 The MITRE Corporation.
  */
+
 package gov.niem.tools.niemtool;
 
 import com.google.gson.JsonObject;
@@ -23,8 +20,13 @@ import java.util.Map;
  * A class to represent mappings between namespace URIs and the prefix string
  * to be used in a JSON-LD context. Guarantees that each prefix is bound
  * to exactly one URI, and that each URI is bound to exactly one prefix.
- * @author Scott Renner <sar@mitre.org>
+ * It is used when parsing the schema.  It is also used when translating
+ * the XML document -- which may include namespace declarations not found
+ * in the schema.
+ * @author Scott Renner
+ * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
+
 public class NamespaceBindings {
     
     private final HashMap<String,String> prefixOf;  // prefixOf.get(U) -> P, where namespace U is bound to prefix P
@@ -42,12 +44,11 @@ public class NamespaceBindings {
         uriOf = u;
     }
     
-    public NamespaceBindings copyOf() {
-        HashMap<String,String> np = (HashMap<String,String>)prefixOf.clone();
-        HashMap<String,String> nu = (HashMap<String,String>)uriOf.clone();
-        return new NamespaceBindings(np, nu);
+    public NamespaceBindings (NamespaceBindings orig) {
+        prefixOf = new HashMap<>(orig.prefixOf);
+        uriOf = new HashMap<>(orig.uriOf);
     }
-    
+       
     public JsonObject contextObj () {
         if (contextObj == null) {
             contextObj = new JsonObject();
@@ -84,7 +85,7 @@ public class NamespaceBindings {
     }
     
     /**
-     * Returns the map of uri -> prefix
+     * Returns the map of uri to prefix
      * @return 
      */
     public Map<String,String> getDecls () {
