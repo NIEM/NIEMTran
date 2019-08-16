@@ -327,7 +327,7 @@ public class XSNamespaceInfo {
                                 int sp = ctv.indexOf('/');
                                 if (sp >= 0) {
                                     ctv = ctv.substring(0, sp);
-                                    ndrVersion = av;
+                                    ndrVersion = ctv;
                                     return;
                                 }
                             }

@@ -217,14 +217,57 @@ contain either or both of two flags:
   
 * `X2J_EXTENDED` -- the usual context for this message format has been
   extended with context mappings for namespaces not found in the
-  message description. This can only happen with wildcard elements.
+  message description. This can only happen with wildcard elements or
+  nonconforming message documents.
   
 
 # Assumptions and Provisos
 
+1. The JSON-to-XML translation is not implemented yet, and the schema
+   compiler does not generate the information needed for this
+   translation. 
+
+1. `xml:lang` and `xml:space` attributes are not handled yet.
+
+1. Augmentation element attributes are ignored. Perhaps they should be
+   forbidden? Their RDF interpretation is unclear.
+
+1. All `xsi` attributes in XML are ignored when translating to
+   JSON. I'm not sure what to do about `xsi:type` attributes when
+   translating from JSON to XML.
+
+1. Very little care is taken to produce correct output for a document
+   that does not conform to the message description schema.
+
 1. Every namespace with a URI beginning with
-   http://release.niem.gov/niem/structures/ is a structures namespace.
+   http://release.niem.gov/niem/structures/ is a structures
+   namespace. These namespaces do not appear in the message format
+   context. Attributes named `uri`, `id`, `ref`, and `metadata` in
+   these namespaces receive special handling (and do not appear in the
+   JSON output).
    
 1. Every namespace with a URI beginning with
-   http://release.niem.gov/niem/appinfo/ is an appinfo namespace.
+   http://release.niem.gov/niem/appinfo/ is an appinfo
+   namespace. These namespaces do not appear in the message format
+   context.
+   
+1. Every namespace with a URI beginning with
+   http://release.niem.gov/niem/proxy/xsd/ is a proxy
+   namespace. These namespaces do not appear in the message format
+   context.
+   
+1. Every namespace with a URI beginning with
+   http://release.niem.gov/niem/conformanceTargets/ is a conformance
+   target namespace. These namespaces do not appear in the message
+   format context. An attribute named `conformanceTargets` in such a
+   namespace is taken to be a conformance assertion. The first token
+   in the attribute value that matches the pattern
+   `http://reference.niem.gov/niem/specification/naming-and-design-rules/[^/]*/` 
+   defines the NIEM version of the current schema document, with the
+   characters matching `[^/]*` taken to be the version number.
+   
+1. Every namespace with a URI beginning with
+   http://release.niem.gov/niem/ not mentioned above is a NIEM model
+   namespace. These namespaces are preferred over external namespaces
+   when namespace prefixes are assigned.
    
