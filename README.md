@@ -30,6 +30,11 @@ written in Java, and based on the Xerces2 Java Parser.
 * A NIEM XML-to-JSON translator, which uses the object file to convert
   XML documents that conform to those message formats into the
   equivalent NIEM JSON. 
+  
+The project uses the *appassembler* plugin for Maven to create the
+command-line tools; it collects JAR files into a library directory
+and constructs executable scripts with the correct class path. 
+Find these in the *target/appassembler* directory.
 
 Some of the Java classes in the project are only suitable for a
 development environment, while others can be reused and deployed to
