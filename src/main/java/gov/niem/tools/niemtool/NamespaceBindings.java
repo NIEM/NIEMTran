@@ -53,7 +53,12 @@ public class NamespaceBindings {
         if (contextObj == null) {
             contextObj = new JsonObject();
             uriOf.forEach((prefix,nsuri) -> {
-                contextObj.addProperty(prefix, nsuri);
+                if (nsuri.endsWith("#")) {
+                    contextObj.addProperty(prefix, nsuri);
+                }
+                else {
+                    contextObj.addProperty(prefix, nsuri + "#");
+                }
             });
         }
         return contextObj;

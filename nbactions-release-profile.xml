@@ -4,11 +4,11 @@
             <actionName>CUSTOM-App-Assemble</actionName>
             <displayName>App-Aassemble</displayName>
             <goals>
-                <goal>clean</goal>
                 <goal>install</goal>
                 <goal>test</goal>
                 <goal>jar:jar</goal>
                 <goal>appassembler:assemble</goal>
+                
             </goals>
         </action>
     </actions>

@@ -60,6 +60,9 @@
                     <useWildcardClassPath>true</useWildcardClassPath>
                     <repositoryLayout>flat</repositoryLayout>
                     <repositoryName>lib</repositoryName>
+                    <configurationSourceDirectory>src/main/resources/share</configurationSourceDirectory>
+                    <configurationDirectory>share</configurationDirectory>
+                    <copyConfigurationDirectory>true</copyConfigurationDirectory>
                     <programs>
                         <program>
                             <mainClass>gov.niem.tools.niemtool.NIEMTool</mainClass>

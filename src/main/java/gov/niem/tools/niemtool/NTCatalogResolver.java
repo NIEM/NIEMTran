@@ -13,6 +13,7 @@
 package gov.niem.tools.niemtool;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -165,10 +166,7 @@ public class NTCatalogResolver
     // MODIFIED -- new class members and methods begin ------------------------
     
     public static final String XMLCATALOG_NS = "http://www.oasis-open.org/committees/entity/release/1.0/catalog.dtd";
-    private static SAXParser catParser = null;          // XML Catalog parser
-    static URL catSchemaResource = null;                // URL of XML Catalog XSD
-    static URL catDTDResource = null;                   // URL of XML Catalog DTD
-    
+    private static SAXParser catParser = null;                  // XML Catalog parser   
     private List<String> resolutionMsgs = new ArrayList<>();    // catalog resolution results; clear with resetResolutions();
     
     /**
@@ -288,15 +286,15 @@ public class NTCatalogResolver
      * @return validation messages
      */
     public String validateCatalog(String furi) {
-        if (catSchemaResource == null) {
-            catSchemaResource = this.getClass().getResource("/XMLCatalogSchema.xsd");
+        if (catParser == null) {
+            URL catSchema = this.getClass().getResource("/XMLCatalogSchema.xsd");
             SchemaFactory sf = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
             javax.xml.validation.Schema schema = null;
             try {
-                schema = sf.newSchema(catSchemaResource);
+                schema = sf.newSchema(catSchema);
             } catch (SAXException ex) {
                 Logger.getLogger(NTCatalogResolver.class.getName()).log(Level.SEVERE,
-                        "can't construct schema from " + catSchemaResource, ex);
+                        "can't construct schema from " + catSchema.toString(), ex);
             }
             try {
                 SAXParserFactory spf = SAXParserFactory.newInstance();
@@ -345,13 +343,11 @@ public class NTCatalogResolver
         @Override public void fatalError (SAXParseException ex) { error(ex); }    
         @Override
         public InputSource resolveEntity (String pid, String sid) {
-            if (NTCatalogResolver.catDTDResource == null) {
-                NTCatalogResolver.catDTDResource = this.getClass().getResource("/catalog.dtd");
-            }
+            InputStream catDTD = this.getClass().getResourceAsStream("/catalog.dtd");
             if (!XMLCATALOG_NS.equals(sid)) {
                 msgs.append("  non-local entity in catalog file\n");
             }
-            return new InputSource(catDTDResource.getFile());
+            return new InputSource(catDTD);
         }
         @Override
         public void setDocumentLocator(Locator locator) {

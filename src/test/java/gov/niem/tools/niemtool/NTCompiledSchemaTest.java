@@ -47,61 +47,16 @@ public class NTCompiledSchemaTest {
         testModelCreate("/bogus-rdf");
     }
     
-//    @Test
-//    public void testCatalogSchemalocMismatch () {
-//        testModelCreate("/catalog-schemaloc-mismatch");
-//    }
+    @Test
+    public void testCatalogSchemalocMismatch () {
+        testModelCreate("/catalog-schemaloc-mismatch");
+    }
    
     @Test
     public void testCorrect () {
         testModelCreate("/correct");
     }
 
-//    @Test
-//    public void testInclude () {
-//        testModelCreate("/include");
-//    }
-//        
-//    @Test
-//    public void testInvalidCatalog () {
-//        testModelCreate("/invalid-catalog");
-//    }
-//        
-//    @Test
-//    public void testInvalidSchema1 () {
-//        testModelCreate("/invalid-schema-1");
-//    }
-//    
-//    @Test
-//    public void testInvalidSchema2 () {
-//        testModelCreate("/invalid-schema-2");
-//    }
-//    
-//    @Test
-//    public void testMissingCatalog () {
-//        testModelCreate("/missing-catalog");
-//    }
-//    
-//    @Test
-//    public void testMissingCatalogEntry () {
-//        testModelCreate("/missing-catalog-entry");
-//    }
-//        
-//    @Test
-//    public void testMissingSchema () {
-//        testModelCreate("/missing-schema");
-//    }  
-//    
-//    @Test
-//    public void testNoGMLCatalog () {
-//        testModelCreate("/no-gml-catalog");
-//    } 
-//    
-//    @Test
-//    public void testNonlocalCatalogEntry () {
-//        testModelCreate("/nonlocal-catalog-entry");
-//    } 
-//    
     @Test
     public void testNstdPrefix () {
         testModelCreate("/nstd-prefix");

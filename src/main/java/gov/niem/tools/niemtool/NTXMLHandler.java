@@ -89,7 +89,7 @@ public class NTXMLHandler extends DefaultHandler {
         return resultFlags;
     }
     
-    // All of the namespaces in the schema mode are already in the
+    // All of the namespaces in the schema model are already in the
     // namespace map.  Remember each namespace declaration anyway, for 
     // elements matching a schema wildcard.
     @Override
@@ -121,7 +121,7 @@ public class NTXMLHandler extends DefaultHandler {
             
             // xml:base becomes @base keyword
             if ("xml:base".equals(aqn)) {
-                cobj.addProperty("@base", av);
+                // FIXME: more complicated than cobj.addProperty("@base", av);
             } 
             // handle xml:lang attribute
             else if ("xml:lang".equals(aqn)) {
@@ -150,9 +150,20 @@ public class NTXMLHandler extends DefaultHandler {
                 }
                 // structures:metadata becomes a placeholder for the metadata object reference                
                 else if (aqn.endsWith(":metadata")) {
-                    JsonObject obj = new JsonObject();
-                    obj.addProperty("@id", "#" + av);
-                    cobj.add(STRUCTURES_NS_URI_PREFIX, obj);
+                    JsonArray phold = cobj.getAsJsonArray(STRUCTURES_NS_URI_PREFIX);
+                    if (null == phold) {
+                        phold = new JsonArray();
+                        cobj.add(STRUCTURES_NS_URI_PREFIX, phold);
+                    }
+                    String[] vals = av.split("\\s+");
+                    for (String v: vals) {
+                        if (v.startsWith("#")) {
+                            phold.add(v);
+                        }
+                        else {
+                            phold.add("#" + v);
+                        }
+                    }
                     objWithMetadata.add(cobj);
                 }
             } 
@@ -189,7 +200,7 @@ public class NTXMLHandler extends DefaultHandler {
         String elementKey = nsPrefix + ":" + eLocalName;  
         JsonObject cobj = ostk.pop();   // element with eQName
         JsonObject pobj = ostk.peek();  // parent of cobj
-        JsonElement jval = null;        // value for pobj.add(key)
+        JsonElement jval;               // value for pobj.add(key)
         
         // Construct value of element with simple content
         String simpleType = model.simpleElementType(elementIRI);
@@ -255,12 +266,15 @@ public class NTXMLHandler extends DefaultHandler {
         
         // Replace "structures:metadata" keys with compact IRI of the metadata element
         for (JsonObject obj : objWithMetadata) {
-            JsonObject phold = obj.getAsJsonObject(STRUCTURES_NS_URI_PREFIX);           
-            String id = phold.get("@id").getAsString();
-            String mdkey = metadataElement.get(id);
-            
-            obj.remove(STRUCTURES_NS_URI_PREFIX);
-            obj.add(mdkey, phold);            
+            JsonArray phold = obj.getAsJsonArray(STRUCTURES_NS_URI_PREFIX); 
+            for (JsonElement je : phold) {
+                String id = je.getAsString();
+                String mdkey = metadataElement.get(id);
+                JsonObject mdo = new JsonObject();
+                mdo.addProperty("@id", id);
+                addToObject(obj,mdkey,mdo);
+            }          
+            obj.remove(STRUCTURES_NS_URI_PREFIX);           
         }
         
         // Make a copy of the model context object.
@@ -274,7 +288,12 @@ public class NTXMLHandler extends DefaultHandler {
             String prefix = model.namespaceBindings().getPrefix(ns);
             if (prefix == null) {
                 prefix = nsbind.getPrefix(ns);
-                context.addProperty(prefix, ns);
+                if (ns.endsWith("#")) {
+                    context.addProperty(prefix, ns);
+                }
+                else {
+                    context.addProperty(prefix, ns + "#");
+                }
                 resultFlags = (short) (resultFlags | X2J_EXTENDED);
             }
         }
@@ -307,9 +326,9 @@ public class NTXMLHandler extends DefaultHandler {
         else if ("boolean".equals(simpleType)) {
             return new JsonPrimitive(Boolean.valueOf(val));
         } 
-        else if ("decimal".equals(simpleType)) {
-            return new JsonPrimitive(new BigDecimal(val));
-        } 
+        // else if ("decimal".equals(simpleType)) {
+        //    return new JsonPrimitive(new BigDecimal(val));
+        //} 
         else if ("double".equals(simpleType)) {
             return new JsonPrimitive(Double.valueOf(val));
         } 

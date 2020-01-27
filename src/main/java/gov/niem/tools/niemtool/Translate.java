@@ -93,8 +93,8 @@ public class Translate {
     }
     
     /**
-     * Translates a NIEM XML input stream into a JSON character stream.
-     * The output stream contains JSON-LD data plus context object.
+     * Translates a NIEM XML input stream into a JSON object containing
+     * context plus data.
      * @param is XML input
      * @param json JSON object output
      */
@@ -108,7 +108,7 @@ public class Translate {
      * JSON-LD context.
      * @param is XML input
      * @param data -- new JsonObject to hold data output 
-     * @param context -- new JsonObject to hold context object
+     * @param context -- new JsonObject to hold context object (or null)
      * @return 
      * @throws java.io.IOException
      * @throws org.xml.sax.SAXException

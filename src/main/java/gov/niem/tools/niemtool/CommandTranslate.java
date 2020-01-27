@@ -57,14 +57,7 @@ public class CommandTranslate implements JCCommand {
     CommandTranslate (JCommander jc) {
     }
 
-    public static void main (String[] args) {
-        
-        args = Arrays.asList(
-                "CrashDriver.no", "../iep-samples/iep1.xml"
-                //"--help"
-                //"-j2x"
-                ).toArray(new String[0]);
-        
+    public static void main (String[] args) {      
         CommandTranslate obj = new CommandTranslate();
         obj.runMain(args);
     }
@@ -73,7 +66,7 @@ public class CommandTranslate implements JCCommand {
         JCommander jc = new JCommander(this);
         NTUsageFormatter uf = new NTUsageFormatter(jc); 
         jc.setUsageFormatter(uf);
-        jc.setProgramName("trznslate");
+        jc.setProgramName("translate");
         jc.parse(args);
         run(jc);
     }
@@ -165,12 +158,9 @@ public class CommandTranslate implements JCCommand {
             Logger.getLogger(CommandTranslate.class.getName()).log(Level.SEVERE, null, ex);
         }
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        System.out.println("translate returns "+rflag);
-        System.out.println("data:");
-        System.out.println(gson.toJson(data));
-        System.out.println("context:");
-        System.out.println(gson.toJson(cxt));
-        
+        data.add("@context",cxt);
+        System.err.println("translate returns "+rflag);
+        System.out.println(gson.toJson(data));        
     }
 }
 

@@ -30,27 +30,30 @@ import org.apache.commons.io.FileUtils;
 
 public class ContextMap {
     
-    private static final String CONTEXT_RESOURCE_DIR = "/contexts";
     private static HashMap<String,String> contextPrefix = null; // map namespace URI -> common prefix   
 
     /**
      * Returns the well-known prefix string for the specified namespace URI. 
      * The URI to prefix mapping is created by processing every file
-     * in the context resource directory (OONTEXT_RESOURCE_DIR) as containing
-     * a JSON-LD context. Comments are allowed, and the outer "@context" key is 
-     * optional.
+     * in the "share/context" directory as a JSON-LD context. Comments are allowed, 
+     * and the outer "@context" key is optional.
      * @param uri namespace
      * @return common prefix string for namespace
      */
     public static String wellKnownPrefix (String uri) {
         if (contextPrefix == null) {
             contextPrefix = new HashMap<>();
-            URL contextDir = ContextMap.class.getResource(CONTEXT_RESOURCE_DIR);
-            File dir = FileUtils.toFile(contextDir);
+            
+            // Locate directory of context files
+            String appdir = ContextMap.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+            if (appdir.endsWith(".jar")) {
+                appdir = new File(appdir).getParentFile().getParent();
+            }
+            File contextDir = FileUtils.getFile(appdir, "share", "contexts");
             File[] files = null;
-            if (dir == null || (files = dir.listFiles()) == null) {
+            if (contextDir == null || (files = contextDir.listFiles()) == null) {
                 Logger.getLogger(ContextMap.class.getName()).log(
-                        Level.SEVERE, String.format("Can't read context resource directory %s", CONTEXT_RESOURCE_DIR));
+                        Level.SEVERE, String.format("Can't read context resource directory"));
                 return "";
             }
             for (File f : files) {
@@ -77,7 +80,7 @@ public class ContextMap {
                         if (cp != null && !cp.equals(prefixKey)) {
                             Logger.getLogger(ContextMap.class.getName()).log(Level.WARNING,
                                     String.format("Conflicting context resources in %s for %s",
-                                            dir.getPath(), nsURI));
+                                            contextDir.getPath(), nsURI));
                         }
                         else {
                             nsURI = nsURI.substring(0, nsURI.length()-1);                            
@@ -94,5 +97,4 @@ public class ContextMap {
         if (res == null) { return ""; }
         return res;
     }
-    
 }
