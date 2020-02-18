@@ -17,6 +17,8 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
@@ -24,8 +26,14 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Arrays;
+import static java.lang.Math.max;
+import static java.lang.Math.min;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.xml.parsers.ParserConfigurationException;
@@ -44,6 +52,15 @@ public class CommandTranslate implements JCCommand {
     
     @Parameter(names = {"--x2j"}, description = "translate NIEM XML to NIEM JSON (default)")
     boolean nx2j = true;
+    
+    @Parameter(names = {"--x2t"}, description = "translate NIEM XML to NIEM RDF (Turtle syntax)")
+    boolean nx2t = false;
+    
+    @Parameter(names = {"--x2g"}, description = "translate NIEM XML to Graphviz")
+    boolean nx2g = false;
+    
+    @Parameter(names = "--uri", description = "default URI for output resource")
+    String baseURI = "http://example.com/msg/1/";
     
     @Parameter(names = {"-h","--help"}, description = "display this usage message", help = true)
     boolean help = false;
@@ -131,7 +148,7 @@ public class CommandTranslate implements JCCommand {
         // Set up output to outputFile or stdout
         PrintWriter outPW = null;
         if ("".equals(outputFN)) {
-            outPW = new PrintWriter(System.out);
+            outPW = new PrintWriter(System.out, true);
         }
         else {
             try {
@@ -143,7 +160,7 @@ public class CommandTranslate implements JCCommand {
             }
         }
         
-        // Set up the translator object, collect results, write to output
+        // Set up the translator object, collect results
         Translate trans = new Translate(model);
         JsonObject data = new JsonObject();
         JsonObject cxt  = new JsonObject();
@@ -157,10 +174,36 @@ public class CommandTranslate implements JCCommand {
         } catch (ParserConfigurationException ex) {
             Logger.getLogger(CommandTranslate.class.getName()).log(Level.SEVERE, null, ex);
         }
+        
+        // Write results in desired syntax
+        if (nx2t) {
+            writeTurtle(outPW, data, cxt);
+        }
+        else if (nx2g){
+            writeGraphviz(outPW, data, cxt);
+        }
+        else {
+            writeJson(outPW, data, cxt);
+        }
+        outPW.close();
+        System.err.println("translate returns "+rflag);
+        System.exit(0);
+    }
+    
+    void writeJson(PrintWriter pw, JsonObject data, JsonObject cxt) {
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         data.add("@context",cxt);
-        System.err.println("translate returns "+rflag);
-        System.out.println(gson.toJson(data));        
+        pw.println(gson.toJson(data));      
     }
+       
+    void writeTurtle(PrintWriter pw, JsonObject data, JsonObject cxt) {
+        NJ2Turtle njt = new NJ2Turtle(data, cxt, baseURI);
+        njt.turtle(pw);
+    }       
+    
+    void writeGraphviz(PrintWriter pw, JsonObject data, JsonObject cxt) {
+        NJ2Graphviz njt = new NJ2Graphviz(data, cxt, baseURI);
+        njt.graphviz(pw);
+    }
+    
 }
-
