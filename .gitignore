@@ -1,3 +1,7 @@
 /src/main/java/gov/niem/tools/niemtool/testSchema.java
 /src/test/resources/correct/CrashDriver.no
 /nbproject/
+/nbactions-gccs.xml
+/nbactions-debug.xml
+/nbactions-nt.xml
+/nbactions-nt_clone.xml

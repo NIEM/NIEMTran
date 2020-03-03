@@ -113,66 +113,130 @@ public class NJ2Graphviz {
     }
     
     private void writeNode (PrintWriter pw, JsonObject node) {
-        // Any predicates in this node?
+        
+        // count the data rows and columns
+        List<Map.Entry<String,JsonElement>> dataRow = new ArrayList<>();
+        int dataColCt = 0;
         boolean skip = true;
-        for (Map.Entry<String,JsonElement>pair: node.entrySet()) {
-            String pred   = pair.getKey();
-            if (!pred.startsWith("@")) {
-                skip = false;
-                break;
-            }
-        }
-        if (skip) { return; }
-               
         for (Map.Entry<String,JsonElement>pair: node.entrySet()) {
             String pred   = pair.getKey();
             JsonElement e = pair.getValue();
             if (!pred.startsWith("@")) {
-                writePredicate(pw, node, pred, e);
-             }
+                skip = false;
+                if (e.isJsonArray()) {
+                    JsonArray ea = e.getAsJsonArray();
+                    int ncols = countDataCells(ea);
+                    if (ncols > 0) { 
+                        dataRow.add(pair); 
+                        dataColCt = max(dataColCt, ncols);
+                    }
+                }
+                else {
+                    if (!e.isJsonObject()) {
+                        dataRow.add(pair);
+                        dataColCt = max(1, dataColCt);
+                    }
+                }
+            }
         }
-        for (Map.Entry<String,JsonElement>pair: node.entrySet()) {    
+        if (skip) { return; }
+        
+        int maxDataRows = 3;
+        int maxDataCols = 3;
+        
+        // write the graphviz for the node
+        String nodeID = genNodeID(node);        
+        if (dataRow.size() < 1) {
+            pw.printf("\"%s\";\n", nodeID);
+        }
+        else {
+            int colMax = min(dataColCt, maxDataCols);
+            int rowMax = min(dataRow.size(), maxDataRows);
+            pw.printf("\"%s\" [shape=\"plaintext\",label=<\n", nodeID);
+            pw.print("<font point-size=\"12\">\n");
+            pw.print("<table border=\"0\" cellborder=\"1\" cellspacing=\"0\">\n");
+            int row = 0;
+            while (row < rowMax) {
+                Map.Entry<String, JsonElement> pair = dataRow.get(row);
+                String pred = pair.getKey();
+                JsonElement e = pair.getValue();
+                pw.print(" <tr>\n");
+                
+                // last row is ellipsis row if too many rows
+                if (row != rowMax-1 && dataRow.size() > maxDataRows) {
+                    pw.printf("  <td>...</td><td colspan=\"%d\">...</td>\n", dataColCt+1);
+                } 
+                else {
+                    if (row == 0) {
+                        pw.printf("  <td rowspan=\"%d\"><b>%s</b></td>\n", rowMax, nodeID);
+                    }
+                    pw.printf("  <td align=\"right\">%s</td>\n", pred);
+                    if (e.isJsonArray()) {
+                        JsonArray ea = e.getAsJsonArray();
+                        int col = 0;
+                        int ncols = countDataCells(ea);
+                        for (int i = 0; i < ea.size(); i++) {
+                            JsonElement ee = ea.get(i);
+                            if (ee.isJsonPrimitive()) {
+                                // last cell is ellipsis if too many columns
+                                if (col == colMax-1 && ncols > maxDataCols) {
+                                    pw.print("  <td>...</td>");
+                                }
+                                else {
+                                    pw.printf("  <td align=\"left\">%s</td>\n", ee.getAsString());
+                                }
+                            }
+                        }
+
+                    } 
+                    else {
+                        pw.printf("  <td align=\"left\" colspan=\"%d\">%s</td>\n", colMax, e.getAsString());
+                    }
+                }
+                pw.print(" </tr>\n");
+                row++;
+            }
+            pw.print("</table></font>\n");
+            pw.print(">];\n");
+        }
+        // write the graphviz links
+        List<JsonObject>obj = new ArrayList<>();
+        for (Map.Entry<String,JsonElement>pair: node.entrySet()) {
             String pred   = pair.getKey();
             JsonElement e = pair.getValue();
             if (!pred.startsWith("@")) {
                 if (e.isJsonArray()) {
                     JsonArray ea = e.getAsJsonArray();
                     for (int i = 0; i < ea.size(); i++) {
-                        if (ea.get(i).isJsonObject()) {
-                            JsonObject eo = ea.get(i).getAsJsonObject();
-                            writeNode(pw, eo);
+                        JsonElement ee = ea.get(i);
+                        if (ee.isJsonObject()) {
+                            JsonObject eo = ee.getAsJsonObject();
+                            obj.add(eo);
+                            String objID = genNodeID(eo);
+                            pw.printf("\"%s\" -> \"%s\" [label=\"%s\"];\n", nodeID, objID, pred);                         
                         }
                     }
                 }
                 else if (e.isJsonObject()) {
-                    writeNode(pw, e.getAsJsonObject());
+                    JsonObject eo = e.getAsJsonObject();
+                    obj.add(eo);
+                    String objID = genNodeID(eo);
+                    pw.printf("\"%s\" -> \"%s\" [label=\"%s\"];\n", nodeID, objID, pred);
                 }
             }
-        }  
+        }
+        // write the linked nodes
+        for (JsonObject eo : obj) {
+            writeNode(pw, eo);
+        }     
     }
     
-    private void writePredicate (PrintWriter pw, JsonObject node, String pred, JsonElement e) {
-        if (e.isJsonArray()) {
-            JsonArray ea = e.getAsJsonArray();
-            for (int i = 0; i < ea.size(); i++) {
-                JsonElement ee = ea.get(i);
-                writeValue(pw, node, pred, ee);
-            }
+    private int countDataCells (JsonArray ea) {
+        int ct = 0;
+        for (int i = 0; i < ea.size(); i++) {
+            if (ea.get(i).isJsonPrimitive()) { ct++; }
         }
-        else {
-            writeValue(pw, node, pred, e);
-        }
-    }
-    
-    private void writeValue (PrintWriter pw, JsonObject node, String pred, JsonElement e) {
-        String nodeID = genNodeID(node);
-        if (e.isJsonObject()) {
-            String objID = genNodeID(e.getAsJsonObject()) ;
-            pw.printf(" \"%s\" -> \"%s\" [label=\" %s\"];\n", nodeID, objID, pred);           
-        }
-        else {
-            pw.printf(" \"%s\" -> \"%s\" [label=\" %s\"];\n", nodeID, e.getAsString(), pred);
-        }
+        return ct;
     }
     
     private String genNodeID (JsonObject obj) {

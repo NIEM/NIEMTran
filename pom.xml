@@ -60,7 +60,7 @@
                     <useWildcardClassPath>true</useWildcardClassPath>
                     <repositoryLayout>flat</repositoryLayout>
                     <repositoryName>lib</repositoryName>
-                    <configurationSourceDirectory>src/main/resources/share</configurationSourceDirectory>
+                    <configurationSourceDirectory>src/main/share</configurationSourceDirectory>
                     <configurationDirectory>share</configurationDirectory>
                     <copyConfigurationDirectory>true</copyConfigurationDirectory>
                     <programs>
