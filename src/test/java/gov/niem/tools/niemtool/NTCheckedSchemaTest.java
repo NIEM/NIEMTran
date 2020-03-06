@@ -40,6 +40,8 @@ public class NTCheckedSchemaTest {
     
     // @ParameterizedTest would be cool, but it's not working
 
+    
+ /*
     @Test
     public void testCatalogSchemalocMismatch () {
         testSchemaLoad("/catalog-schemaloc-mismatch");
@@ -134,4 +136,5 @@ public class NTCheckedSchemaTest {
             Logger.getLogger(NTCheckedSchemaTest.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
+*/
 }

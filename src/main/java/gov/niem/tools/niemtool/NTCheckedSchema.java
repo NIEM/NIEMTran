@@ -53,7 +53,7 @@ import org.xml.sax.helpers.DefaultHandler;
  * (including subordinate catalogs)?</ul>
  *
  * <p>
- * <li> Schema assembly. Parses each schema document (using vanilla
+ * <li> Schema assembly checking. Parses each schema document (using vanilla
  * SAX, not the Xerces XML Scheme API), following every <code>import</code>,
  * <code>include</code>, and <code>redefine</code> element. Checks each of
  * those elements for completeness and consistency. Reports the following 
@@ -73,7 +73,7 @@ import org.xml.sax.helpers.DefaultHandler;
  * <li>include element found in namespace that has a catalog entry</ul>
  *
  * <p>
- * <li> Schema construction. Uses the Xerces XML Schema API to construct
+ * <li> Schema construction checking. Uses the Xerces XML Schema API to construct
  * the XSModel object. Reports: <ul>
  * 
  * <li>any errors or warnings returned by Xerces
@@ -119,10 +119,10 @@ import org.xml.sax.helpers.DefaultHandler;
 public class NTCheckedSchema extends NTSchema {
     
     private String schemaRootDirectory = "";                // file URI for root directory of all schema documents 
-    private int schemaRootDirectoryLength = 0;              // length of root directory URI
-    private List<LoadRec> loadDocs = null;                  // results of each document load attempt
-    private HashSet<String> attemptedFiles = null;          // schema document load attempts
-    private HashSet<String> loadedFiles = null;             // schema documents successfully loaded
+    private boolean schemaWarnings = false;                       // any assembly warnings?
+    private List<LoadRec> loadDocs = null;                  // schema load requests / results
+    private HashSet<String> attemptedFiles = null;          // file URI of schema document load attempts
+    private HashSet<String> loadedFiles = null;             // file URI of schema documents successfully loaded
     private HashMap<String, String> namespaceFile = null;   // map of namespace URI to schema document
     private XSNamespaceInfo nsInfo = null;                  // Xerces namespace info item annotations
 
@@ -135,10 +135,19 @@ public class NTCheckedSchema extends NTSchema {
             throws ParserConfigurationException {
         super(catalogs,schemaOrNSs);
     }   
+    
+    @Override
+    protected void reset () {
+        super.reset();
+        loadDocs = null;
+    }
 
     
-    // ----- RESULTS OF SCHEMA ASSEMBLY AND CONSTRUCTION CHECKING --------------
-        
+    // ----- RESULTS OF SCHEMA ASSEMBLY CHECKING --------------
+    //
+    // Assembly checking parses all the schema documents using vanilla SAX,
+    // generating warnings about potential ambiguities.
+    
     /**
      * Returns the root directory for catalog and schema documents as a file
      * URI. All catalog and schema documents are located somewhere in this tree.
@@ -167,13 +176,7 @@ public class NTCheckedSchema extends NTSchema {
     }
     
     /**
-     * Returns a list of messages describing each document load attempt during the
-     * schema assembly check. Each entry in the list is formatted as follows:
-     * <pre><code>
-     filename:line# IMPORT path/to/file ns=http://namespace/uri sl=schema/location/path
-       resolved namespace != resolved schemaLocation
-       namespace URI resolves to non-local resource</code></pre> 
-     * <p>
+     * Returns a message list logging each schema document load attempt. 
      * Returns an empty list if no errors encountered.
      * @return list of assembly log messages
      */
@@ -182,15 +185,27 @@ public class NTCheckedSchema extends NTSchema {
     }
     
     /**
-     * Returns a string describing document load attempts with warnings. 
-     * Documents loaded with no checked error, inconsistency, or ambiguity
-     * are not listed.
-     * @return string of assembly warnings
+     * Returns a message list of schema document load attempts with warnings. 
+     * @return list of assembly warning messages
      */
     public List<String> assemblyWarningMessages() {
-        constructionCheck();
         return assemblyMessages(false);
     }
+    
+    /**
+     * Returns true if schema assembly generated any warning messages.
+     * @return warning flagg
+     */
+    public boolean assemblyWarnings() {
+        return schemaWarnings;
+    }
+    
+    
+    // ----------- RESULTS OF SCHEMA CONSTRUCTION CHECKING ---------
+    //
+    // Schema construction is performed by Xerces.  Info and warning 
+    // messages are generated from the Xerces namespace information items
+    // found in the XSModel object.
     
     public List<String> xsNamespaceList() {
         constructionCheck();
@@ -212,18 +227,33 @@ public class NTCheckedSchema extends NTSchema {
     
     private List<String> assemblyMessages(boolean allMsgs) {
         assemblyCheck();
-        String pilePrefix = "*" + schemaRootDirectory; // convert absolute file URI to relative path
         List<String> res = new ArrayList<>();       
         if (loadDocs.size() < 1) {
-            res.add("No initial schema document\n");
+            res.add("Empty schema\n");
             return res;
         }
         for (LoadRec r : loadDocs) {
             if (allMsgs || r.warnFlag) {
-                res.add(r.msgHeader());
-                for (String m : r.msgs) {
-                    m = m.replace(pilePrefix, ""); // convert absolute file URI to relative path
-                    res.add("  " + m);
+                if (r.parent == null) {
+                    if (r.ns != null) {
+                        String furi = r.nsRes.replace(schemaRootDirectory, "");
+                        res.add(String.format("INITIAL LOAD of namespace %s\n", r.ns));
+                        res.add(String.format("  namespace resolves to %s\n", furi));
+                        res.add(String.format("  %s appended to schema document queue\n", furi));
+                    }
+                    else {
+                        String furi = r.slocRes.replace(schemaRootDirectory, "");
+                        res.add(String.format("INITIAL LOAD of schema document %s\n", furi));
+                        res.add(String.format("  %s appended to schema document queue\n", furi));
+                    }
+                }
+                else {
+                    String relParent = r.parent.substring(schemaRootDirectory.length());
+                    res.add(String.format("At %s:%d %s ns=%s sl=%s\n",
+                            relParent, r.pline, r.fkind.toUpperCase(), r.ns, r.sloc));
+                    for (String s : r.msgs) {
+                        res.add("  " + s);
+                    }
                 }
             }
         }
@@ -231,11 +261,11 @@ public class NTCheckedSchema extends NTSchema {
     }
 
     /*
-     * Xerces assembles schema documents depth-first.  
-     * We check them breadth-first.
-     * Doesn't matter because we check all the import and include elements in 
-     * all the documents.
-    */
+     * Xerces constructs a schema by processing schema documents depth-first. 
+     * We check them  breadth-first.  Doesn't matter because we process all of 
+     * the schema documents referred to by all of the import and include elements 
+     * encountered (in all the documents).
+     */
     private void assemblyCheck() {
         if (loadDocs != null) {
             return;
@@ -264,20 +294,47 @@ public class NTCheckedSchema extends NTSchema {
             // System.out.println(idx);
             // System.out.println(r.toString());
         }
-        if (loadDocs.size() > 0) {
-            schemaRootDirectory = loadDocs.get(0).fileURI;
-            for (LoadRec r : loadDocs) {
-                schemaRootDirectory = commonPrefix(schemaRootDirectory, r.fileURI);
-                schemaRootDirectory = commonPrefix(schemaRootDirectory, r.fileURI_2);
-            }
-            for (String cf : getAllCatalogFiles()) {
-                schemaRootDirectory = commonPrefix(schemaRootDirectory, cf);
-            }
-            schemaRootDirectoryLength = schemaRootDirectory.length();
+        // Find the longest common prefix of the file URIs for all schema
+        // documents and catalog documents.  This is the schema root directory.
+        String[] afiles = attemptedFiles.toArray(new String[0]);
+        if (afiles.length > 0) {
+            schemaRootDirectory = afiles[0];
+        }
+        else {
+            schemaRootDirectory = "file:/";
+        }
+        for (int i = 1; i < afiles.length; i++) {
+            schemaRootDirectory = commonPrefix(schemaRootDirectory, afiles[i]);
+        }        
+        String pat = "\\*" + schemaRootDirectory;
+        for (LoadRec r : loadDocs) {
+            r.msgs.replaceAll(e -> e.replaceAll(pat, ""));
         }
     }
 
+    /**
+     * Process a schema document load attempt and record result.
+     * 
+     * As each schema document is parsed (as a plain XML document), each {import, 
+     * include, redefine} element turns into a LoadRec object added to a queue.
+     * In this way, schema documents are processed breadth-first.
+     * 
+     * Those objects are processed here.  Input values are:
+     * 
+     * r.fkind      type of request (import,include,redefine,initial-load) 
+     * r.parent     file URI of schema document containing the request element
+     * r.ns         @namespace in request (eg. namespace="xxx")
+     * r.sloc       @schemaLocation in request (eg. schemaLocation="xxx")
+     * r.slocres    URI of initial schema document (for LOAD request only)
+     * 
+     * Actual document load and parsing is handled by loadDocumentFromURI.
+     * This routine only handles catalog resolution and various warnings that
+     * result.
+     * 
+     * @param r Describes this document load effort 
+     */
     private void loadDocument(LoadRec r) {
+        // attempt catalog resolution of @namespace and @schemaLocation
         try {
             r.nsRes = resolver().resolveURI(r.ns);
             if (r.sloc != null) {    // could be initial schema doc
@@ -287,6 +344,8 @@ public class NTCheckedSchema extends NTSchema {
         } catch (Exception ex) {
             /* ignore */
         }
+        // create various warnings based on resolution results
+        // strip out any attempt to load non-local resource
         if (r.ns != null) {
             if (r.nsRes == null && getCatalogFiles().size() > 0) {
                 r.warn("no catalog entry for namespace %s\n", r.ns);
@@ -306,28 +365,29 @@ public class NTCheckedSchema extends NTSchema {
                     r.slocRes = null;
                 }
             } else {
-                r.slocRes = canonicalFileURI(r.fileURI, r.sloc);
+                r.slocRes = canonicalFileURI(r.parent, r.sloc);
             }
         } else {
             if (!"load".equals(r.fkind)) {
                 r.warn("no schemaLocation attribute in %s element\n", r.fkind);
             }
         }
+        // log resolution results for this load attempt
         if (r.nsRes != null) {
             r.log("namespace resolves to *%s\n", r.nsRes);
         }
         if (r.slocRes != null) {
             r.log("schemaLocation resolves to *%s\n", r.slocRes);
         }
+        // At this point we should know the file path of the schema
+        // document(s) to be loaded. 
         if (r.nsRes != null && r.slocRes != null) {
             if (r.nsRes.equals(r.slocRes)) {
                 loadDocumentFromURI(r, r.nsRes);
             } else {
                 r.warn("resolved namespace != resolved schemaLocation\n");
                 loadDocumentFromURI(r, r.nsRes);
-                loadDocumentFromURI(r, r.slocRes);  // load both files
-                r.fileURI = r.nsRes;
-                r.fileURI_2 = r.slocRes;            // remember both files for schema root determination later
+                loadDocumentFromURI(r, r.slocRes);  // process both files
             }
         } else if (r.nsRes != null) {
             loadDocumentFromURI(r, r.nsRes);
@@ -338,40 +398,48 @@ public class NTCheckedSchema extends NTSchema {
         }
     }
 
+    /**
+     * Load and parse a schema document (as plain XML).
+     * 
+     * This is a separate routine because a single include element can result
+     * in loading two separate schema documents (if @namespace and @schemalocation
+     * attributes don't resolve to the same document.
+     * 
+     * @param r     append warning and log messages to this LoadRec
+     * @param furi  file URI of schema document to load and parse
+     */
     private void loadDocumentFromURI(LoadRec r, String furi) {
-        if (!furi.startsWith("file:")) {
-            return;
+        if (loadedFiles.contains(furi)) {
+            r.log("*%s already queued\n", furi);
         }
-        r.fileURI = furi;
-        if (attemptedFiles.contains(furi)) {
-            if (loadedFiles.contains(furi)) {
-                r.log("already loaded *%s\n", furi);
-            }
-            else {
-                r.log("already failed to load *%s\n", furi);
-            }
+        else if (attemptedFiles.contains(furi)) {
+            r.log("*%s already found non-loadable\n", furi);
         }
         else {
-            r.log("loading *%s\n", furi);
+            r.log("*%s appended to schema document queue\n", furi);
             if (r.ns != null) {
                 String lns = namespaceFile.getOrDefault(r.ns, furi);
                 if (!lns.equals(furi)) {
-                    r.warn("namespace %s also loaded from *%s\n", r.ns, lns);
+                    r.warn("namespace %s is also loaded from *%s\n", r.ns, lns);
                 }
             }
             namespaceFile.put(r.ns, furi);
             attemptedFiles.add(furi);
-            Handler myhandler = new Handler(this.loadDocs, r);
+            
+            // Pass the list of load requests/results to the SAX handler
+            // so that the handler can append any {import,include,redefine} 
+            // it encounters.
+            Handler myhandler = new Handler(this.loadDocs, r, furi);
             try {
                 SAXParser saxp = parsers.sax2Parser();
                 saxp.parse(furi, myhandler);
                 loadedFiles.add(furi);
             } catch (SAXException | ParserConfigurationException ex) {
                 String em = exceptionReason(ex);
-                r.warn("can't parse schema document *%s: %s\n", furi, em);
+                r.warn("*%s can't be parsed: %s\n", furi, em);
             } catch (IOException ex) {
                 String em = exceptionReason(ex);
-                r.warn("can't read *%s: %s\n", furi, em);
+                r.warn("*%s can't be read: %s\n", furi, em);
             }
         }
     }
@@ -381,19 +449,25 @@ public class NTCheckedSchema extends NTSchema {
      */
     private class Handler extends DefaultHandler {
 
-        private final LoadRec r;
-        private final List<LoadRec> lds;
-        private Locator loc;
+        private final List<LoadRec> lds;    // master list of requests/results 
+        private final LoadRec r;            // for warning and log messages
+        private final String furi;          // URI of file we are psrsing
+        private Locator loc = null;         // line numbering
 
-        Handler(List<LoadRec> lds, LoadRec r) {
+        Handler(List<LoadRec> lds, LoadRec r, String furi) {
             super();
             this.lds = lds;
             this.r = r;
+            this.furi = furi;
         }
 
         @Override
+        /**
+         * Save the locator.
+         * Use it later for line tracking when traversing nodes.
+         */
         public void setDocumentLocator(Locator locator) {
-            this.loc = locator; //Save the locator, so that it can be used later for line tracking when traversing nodes.
+            this.loc = locator; 
         }
 
         @Override
@@ -404,25 +478,26 @@ public class NTCheckedSchema extends NTSchema {
                     if (tns != null && r.ens != null && !tns.equals(r.ens)) {
                         r.warn("targetNamespace %s != expected namespace %s\n", tns, r.ens);
                     }
-                } else if ("import".equals(local)) {
+                }
+                // Process <import> found at line "nr.pline" in file "nr.parent"
+                else if ("import".equals(local)) {
                     LoadRec nr = new LoadRec();
                     nr.fkind = "import";
-                    nr.parent = r.fileURI;
+                    nr.parent = furi;
                     nr.pline = loc.getLineNumber();
-                    nr.fileURI = r.fileURI;
                     nr.ns = nr.ens = attrs.getValue("namespace");
                     nr.sloc = attrs.getValue("schemaLocation");
                     lds.add(nr);
                 } else if ("include".equals(local) || "redefine".equals(local)) {
                     LoadRec nr = new LoadRec();
                     nr.fkind = local;
-                    nr.parent = r.fileURI;
+                    nr.parent = furi;
                     nr.pline = loc.getLineNumber();
-                    nr.fileURI = r.fileURI;
                     nr.ens = r.ens;
                     nr.sloc = attrs.getValue("schemaLocation");
                     lds.add(nr);
-                    // Xerces can't handle include and redefine elements in a namespace that has a catalog entry
+                    // Xerces can't handle include and redefine elements in a 
+                    // namespace that has a catalog entry
                     if (r.nsRes != null) {
                         r.warn("<%s \"%s\"> found in a namespace that has a catalog entry\n", local, nr.sloc);
                     }                    
@@ -432,7 +507,8 @@ public class NTCheckedSchema extends NTSchema {
     }
 
     /**
-     * A class for recording the results of a schema document load attempt
+     * A class for queuing a schema document load attempt, and recording the
+     * result of processing the load attempt. 
      */
     private class LoadRec {
         private String fkind;            // operation attempting the load: import, include, redefine, or initial load
@@ -443,35 +519,16 @@ public class NTCheckedSchema extends NTSchema {
         private String sloc;             // schemaLocation attribute from import/include/redefine element
         private String nsRes;            // namespace resolution URI (or null if not resolved)
         private String slocRes;          // schemaLocation resolution or path (or null if no schemaLocation)
-        private String fileURI;          // canonical file URI of the document to be loaded        
-        private String fileURI_2;        // other file URI to be loaded (if namespace != schemaLocation)
         private boolean warnFlag;        // false if all messages are log entries
-        private List<String> msgs;       // empty list if no messages for this document load attempt
+        private List<String> msgs;       // empty list if no messages for this document load effort
 
         LoadRec() {
-            fkind = parent = ens = ns = sloc = nsRes = slocRes = fileURI = fileURI_2 = null;
+            fkind = parent = ens = ns = sloc = nsRes = slocRes = null;
             pline = 0;
             warnFlag = false;
             msgs = new ArrayList<>();
         }
         
-        private String msgHeader () {
-            String prp;
-            if (parent == null) {
-                prp = "[initial load]";
-            } else {
-                prp = parent.substring(schemaRootDirectoryLength);
-            }
-            String h = String.format("%s:%d %s ns=%s sl=%s\n",
-                    prp, pline, fkind.toUpperCase(), ns, sloc);
-            return h;           
-        }
-        
-        private void warn (String fmt, Object... args  ) {
-            warnFlag = true;
-            log(fmt, args);
-        }
-
         /**
          * Put a * character before the string format (i.e. "*%s") if the
          * string is a file URI that you want converted into a path 
@@ -479,6 +536,17 @@ public class NTCheckedSchema extends NTSchema {
          */        
         private void log (String fmt, Object... args) {
             msgs.add(String.format(fmt, args));             
+        }
+        
+        private void warn (String fmt, Object... args  ) {
+            schemaWarnings = true;
+            warnFlag = true;
+            log(fmt, args);
+        }
+
+        private void relativizeMsgs (String prefix) {
+            String pat = "*" + prefix;
+            msgs.replaceAll(e -> e.replaceAll(pat, ""));
         }
     }
     

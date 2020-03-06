@@ -8,8 +8,8 @@ Without this configuration present, some functionality in the IDE may be limited
 -->
     <config-data xmlns="http://www.netbeans.org/ns/maven-config-data/1">
         <configurations>
-            <configuration id="debug" profiles=""/>
             <configuration id="nt" profiles=""/>
+            <configuration id="nt-check" profiles=""/>
         </configurations>
     </config-data>
     <properties xmlns="http://www.netbeans.org/ns/maven-properties-data/1">
@@ -21,5 +21,6 @@ Any value defined here will override the pom.xml file value but is only applicab
 -->
         <netbeans.hint.licensePath>${project.basedir}/licenseheader.txt</netbeans.hint.licensePath>
         <org-netbeans-modules-javascript2-requirejs.enabled>true</org-netbeans-modules-javascript2-requirejs.enabled>
+        <netbeans.compile.on.save>all</netbeans.compile.on.save>
     </properties>
 </project-shared-configuration>

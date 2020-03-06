@@ -113,12 +113,10 @@ public class XSNamespaceInfo {
             nsPrefix.forEach((prefix, map) -> {
                 long ctURIsMappedToPrefix = map.values().stream().distinct().count();
                 if (ctURIsMappedToPrefix > 1) {
-                    StringBuilder msg = new StringBuilder();
-                    msg.append(String.format("prefix \"%s\" is mapped to multiple namespaces\n", prefix));
+                    xsWarnings.add(String.format("prefix \"%s\" is mapped to multiple namespaces:\n", prefix));
                     map.forEach((ns, uri) -> {
-                        msg.append(String.format("  to %s in namespace %s\n", uri, ns));
+                        xsWarnings.add(String.format("  to %s in namespace %s\n", uri, ns));
                     });
-                    xsWarnings.add(msg.toString());
                 }
             });
             // Iterate through the URI mappings,
@@ -126,12 +124,10 @@ public class XSNamespaceInfo {
             nsURI.forEach((uri, nlst) -> {
                 long ctPrefixMappedToURI = nlst.stream().map(MapRec::getPrefix).distinct().count();
                 if (ctPrefixMappedToURI > 1) {
-                    StringBuilder msg = new StringBuilder();
-                    msg.append(String.format("multiple prefixes are mapped to namespace %s\n", uri));
+                    xsWarnings.add(String.format("multiple prefixes are mapped to namespace %s:\n", uri));
                     nlst.forEach((mr) -> {
-                        msg.append(String.format("  prefix \"%s\" in namespace %s\n", mr.prefix, mr.ns));
+                        xsWarnings.add(String.format("  prefix \"%s\" in namespace %s\n", mr.prefix, mr.ns));
                     });
-                    xsWarnings.add(msg.toString());
                 }
             });  
         }

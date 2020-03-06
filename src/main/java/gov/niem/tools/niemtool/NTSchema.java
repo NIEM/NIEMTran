@@ -173,9 +173,10 @@ public class NTSchema {
         reset();
     }
     
-    private void reset() {
+    protected void reset() {
         initErrors = null;
-        xsmodel = null;                  
+        xsmodel = null;
+        xsConstructionErrors = null;              
     }
 
     /**
@@ -379,7 +380,7 @@ public class NTSchema {
                 allSchemaFileURIs.size());
         xsmodel = loader.loadURIList(slist);
         if (xsmodel == null) {
-            xsConstructionErrors.add("xerces xsloader returned null");
+            xsConstructionErrors.add("Xerces xsloader returned null");
         }
         return xsmodel;
     }

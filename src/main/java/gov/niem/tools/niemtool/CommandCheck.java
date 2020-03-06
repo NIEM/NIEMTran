@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import javax.xml.parsers.ParserConfigurationException;
 import org.apache.xerces.xs.XSModel;
 
 /**
@@ -30,7 +31,7 @@ import org.apache.xerces.xs.XSModel;
 @Parameters(commandDescription = "check XML schema for assembly errors")
 public class CommandCheck implements JCCommand {
    
-    @Parameter(names = "-s", description = "filename separator character")
+    @Parameter(names = "-s", description = "filename separator character (e.g. \"-s,\" or \"-s ,\")")
     private String fsep = ",";
     
     @Parameter(names = "-i", description = "continue checking after initialization or assembly warnings")
@@ -41,9 +42,6 @@ public class CommandCheck implements JCCommand {
    
     @Parameter(names = {"-v"}, description = "verbose output")
     private boolean verbose = false;
-    
-    @Parameter(names = "-q", description = "no output, exit status only")
-    private boolean quiet = false;
     
     @Parameter(names = {"-h","--help"}, description = "display this usage message", help = true)
     boolean help = false;
@@ -80,7 +78,8 @@ public class CommandCheck implements JCCommand {
     }
     
     private void run (JCommander cob) {
-        
+        // A schema is defined by a list of catalog files plus a list of
+        // schema documents or namespaces.  Process the arguments for those lists
         ArrayList<String> catalogs = new ArrayList<>();
         ArrayList<String> schemas  = new ArrayList<>();
         
@@ -88,76 +87,81 @@ public class CommandCheck implements JCCommand {
             cob.usage();
             System.exit(0);
         }
-        if (verbose && quiet) {
-            System.out.println("Error: -v and -q options are incompatible");
-            cob.usage();
-            System.exit(1);
-        }
         if (mainArgs == null || mainArgs.size() < 1) {
             cob.usage();
             System.exit(1);
         }
+        // Argument "-s ," will have been processed by JCommander
+        // Argument "-s," will be unhandled -- handle it now
         if (mainArgs.get(0).startsWith("-s") && mainArgs.get(0).length() == 3) {
             String s = mainArgs.remove(0);
             fsep = s.substring(2);
         }
+        // Any other argument beginning with "-" is an unknown option
+        // Except for "--", which is ignored and allows filenames starting with "-"
         String na = mainArgs.get(0);
         if (na.startsWith("-")) {
-            if (na.length() == 1) {
+            if (na.equals("--")) {
                 mainArgs.remove(0);
             } else {
                 System.out.println("unknown option: " + na);
                 cob.usage();
                 System.exit(1);
             }
-        }        
+        } 
+        // Must be at least one schema or nsmespsce argument
         if (mainArgs.size() < 0) {
             cob.usage();
             System.exit(1);            
-        }      
+        }
+        // Two or more arguments? Then the first one is XML Catalog(s)
         if (mainArgs.size() > 1) {
             String catstr = mainArgs.remove(0);
             catalogs.addAll(Arrays.asList(catstr.split(fsep)));
         }
+        // Everything else is a schema document (list)
         for (String s : mainArgs) {
             schemas.addAll(Arrays.asList(s.split(fsep)));
         }
+        // Arguments all handled, time to construct the schema object       
         NTCheckedSchema sc = null;
         try {
             sc = new NTCheckedSchema(catalogs, schemas);
-        } catch (Exception ex) {
+        } catch (ParserConfigurationException ex) {
             System.out.println(ex.getMessage());
             System.exit(2);
         }
-        
-        // Initialization checking
+        // Initialization checking -- tell us about catalog parsing and resolved namespaces
         boolean schemasFound = (sc.getAllInitialSchemas().size() > 0);
         if (verbose) {
-            System.out.println("== Schema initialization ==");
+            System.out.println("== Schema initialization checking ==");
             printMessages("Catalog validation results:", sc.resolver().validationResults());
             printItems("Initial schema documents:", sc.getAllInitialSchemas());
         }
         if (!schemasFound) {
-            System.out.println("No initial schema documents provided");   
-            if (!ignore) {
-                System.exit(1);
-            }
+            System.out.println("Schema initialization error: no initial schema documents");
+            System.exit(1);
         }
         List<String> initErrs = sc.initializationErrorMessages();
         if (initErrs.size() > 0) {
-            if (!quiet) {
-                printMessages("Schema initialization errors:", initErrs);
-            }
+            printMessages("Schema initialization errors:", initErrs);
             if (!ignore) {
                 System.exit(1);
             }
         }
-        // Schema assembly checking
+        // Get the schema root directory. This executes the schema assembly checking, but
+        // I want it now so we can print the root directory before "Schema initialization: OK"
         String schemaRoot = sc.schemaRootDirectory();
         int schemaRootLength = schemaRoot.length();
+        System.out.println("Schema root directory: " + schemaRoot);
+        
+        // OK, now tell us about successful initialization
+        if (initErrs.size() < 1) {
+            System.out.println("Schema initialization: OK");
+        }
+        // And now tell us about schema assembly checking
         if (verbose) {
             System.out.println("== Schema assembly checking ==");
-            System.out.println("Schema root directory: " + schemaRoot);
             System.out.println("Schema documents assembled:");
             List<String> dl = sc.assembledSchemaDocuments();
             Collections.sort(dl);
@@ -166,37 +170,33 @@ public class CommandCheck implements JCCommand {
             }
             printMessages("Schema assembly log messages:", sc.assemblyLogMessages());
         }
-        if (!sc.assemblyWarningMessages().isEmpty()) {
-            if (!quiet && !verbose) {
-                System.out.println("Schema root directory: " + schemaRoot);                
-                printMessages("Schema assembly messages:", sc.assemblyWarningMessages());
-            }
+        else if (sc.assemblyWarnings()) {            
+                printMessages("Schema assembly warnings:", sc.assemblyWarningMessages());
+        }
+        if (sc.assemblyWarnings()) {
             if (!ignore) {
                 System.exit(1);
             }
         }
+        else {
+            System.out.println("Schema assembly: OK");
+        }
+
         // Schema construction
         XSModel xs = sc.xsmodel();
         if (verbose) {
             System.out.println("== Schema construction ==");
-            System.out.println(xs == null ? "Schema contruction: FAILED" : "Schema construction: OK");
-            printMessages("Schema construction messages:", sc.xsConstructionMessages());
-            printMessages("Schema warnings:", sc.xsWarningMessages());
-            if (!noNIEM) { printMessages("Schema NIEM warnings:", sc.xsNIEMWarningMessages()); }
+        }
+        printMessages("Schema construction messages:", sc.xsConstructionMessages());
+        if (xs == null) {
+            System.out.println("Schema construction: FAILED");
+            System.exit(1);
+        }        
+        printMessages("Schema warnings:", sc.xsWarningMessages());
+        if (!noNIEM) { printMessages("Schema NIEM warnings:", sc.xsNIEMWarningMessages()); }
+        if (verbose) {
             printMessages("Namespaces constructed:", sc.xsNamespaceList());
             printMessages("Catalog resolutions:", sc.xsResolutionMessages());
-        }
-        else if (!quiet) {
-            if (sc.assemblyWarningMessages().isEmpty()) {
-                System.out.println("Schema root directory: " + schemaRoot);                
-            }
-            System.out.println(xs == null ? "Schema contruction: FAILED" : "Schema construction: OK");
-            printMessages("Schema construction messages:", sc.xsConstructionMessages());
-            printMessages("Schema warnings:", sc.xsWarningMessages());
-            if (!noNIEM) { printMessages("Schema NIEM warnings:", sc.xsNIEMWarningMessages()); }            
-        }
-        if (xs == null) {
-            System.exit(1);
         }
      }
        
