@@ -41,6 +41,7 @@ public class NTCompiledSchemaTest {
     
    // @ParameterizedTest would be cool, but it's not working
 
+/*
     
     @Test
     public void testBogusRdf () {
@@ -105,5 +106,5 @@ public class NTCompiledSchemaTest {
             Logger.getLogger(NTCheckedSchemaTest.class.getName()).log(Level.SEVERE, null, ex);
         }
     }   
-    
+*/    
 }
