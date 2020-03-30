@@ -18,10 +18,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import static gov.niem.tools.niemtool.NTConstants.STRUCTURES_NS_URI_PREFIX;
 import static gov.niem.tools.niemtool.Translate.X2J_EXTENDED;
-import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.Stack;
@@ -51,11 +48,15 @@ public class NTXMLHandler extends DefaultHandler {
 
     protected final StringBuilder content;    // gathers content of simple content elements
     protected final Stack<JsonObject> ostk;   // parent objects of the element being processed
-    protected String messageFormatID;         // 
-    protected int resultFlags;
-    protected final ArrayList<JsonObject> objWithMetadata;    // for second-pass of objects with metadata
-    protected final HashMap<String,String> metadataElement;   // maps @id to metadata element compact IRI    
+    protected String messageFormatID;         // namespace of the document element
+    protected int resultFlags;  
     
+    /**
+     * 
+     * @param m -- schema model for this document; not modified by handler
+     * @param d -- an empty JsonObject; handler adds json data to it
+     * @param c -- an empty JsonObject; handler adds context pairs to it
+     */
     NTXMLHandler (NTSchemaModel m, JsonObject d, JsonObject c) {
         super();
         model = m;
@@ -63,8 +64,6 @@ public class NTXMLHandler extends DefaultHandler {
         context = c;
         nsbind = new NamespaceBindings(m.namespaceBindings());
         uriUsed = new HashSet<>();
-        objWithMetadata = new ArrayList<>();
-        metadataElement = new HashMap<>();
         content = new StringBuilder(80);
         ostk = new Stack<>();
         ostk.push(data);
@@ -133,6 +132,8 @@ public class NTXMLHandler extends DefaultHandler {
             } 
             // Handle attributes from structures namespace
             else if (auri.startsWith(STRUCTURES_NS_URI_PREFIX)) {
+                av = av.strip();
+                
                 // structures:uri, id, and ref all become @id keyword 
                 if ("id".equals(aln) || "ref".equals(aln) || "uri".equals(aln)) {
                     String ref;
@@ -140,38 +141,42 @@ public class NTXMLHandler extends DefaultHandler {
                         ref = av;       // uri value already is a relative URI
                     }
                     else {
-                        ref = "#" + av; // convert id and ref values into relative URI
+                        ref = idref(av); // convert ID and IDREF values into relative URI
                     }
                     cobj.addProperty("@id", ref);
-                    // Remember compact IRI of metadata elements for cleanup phase
-                    if (eLocalName.endsWith("Metadata")) {
-                        metadataElement.put(ref, elementKey);
-                    }
-                }
-                // structures:metadata becomes a placeholder for the metadata object reference                
+                }            
+                // structures:metadata becomes a name-value pair in the element object
                 else if (aqn.endsWith(":metadata")) {
-                    JsonArray phold = cobj.getAsJsonArray(STRUCTURES_NS_URI_PREFIX);
-                    if (null == phold) {
-                        phold = new JsonArray();
-                        cobj.add(STRUCTURES_NS_URI_PREFIX, phold);
-                    }
-                    String[] vals = av.split("\\s+");
-                    for (String v: vals) {
-                        if (v.startsWith("#")) {
-                            phold.add(v);
+                    
+                    // is the attribute value a single IDREF or an IDREF list?
+                    JsonElement jv = null;
+                    if (av.matches("\\S+\\s")) {
+                        JsonArray jva = new JsonArray();
+                        String[] vals = av.split("\\s+");
+                        for (String v : vals) {
+                            jva.add(idref(v));
                         }
-                        else {
-                            phold.add("#" + v);
-                        }
+                        jv = jva;                        
                     }
-                    objWithMetadata.add(cobj);
+                    else {
+                        jv = new JsonPrimitive(idref(av));
+                    }
+                    String aprfx = nsbind.getPrefix(auri);
+                    String akey = aprfx + ":" + "metadata";
+                    cobj.add(akey, jv);
+                    uriUsed.add(auri);
+                }
+                else if (aqn.endsWith("relationshipMetadata")) {
+                    // FIXME
                 }
             } 
+            // done with attributes from structures namespace
             // ignore xsi: attributes
             else if (W3C_XML_SCHEMA_INSTANCE_NS_URI.equals(auri)) {
                 // do nothing for xsi:type, xsi:nil, etc.
             }
             // "ordinary" attribute becomes a name-value pair in the element object
+            // FIXME attributes of list type need an array
             else {
                 String aprfx = nsbind.getPrefix(auri);
                 String akey = aprfx + ":" + aln;
@@ -181,6 +186,7 @@ public class NTXMLHandler extends DefaultHandler {
                 uriUsed.add(auri);
             }
         }
+        // Done processing attributes.  Nothing more to do for complex content.
         // Element with simple content? Empty the content-capture buffer
         // There will be some "characters" events, then an end-element, and
         // nothing in between, because no mixed content allowed.
@@ -239,12 +245,12 @@ public class NTXMLHandler extends DefaultHandler {
     // same key are handled differently
     protected static void addToObject(JsonObject pobj, String elementKey, JsonElement jval) {
 
-        // If it's the 1st time to add this key, just add the new name-value pair.
+        // 1st time adding this key, just add the new name-value pair.
         if (!pobj.has(elementKey)) {
            pobj.add(elementKey, jval);
         }
         else {
-            // 2nd time addking key, replace cval with an array [cval,jval]
+            // 2nd time adding key, replace cval with an array [cval,jval]
             JsonElement cval = pobj.get(elementKey);
             if (!cval.isJsonArray()) {
                 pobj.remove(elementKey);
@@ -253,7 +259,7 @@ public class NTXMLHandler extends DefaultHandler {
                 cva.add(jval);
                 pobj.add(elementKey,cva);
             }
-            // 3rd or later time for this key, append to the cval array
+            // 3rd or later time for this key, append jval to the cval array
             else {
                 JsonArray cva = (JsonArray)cval;
                 cva.add(jval);
@@ -263,20 +269,7 @@ public class NTXMLHandler extends DefaultHandler {
 
     @Override
     public void endDocument () {
-        
-        // Replace "structures:metadata" keys with compact IRI of the metadata element
-        for (JsonObject obj : objWithMetadata) {
-            JsonArray phold = obj.getAsJsonArray(STRUCTURES_NS_URI_PREFIX); 
-            for (JsonElement je : phold) {
-                String id = je.getAsString();
-                String mdkey = metadataElement.get(id);
-                JsonObject mdo = new JsonObject();
-                mdo.addProperty("@id", id);
-                addToObject(obj,mdkey,mdo);
-            }          
-            obj.remove(STRUCTURES_NS_URI_PREFIX);           
-        }
-        
+
         // Make a copy of the model context object.
         // If the input XML uses any unanticipated namespace (in an attribute or
         // element matching a wildcard), add the (prefix,ns) pair to the
@@ -324,7 +317,7 @@ public class NTXMLHandler extends DefaultHandler {
         } 
         // Not a list type, return JsonPrimitive based on simpleType
         else if ("boolean".equals(simpleType)) {
-            return new JsonPrimitive(Boolean.valueOf(val));
+            return new JsonPrimitive(Boolean.valueOf(val.trim()));
         } 
         // else if ("decimal".equals(simpleType)) {
         //    return new JsonPrimitive(new BigDecimal(val));
@@ -336,11 +329,22 @@ public class NTXMLHandler extends DefaultHandler {
             return new JsonPrimitive(Float.valueOf(val));
         } 
         else if (INTEGER_TYPES.contains(simpleType)) {
-            return new JsonPrimitive(new BigInteger(val));
+            return new JsonPrimitive(new BigInteger(val.trim()));
         }
         return new JsonPrimitive(val);
     }
     
+    // every IDREF becomes a URI relative to the document base 
+    static String idref (String s) {
+        if (s.startsWith("#")) {
+            return s;
+        }
+        else {
+            return "#" + s;
+        }
+    }
+    
+    // returns the component URI by composing namespace and local name
     static String componentURI (String namespace, String localName) {
         if (namespace.endsWith("#")) {
             return namespace + localName;

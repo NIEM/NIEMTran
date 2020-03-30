@@ -61,14 +61,14 @@ public class Translate {
     
     // NIEM XML to NIEM JSON translation routines
     // You can have the JSON input as text or a JsonObject.
-    // You can have the context object included or separate.
+    // You can have the context object included in the json data or as a separate object.
     // All return a status value:
-    //   X2J_EXTENDED -- Components with an unexpected namespace in the input XML;
+    //   X2J_EXTENDED -- Components with an unexpected namespace found in the input XML;
     //                   the schema model's context object is extended with these namespaces.
     //                   With valid NIEM XML, this can only happen via schema wildcards.
-    //   X2J_OMITTED  -- Input XML contains elements from unhandled external or unexpected 
-    //                   namespaces; this data is omitted from the output json.
-    //   X2J_OK       -- All input XML translated; the context is the schema model's context.
+    //   X2J_OMITTED  -- Input XML contained elements from unhandled external or unexpected 
+    //                   namespaces; this data was omitted from the output json.
+    //   X2J_OK       -- All input XML translated; the context is same as the schema model's context.
     
     /**
      * Translates a NIEM XML input stream into a JSON character stream.
