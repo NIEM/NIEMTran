@@ -10,7 +10,7 @@
  * Copyright 2019 The MITRE Corporation.
  */
 
-package gov.niem.tools.niemtool;
+package gov.niem.tools.niemtran;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
@@ -20,15 +20,15 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * The "niemtool" command-line program.
+ * The "niemtran" command-line program.
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 
-public class NIEMTool {
+public class NIEMTran {
     
     public static void main (String[] args) {
-        NIEMTool obj = new NIEMTool();
+        NIEMTran obj = new NIEMTran();
         obj.run(args);
     }
     
@@ -37,7 +37,7 @@ public class NIEMTool {
         JCommander jc = new JCommander();
         NTUsageFormatter uf = new NTUsageFormatter(jc); 
         jc.setUsageFormatter(uf);
-        jc.setProgramName("niemtool");
+        jc.setProgramName("niemtran");
         
         CommandCheck checkCmd         = new CommandCheck(jc);
         CommandCompile compileCmd     = new CommandCompile(jc);
@@ -69,7 +69,7 @@ public class NIEMTool {
         cmd.runCommand(cob);               
     }
     
-    @Parameters(commandDescription = "list of niemtool commands")
+    @Parameters(commandDescription = "list of niemtran commands")
     private class CommandHelp implements JCCommand {
         
         @Parameter(description = "display help for this command")

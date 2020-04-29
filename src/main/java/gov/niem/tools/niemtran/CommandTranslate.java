@@ -10,7 +10,7 @@
  * Copyright 2019 The MITRE Corporation.
  */
 
-package gov.niem.tools.niemtool;
+package gov.niem.tools.niemtran;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
@@ -90,7 +90,7 @@ public class CommandTranslate implements JCCommand {
     
     @Override
     public void runCommand (JCommander cob) {
-        cob.setProgramName("niemtool translate");
+        cob.setProgramName("niemtran translate");
         run(cob);
     }
     
@@ -202,7 +202,7 @@ public class CommandTranslate implements JCCommand {
     }       
     
     void writeGraphviz(PrintWriter pw, JsonObject data, JsonObject cxt) {
-        NJ2Graphviz njt = new NJ2Graphviz(data, cxt, baseURI);
+        NJ2Graphviz njt = new NJ2Graphviz(data, cxt);
         njt.graphviz(pw);
     }
     

@@ -10,7 +10,7 @@
  * Copyright 2019 The MITRE Corporation.
  */
 
-package gov.niem.tools.niemtool;
+package gov.niem.tools.niemtran;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -786,7 +786,7 @@ public class NTCatalogResolver
         fPreferPublic = preferPublic;
         fResolverCatalogManager = new CatalogManager();
         fResolverCatalogManager.setAllowOasisXMLCatalogPI(false);
-        fResolverCatalogManager.setCatalogClassName("niemtool.NTCatalogResolver"); // MODIFIED, was org.apache.xml.resolver.Catalog
+        fResolverCatalogManager.setCatalogClassName("niemtran.NTCatalogResolver"); // MODIFIED, was org.apache.xml.resolver.Catalog
         fResolverCatalogManager.setCatalogFiles("");
         fResolverCatalogManager.setIgnoreMissingProperties(true);
         fResolverCatalogManager.setPreferPublic(fPreferPublic);

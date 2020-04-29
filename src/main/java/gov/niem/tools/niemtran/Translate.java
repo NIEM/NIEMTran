@@ -10,9 +10,9 @@
  * Copyright 2019 The MITRE Corporation.
  */
 
-package gov.niem.tools.niemtool;
+package gov.niem.tools.niemtran;
 
-import static gov.niem.tools.niemtool.ParserBootstrap.BOOTSTRAP_SAX2;
+import static gov.niem.tools.niemtran.ParserBootstrap.BOOTSTRAP_SAX2;
 import com.google.gson.JsonObject;
 import java.io.IOException;
 import java.io.InputStream;

@@ -2,7 +2,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>gov.niem.tools</groupId>
-    <artifactId>NIEMTool</artifactId>
+    <artifactId>NIEMTran</artifactId>
     <version>1.0rc</version>
     <packaging>jar</packaging>
     <dependencies>
@@ -70,7 +70,7 @@
                     <copyConfigurationDirectory>true</copyConfigurationDirectory>
                     <programs>
                         <program>
-                            <mainClass>gov.niem.tools.niemtool.NIEMTool</mainClass>
+                            <mainClass>gov.niem.tools.niemtran.NIEMTran</mainClass>
                             <id>niemtool</id>
                         </program>
                     </programs>
@@ -103,5 +103,6 @@
                 <version>3.0.0-M1</version>
             </plugin>                                   
         </plugins>
-    </build>    
+    </build>
+    <name>NIEMTran</name>
 </project>

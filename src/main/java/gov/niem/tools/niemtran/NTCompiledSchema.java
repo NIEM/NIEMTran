@@ -10,7 +10,7 @@
  * Copyright 2019 The MITRE Corporation.
  */
 
-package gov.niem.tools.niemtool;
+package gov.niem.tools.niemtran;
 
 import java.util.List;
 import javax.xml.parsers.ParserConfigurationException;
@@ -24,7 +24,7 @@ import org.apache.xerces.xs.XSObject;
 import org.apache.xerces.xs.XSSimpleTypeDefinition;
 import org.apache.xerces.xs.XSTypeDefinition;
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
-import static gov.niem.tools.niemtool.NTConstants.*;
+import static gov.niem.tools.niemtran.NTConstants.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import org.apache.xerces.xs.XSModelGroup;

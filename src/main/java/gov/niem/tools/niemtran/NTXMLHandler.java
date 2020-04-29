@@ -10,14 +10,14 @@
  * Copyright 2019 The MITRE Corporation.
  */
 
-package gov.niem.tools.niemtool;
+package gov.niem.tools.niemtran;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-import static gov.niem.tools.niemtool.NTConstants.STRUCTURES_NS_URI_PREFIX;
-import static gov.niem.tools.niemtool.Translate.X2J_EXTENDED;
+import static gov.niem.tools.niemtran.NTConstants.STRUCTURES_NS_URI_PREFIX;
+import static gov.niem.tools.niemtran.Translate.X2J_EXTENDED;
 import java.math.BigInteger;
 import java.util.HashSet;
 import java.util.Set;

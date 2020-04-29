@@ -10,14 +10,14 @@
  * Copyright 2019 The MITRE Corporation.
  */
 
-package gov.niem.tools.niemtool;
+package gov.niem.tools.niemtran;
 
-import static gov.niem.tools.niemtool.NTConstants.APPINFO_NS_URI_PREFIX;
-import static gov.niem.tools.niemtool.NTConstants.CONFORMANCE_ATTRIBUTE_NAME;
-import static gov.niem.tools.niemtool.NTConstants.CONFORMANCE_TARGET_NS_URI_PREFIX;
-import static gov.niem.tools.niemtool.NTConstants.NDR_CT_URI_PREFIX;
-import static gov.niem.tools.niemtool.NTConstants.NIEM_RELEASE_PREFIX;
-import static gov.niem.tools.niemtool.NTConstants.NIEM_XS_PREFIX;
+import static gov.niem.tools.niemtran.NTConstants.APPINFO_NS_URI_PREFIX;
+import static gov.niem.tools.niemtran.NTConstants.CONFORMANCE_ATTRIBUTE_NAME;
+import static gov.niem.tools.niemtran.NTConstants.CONFORMANCE_TARGET_NS_URI_PREFIX;
+import static gov.niem.tools.niemtran.NTConstants.NDR_CT_URI_PREFIX;
+import static gov.niem.tools.niemtran.NTConstants.NIEM_RELEASE_PREFIX;
+import static gov.niem.tools.niemtran.NTConstants.NIEM_XS_PREFIX;
 import java.io.StringReader;
 import static java.lang.Math.min;
 import java.util.ArrayList;

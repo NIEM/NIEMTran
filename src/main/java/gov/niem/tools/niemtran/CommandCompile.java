@@ -10,7 +10,7 @@
  * Copyright 2019 The MITRE Corporation.
  */
 
-package gov.niem.tools.niemtool;
+package gov.niem.tools.niemtran;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
@@ -24,7 +24,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import static gov.niem.tools.niemtool.NTSchema.uriToFile;
+import static gov.niem.tools.niemtran.NTSchema.uriToFile;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.xerces.xs.XSModel;
 
@@ -75,7 +75,7 @@ public class CommandCompile implements JCCommand {
     
     @Override
     public void runCommand (JCommander cob) {
-        cob.setProgramName("niemtool compile");
+        cob.setProgramName("niemtran compile");
         run(cob);
     }
     

@@ -10,9 +10,9 @@
  * Copyright 2019 The MITRE Corporation.
  */
 
-package gov.niem.tools.niemtool;
+package gov.niem.tools.niemtran;
 
-import static gov.niem.tools.niemtool.XSNamespaceInfo.commonPrefix;
+import static gov.niem.tools.niemtran.XSNamespaceInfo.commonPrefix;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
