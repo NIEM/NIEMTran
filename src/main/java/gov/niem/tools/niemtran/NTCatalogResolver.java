@@ -54,7 +54,7 @@ import org.xml.sax.helpers.DefaultHandler;
  * <br>Original source code used here under Apache 2.0 license.
  * 
  * <p>
- * The source code is identical except where marked by <code>//MODIFICATION</code>
+ * The source code is identical except where marked by <code>//MODIFIED</code>
  * comments.
  *
  * <p>
@@ -74,7 +74,7 @@ import org.xml.sax.helpers.DefaultHandler;
  * <p>
  * Catalog file parsing results are obtained through a class extending the
  * org.apache.xml.resolver.Catalog class. The relevant <code>fCatalog</code>
- * member variable is private, which is why this class is not implemented
+ * member variable is private, which is why this class cannot  implemented
  * by extending the XMLCatalogResolver class.
  *
  * <p>

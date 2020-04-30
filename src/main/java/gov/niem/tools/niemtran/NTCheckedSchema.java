@@ -347,7 +347,7 @@ public class NTCheckedSchema extends NTSchema {
         // create various warnings based on resolution results
         // strip out any attempt to load non-local resource
         if (r.ns != null) {
-            if (r.nsRes == null && getCatalogFiles().size() > 0) {
+            if (r.nsRes == null && getInitialCatalogFiles().size() > 0) {
                 r.warn("no catalog entry for namespace %s\n", r.ns);
             } else if (r.nsRes != null && !r.nsRes.startsWith("file:")) {
                 r.warn("namespace %s resolves to non-local resource %s\n", r.ns, r.nsRes);
