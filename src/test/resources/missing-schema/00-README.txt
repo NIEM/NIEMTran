@@ -1,1 +1,0 @@
-jxdm.xsd is missing

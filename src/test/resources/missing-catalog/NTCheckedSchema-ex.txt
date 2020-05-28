@@ -1,1 +1,0 @@
-*Initialization:file:/C:/Work/NetBeans/NIEMTool/target/test-classes/missing-catalog/niem/xml-catalog.xml : catalog file does not exist

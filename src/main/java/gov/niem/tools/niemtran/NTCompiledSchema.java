@@ -7,7 +7,7 @@
  * and Noncommercial Computer Software Documentation
  * Clause 252.227-7014 (FEB 2012)
  * 
- * Copyright 2019 The MITRE Corporation.
+ * Copyright 2020 The MITRE Corporation.
  */
 
 package gov.niem.tools.niemtran;
