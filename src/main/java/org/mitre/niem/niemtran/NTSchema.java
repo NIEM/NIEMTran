@@ -10,9 +10,9 @@
  * Copyright 2020 The MITRE Corporation.
  */
 
-package gov.niem.tools.niemtran;
+package org.mitre.niem.niemtran;
 
-import static gov.niem.tools.niemtran.ParserBootstrap.BOOTSTRAP_ALL;
+import static org.mitre.niem.niemtran.ParserBootstrap.BOOTSTRAP_ALL;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;

@@ -10,22 +10,20 @@
  * Copyright 2020 The MITRE Corporation.
  */
 
-package gov.niem.tools.niemtran;
+package org.mitre.niem.niemtran;
+
+import com.beust.jcommander.JCommander;
 
 /**
- * A kind of exception thrown when a resource load fails because of I/O
- * or parsing error.
+ * An interface for a command-line sub-program using JCommander to parse its
+ * arguments. Implemented by CommandCheck, CommandCompile, etc.
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
+public interface JCCommand {
+       
+    public void runMain (String[] args);
+    public void runCommand (JCommander cob);
 
-public class FormatException extends Exception {
-
-    FormatException(String msg) {
-        super(msg);
-    }
-
-    FormatException(String msg, Throwable cause) {
-        super(msg, cause);
-    }
 }
+

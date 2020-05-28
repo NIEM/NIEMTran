@@ -10,7 +10,7 @@
  * Copyright 2020 The MITRE Corporation.
  */
 
-package gov.niem.tools.niemtran;
+package org.mitre.niem.niemtran;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;

@@ -10,11 +10,11 @@
  * Copyright 2020 The MITRE Corporation.
  */
 
-package gov.niem.tools.niemtran;
+package org.mitre.niem.niemtran;
 
-import static gov.niem.tools.niemtran.NTConstants.CONFORMANCE_ATTRIBUTE_NAME;
-import static gov.niem.tools.niemtran.NTConstants.CONFORMANCE_TARGET_NS_URI_PREFIX;
-import static gov.niem.tools.niemtran.NTConstants.NDR_CT_URI_PREFIX;
+import static org.mitre.niem.niemtran.NTConstants.CONFORMANCE_ATTRIBUTE_NAME;
+import static org.mitre.niem.niemtran.NTConstants.CONFORMANCE_TARGET_NS_URI_PREFIX;
+import static org.mitre.niem.niemtran.NTConstants.NDR_CT_URI_PREFIX;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;

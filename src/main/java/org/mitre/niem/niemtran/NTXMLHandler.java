@@ -10,15 +10,15 @@
  * Copyright 2020 The MITRE Corporation.
  */
 
-package gov.niem.tools.niemtran;
+package org.mitre.niem.niemtran;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-import static gov.niem.tools.niemtran.NTConstants.STRUCTURES_NS_URI_PREFIX;
-import static gov.niem.tools.niemtran.Translator.X2J_OK;
-import static gov.niem.tools.niemtran.Translator.X2J_OMITTED;
+import static org.mitre.niem.niemtran.NTConstants.STRUCTURES_NS_URI_PREFIX;
+import static org.mitre.niem.niemtran.Translator.X2J_OK;
+import static org.mitre.niem.niemtran.Translator.X2J_OMITTED;
 import java.math.BigInteger;
 import java.util.Set;
 import java.util.Stack;

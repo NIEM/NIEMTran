@@ -10,9 +10,9 @@
  * Copyright 2020 The MITRE Corporation.
  */
 
-package gov.niem.tools.niemtran;
+package org.mitre.niem.niemtran;
 
-import static gov.niem.tools.niemtran.NTConstants.RDF_NS_URI;
+import static org.mitre.niem.niemtran.NTConstants.RDF_NS_URI;
 import java.util.HashMap;
 import java.util.Map;
 

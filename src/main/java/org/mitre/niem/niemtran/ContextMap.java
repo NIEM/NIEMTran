@@ -10,7 +10,7 @@
  * Copyright 2020 The MITRE Corporation.
  */
 
-package gov.niem.tools.niemtran;
+package org.mitre.niem.niemtran;
 
 import com.google.gson.stream.JsonReader;
 import java.io.File;

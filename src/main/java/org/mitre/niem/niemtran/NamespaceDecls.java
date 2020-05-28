@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package gov.niem.tools.niemtran;
+package org.mitre.niem.niemtran;
 
-import static gov.niem.tools.niemtran.NTConstants.NIEM_RELEASE_PREFIX;
-import static gov.niem.tools.niemtran.NTConstants.RDF_NS_URI;
+import static org.mitre.niem.niemtran.NTConstants.NIEM_RELEASE_PREFIX;
+import static org.mitre.niem.niemtran.NTConstants.RDF_NS_URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
