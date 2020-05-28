@@ -12,8 +12,6 @@
 
 package gov.niem.tools.niemtran;
 
-import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
-
 /**
  *
  * @author Scott Renner

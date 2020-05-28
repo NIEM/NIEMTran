@@ -74,7 +74,7 @@ import org.xml.sax.helpers.DefaultHandler;
  * <p>
  * Catalog file parsing results are obtained through a class extending the
  * org.apache.xml.resolver.Catalog class. The relevant <code>fCatalog</code>
- * member variable is private, which is why this class cannot  implemented
+ * member variable is private, which is why this class cannot be implemented
  * by extending the XMLCatalogResolver class.
  *
  * <p>
@@ -317,9 +317,7 @@ public class NTCatalogResolver
                 cr = catParser.getXMLReader();
                 cr.setEntityResolver(h);
                 catParser.parse(furi, h);
-            } catch (SAXException ex) {
-                Logger.getLogger(NTCatalogResolver.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (IOException ex) {
+            } catch (SAXException | IOException ex) {
                 Logger.getLogger(NTCatalogResolver.class.getName()).log(Level.SEVERE, null, ex);
             }
             res = msgs.toString();

@@ -135,7 +135,7 @@ public class NJ2Turtle {
         // Any predicates in this node?
         boolean skip = true;
         for (Map.Entry<String,JsonElement>pair: obj.entrySet()) {
-            String pred   = pair.getKey();
+            String pred = pair.getKey();
             if (!pred.startsWith("@")) {
                 skip = false;
                 break;

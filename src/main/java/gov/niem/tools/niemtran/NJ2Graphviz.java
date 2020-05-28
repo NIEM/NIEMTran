@@ -125,8 +125,7 @@ public class NJ2Graphviz {
         // Root node gets an @id table entry even if root object doesn't have that key.
         // The @id row is always first.
         if (obj == data || obj.has("@id")) {
-             dataRowKeys.add("@id");
-             skip = false;        
+             dataRowKeys.add("@id");      
         }
         // Remember keys with primitive value, or an array with a primitive.
         // These are the data rows.
@@ -154,7 +153,7 @@ public class NJ2Graphviz {
         final int maxDataCols = 5;      // maybe parameters some day?
         
         // Handle nodes with no @id and no primitive values         
-        if (dataRowKeys.size() < 1) {
+        if (dataRowKeys.isEmpty()) {
             pw.printf("\"%s\" [label=\"%s\"];\n", nodeID, nodeID);
         }
         // Generate an HTML table for the other nodes

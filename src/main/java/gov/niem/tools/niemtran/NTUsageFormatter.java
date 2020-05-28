@@ -97,7 +97,7 @@ public class NTUsageFormatter extends UnixStyleUsageFormatter {
     @Override
     public void appendAllParametersDetails(StringBuilder out, int indentCount, String indent,
             List<ParameterDescription> sortedParameters) {
-        if (sortedParameters.size() > 0) {
+        if (!sortedParameters.isEmpty()) {
             out.append(indent).append("Options:\n");
         }
 

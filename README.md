@@ -182,8 +182,6 @@ format described by that object file.  Each message is translated into
 the equivalent NIEM JSON-LD. Some components in the XML document
 receive special handling:
 
-1. `@xml:base` becomes the `@base` JSON key
-
 1. `@uri` from any structures namespace becomes the `@id` JSON
    key. The attribute value is the value of `@id`, a relative URI
 
@@ -193,7 +191,7 @@ receive special handling:
 1. `@metadata` from any structures namespace becomes a reference to
    the metadata object. For example, when there is an element 
    `<ns:JusticeMetadata structures:ref="foo">`, then the attribute
-   `structures:metadata="foo"` becomes `"ns:JusticeMetadata": {
+   `structures:metadata="foo"` becomes `"structures:metadata": {
    "@id" : "foo" }`
    
 1. Attributes from the XSI namespace are ignored
@@ -234,7 +232,7 @@ contain either or both of two flags:
    compiler does not generate the information needed for this
    translation. 
 
-1. `xml:lang` and `xml:space` attributes are not handled yet.
+1. `xml:base`, `xml:lang` and `xml:space` attributes are not handled yet.
 
 1. Augmentation element attributes are ignored. Perhaps they should be
    forbidden? Their RDF interpretation is unclear.

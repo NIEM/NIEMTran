@@ -15,7 +15,6 @@ package gov.niem.tools.niemtran;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -88,7 +87,7 @@ public class NIEMTran {
 
         @Override
         public void runCommand(JCommander helpOb) {
-            if (helpArgs != null && helpArgs.size() > 0) {
+            if (helpArgs != null && !helpArgs.isEmpty()) {
                 String cmdName = helpArgs.get(0);
                 Map<String, JCommander> cmdMap = jc.getCommands();
                 JCommander cob = cmdMap.get(cmdName);

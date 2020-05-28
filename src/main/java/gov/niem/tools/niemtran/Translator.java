@@ -12,7 +12,6 @@
 
 package gov.niem.tools.niemtran;
 
-import static gov.niem.tools.niemtran.ParserBootstrap.BOOTSTRAP_SAX2;
 import com.google.gson.JsonObject;
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,20 +32,19 @@ import org.xml.sax.SAXException;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 
-public class Translate {
+public class Translator {
     public static final int X2J_OK = 0;          // all XML handled
     public static final int X2J_OMITTED = 1;     // some XML elements omitted from output
     public static final int X2J_EXTENDED = 2;    // context includes namespaces not found in schema
     public static final int X2J_EXT_OMIT = 3;    // both omitted and extended
     
-    private static ParserBootstrap parser = null;
-    private final NTSchemaModel model;
+    private final NTSchemaModel model;    
     
     /**
      * Construct from a schema model object
      * @param m
      */
-    Translate (NTSchemaModel m) {
+    Translator (NTSchemaModel m) {
         model = m;
     }
     
@@ -55,14 +53,14 @@ public class Translate {
      * @param r model object input stream
      * @throws FormatException 
      */
-    Translate (Reader r) throws FormatException {
+    Translator (Reader r) throws FormatException {
         model = new NTSchemaModel(r);
     }
     
     // NIEM XML to NIEM JSON translation routines
-    // You can have the JSON input as text or a JsonObject.
+    // You can have the JSON output as text or a JsonObject.
     // You can have the context object included in the json data or as a separate object.
-    // All return a status value:
+    // All return status flags:
     //   X2J_EXTENDED -- Components with an unexpected namespace found in the input XML;
     //                   the schema model's context object is extended with these namespaces.
     //                   With valid NIEM XML, this can only happen via schema wildcards.
@@ -76,8 +74,9 @@ public class Translate {
      * @param is XML input stream
      * @param json JSON output stream
      */
-    public int xml2json (InputStream is, Writer json) {
-        return 0;
+    public int xml2json (InputStream is, Writer json) 
+            throws IOException, SAXException, ParserConfigurationException {        
+        return 0; //FIXME
     }
     
     /**
@@ -89,40 +88,72 @@ public class Translate {
      * @param jsonContext JSON-LD context output stream (pass in null if not wanted)
      */
     public int xml2json (InputStream is, Writer jsonData, Writer jsonContext) {
-        return 0;
+        return 0; //FIXME
     }
     
     /**
-     * Translates a NIEM XML input stream into a JSON object containing
-     * context plus data.
+     * Translates a NIEM XML input stream into a single JSON object containing
+     * data plus the JSON-LD context
      * @param is XML input
      * @param json JSON object output
      */
-    public int xml2json (InputStream is, JsonObject json) {
-        return 0;
+    public int xml2json_dataAndContext (InputStream is, JsonObject json) {
+        return 0; //FIXME
+    }
+    
+    public int xml2json_dataOnly () {
+        return 0; //FIXME
     }
     
     /**
-     * Translates a NIEM XML input stream into a character stream with the
-     * JSON-LD data, and a second optional character stream with the 
-     * JSON-LD context.
-     * @param is XML input
-     * @param data -- new JsonObject to hold data output 
-     * @param context -- new JsonObject to hold context object (or null)
-     * @return 
+     * Translates a NIEM XML input stream into one JsonObject containing the
+     * converted data, and into a second JsonObject containing the context pairs.
+     * If wildcard components from unknown namespaces are found, they are treated
+     * as NIEM-conforming, the unknown namespaces included in the output context,
+     * and X2J_EXTENDED set.
+     * @param xmldat 
+     * @param data 
+     * @param context 
+     * @return conversion result flags
      * @throws java.io.IOException
      * @throws org.xml.sax.SAXException
      * @throws javax.xml.parsers.ParserConfigurationException
      */
-    public int xml2json(InputStream is, JsonObject data, JsonObject context)
+    public int xml2json_dataAndContext (InputStream xmldat, JsonObject data, JsonObject context) 
             throws IOException, SAXException, ParserConfigurationException {
-
-        if (parser == null) {
-            parser = new ParserBootstrap(BOOTSTRAP_SAX2);
+        model.generateContext(context);
+        JsonObject ecxt = new JsonObject();
+        int rv = xml2json(xmldat, data, ecxt);
+        if ((rv & X2J_EXTENDED) != 0) {
+            ecxt.entrySet().forEach((e) -> {
+                context.add(e.getKey(), e.getValue());
+            });
         }
-        SAXParser saxp = parser.sax2Parser();
-        NTXMLHandler handler = new NTXMLHandler(model, data, context);
-        saxp.parse(is, handler);
+        return 0;
+    }
+    
+    /**
+     * Translates a NIEM XML input stream into NIEM JSON.  Caller provides
+     * one JSON object to hold the converted data. Caller provides a second
+     * JSON object to hold extensions to the schema model context resulting from 
+     * wildcard elements or attributes in the input stream. The caller must 
+     * construct the complete extended context if one is needed.
+     * @param xmldat -- XML input stream
+     * @param data -- empty JsonObject to contain the converted data
+     * @param ecxt -- empty JsonObject to contain the extended context for this
+     *                data if it includes namespaces not found in the schema
+     *                model context (X2J_EXTENDED is set); will be unchanged otherwise.
+     * @return conversion result flags
+     * @throws java.io.IOException
+     * @throws org.xml.sax.SAXException
+     * @throws javax.xml.parsers.ParserConfigurationException
+     */
+    public int xml2json(InputStream xmldat, JsonObject data, JsonObject ecxt)
+            throws IOException, SAXException, ParserConfigurationException {
+        
+        SAXParser saxp = ParserBootstrap.sax2Parser();
+        NTXMLHandler handler = new NTXMLHandler(model, data, ecxt);
+        saxp.parse(xmldat, handler);
         return handler.resultFlags();
     }
     

@@ -17,9 +17,9 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import static gov.niem.tools.niemtran.NTConstants.STRUCTURES_NS_URI_PREFIX;
-import static gov.niem.tools.niemtran.Translate.X2J_EXTENDED;
+import static gov.niem.tools.niemtran.Translator.X2J_OK;
+import static gov.niem.tools.niemtran.Translator.X2J_OMITTED;
 import java.math.BigInteger;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.Stack;
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_INSTANCE_NS_URI;
@@ -27,7 +27,22 @@ import org.xml.sax.Attributes;
 import org.xml.sax.helpers.DefaultHandler;
 
 /**
- * A SAX handler class for converting NIEM XML to NIEM JSON
+ * A SAX handler class for converting NIEM XML to NIEM JSON.  It is a helper
+ * class for Translator.
+ * 
+ * What to do with XML components from external namespaces? This is controlled
+ * on a per-namespace basis by the externalNShandler map in the schema model.
+ * Possible values are "", "*", and the name of a Java class
+ *   ""  = omit this data (and set X2J_OMITTED)
+ *   "*" = treat data as NIEM conforming
+ *   [name] = use this class to generate JSON for this component (not implemented)
+ * 
+ * What to do with wildcard XML components from namespaces that are not defined by
+ * the schema document set? This is controlled by argument to the class
+ * constructor. The choices are:
+ *   * omit this data (and set X2J_OMITTED)
+ *   * treat as NIEM conforming, and extend the schema model context
+ * 
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
@@ -40,35 +55,35 @@ public class NTXMLHandler extends DefaultHandler {
         "unsignedInt", "byte", "unsignedShort","unsignedByte"
     );
     
-    protected final NTSchemaModel model;      // schema model for this message format
-    protected final JsonObject data;          // add data here
-    protected final JsonObject context;       // add context bindings here if unexpected namespace used
-    protected final NamespaceBindings nsbind; // modifiable copy of model bindings
-    protected final HashSet<String> uriUsed;  // found a component with this namespace in xml data
-
-    protected final StringBuilder content;    // gathers content of simple content elements
-    protected final Stack<JsonObject> ostk;   // parent objects of the element being processed
-    protected String messageFormatID;         // namespace of the document element
+    protected final NTSchemaModel model;            // schema model for this message format
+    protected final JsonObject data;                // put converted data here
+    protected final JsonObject econtext;            // put extended econtext here if unexpected namespace encountered
+    protected final NamespacePrefixMap pmap_orig;   // read-only econtext mapping from schema model
+    protected final StringBuilder content;          // gathers content of simple content elements
+    protected final Stack<JsonObject> ostk;         // parent objects of the element being processed
+    protected NamespacePrefixMap pmap_mod;          // modified copy of econtext mapping (lazy init)  
+    protected String messageFormatID;               // namespace of the document element
     protected int resultFlags;  
     
     /**
-     * 
      * @param m -- schema model for this document; not modified by handler
      * @param d -- an empty JsonObject; handler adds json data to it
-     * @param c -- an empty JsonObject; handler adds context pairs to it
+     * @param c -- an empty JsonObject, or null.
+     *       if null, components from unknown namespaces are omitted (and X2J_OMITTED set)
+     *       if not null, treat as NIEM-conforming, add context pairs to this object
      */
     NTXMLHandler (NTSchemaModel m, JsonObject d, JsonObject c) {
         super();
-        model = m;
-        data = d;
-        context = c;
-        nsbind = new NamespaceBindings(m.namespaceBindings());
-        uriUsed = new HashSet<>();
+        model   = m;
+        data    = d;
+        econtext = c;
+        pmap_orig  = new NamespacePrefixMap(m.prefixMap());
+        pmap_mod   = null;
         content = new StringBuilder(80);
-        ostk = new Stack<>();
+        ostk    = new Stack<>();
         ostk.push(data);
         messageFormatID = "";
-        resultFlags = 0;
+        resultFlags = X2J_OK;
     }
     
     /**
@@ -81,20 +96,15 @@ public class NTXMLHandler extends DefaultHandler {
     }
     
     /**
-     * Returns a status code from translating the XML input data.
-     * @return 
+     * Returns the status flags from translating the XML input data.
+     * X2J_OMITTED is set iff some input XML was not translated
+     * X2J_EXTENDED is set iff this.oontext is not empty
+     * @return translation status flags
      */
     public int resultFlags () {
         return resultFlags;
     }
     
-    // All of the namespaces in the schema model are already in the
-    // namespace map.  Remember each namespace declaration anyway, for 
-    // elements matching a schema wildcard.
-    @Override
-    public void startPrefixMapping(String prefix, String uri) {
-        nsbind.assignPrefix(prefix, uri);
-    }
     
     @Override
     public void startElement(String eNamespace, String eLocalName, String eQName, Attributes atts) {
@@ -103,11 +113,8 @@ public class NTXMLHandler extends DefaultHandler {
             messageFormatID = componentURI(eNamespace, eLocalName);
         }
         // Create new Json object for this element, but don't add to parent object
-        String elementIRI = componentURI(eNamespace, eLocalName);
-        String nsPrefix   = nsbind.getPrefix(eNamespace);
-        String elementKey = nsPrefix + ":" + eLocalName;          
+        String elementIRI = componentURI(eNamespace, eLocalName);       
         JsonObject cobj = new JsonObject();
-        uriUsed.add(eNamespace);
         ostk.push(cobj);
 
         // Process element's attributes, add to element's json object
@@ -154,17 +161,20 @@ public class NTXMLHandler extends DefaultHandler {
                         JsonArray jva = new JsonArray();
                         String[] vals = av.split("\\s+");
                         for (String v : vals) {
-                            jva.add(idref(v));
+                            JsonObject jo = new JsonObject();
+                            jo.addProperty("@id", idref(v));
+                            jva.add(jo);
                         }
                         jv = jva;                        
                     }
                     else {
-                        jv = new JsonPrimitive(idref(av));
+                        JsonObject jo = new JsonObject();
+                        jo.addProperty("@id", idref(av));
+                        jv = jo;
                     }
-                    String aprfx = nsbind.getPrefix(auri);
+                    String aprfx = "structures";
                     String akey = aprfx + ":" + "metadata";
                     cobj.add(akey, jv);
-                    uriUsed.add(auri);
                 }
                 else if (aqn.endsWith("relationshipMetadata")) {
                     // FIXME
@@ -175,15 +185,17 @@ public class NTXMLHandler extends DefaultHandler {
             else if (W3C_XML_SCHEMA_INSTANCE_NS_URI.equals(auri)) {
                 // do nothing for xsi:type, xsi:nil, etc.
             }
-            // "ordinary" attribute becomes a name-value pair in the element object
-            // FIXME attributes of list type need an array
+            // "ordinary" attribute becomes a name-value pair in the element object.
+            // wildcard attributes may be omitted; namespacePrefix() handles that.
+            // attributes of list type are handled in genJsonValue.
             else {
-                String aprfx = nsbind.getPrefix(auri);
-                String akey = aprfx + ":" + aln;
-                String simpleType = model.attributeType(attributeURI);
-                JsonElement jv = genJsonValue(av, simpleType);
-                cobj.add(akey, jv);
-                uriUsed.add(auri);
+                String aprfx = namespacePrefix(auri, aqn);
+                if (aprfx != null) {
+                    String akey = aprfx + ":" + aln;
+                    String simpleType = model.attributeType(attributeURI);
+                    JsonElement jv = genJsonValue(av, simpleType);
+                    cobj.add(akey, jv);
+                }
             }
         }
         // Done processing attributes.  Nothing more to do for complex content.
@@ -200,9 +212,15 @@ public class NTXMLHandler extends DefaultHandler {
         content.append(data, start, length);
     }
 
+    @Override
     public void endElement (String eNamespace, String eLocalName, String eQName) {
+
+        // Is this an unknown wildcard element?  namespacePrefix() handles
+        // those, and returns null if we are omitting their data.
+        String nsPrefix   = namespacePrefix(eNamespace, eQName);
+        if (nsPrefix == null) return;
+        
         String elementIRI = componentURI(eNamespace, eLocalName);        
-        String nsPrefix   = nsbind.getPrefix(eNamespace);
         String elementKey = nsPrefix + ":" + eLocalName;  
         JsonObject cobj = ostk.pop();   // element with eQName
         JsonObject pobj = ostk.peek();  // parent of cobj
@@ -266,32 +284,7 @@ public class NTXMLHandler extends DefaultHandler {
             }                     
         }
     }
-
-    @Override
-    public void endDocument () {
-
-        // Make a copy of the model context object.
-        // If the input XML uses any unanticipated namespace (in an attribute or
-        // element matching a wildcard), add the (prefix,ns) pair to the
-        // "context" object and set the X2J_EXTENDED status flag.
-        model.namespaceBindings().contextObj().entrySet().forEach((pair) -> {
-            context.add(pair.getKey(), pair.getValue());
-        });
-        for (String ns : uriUsed) {
-            String prefix = model.namespaceBindings().getPrefix(ns);
-            if (prefix == null) {
-                prefix = nsbind.getPrefix(ns);
-                if (ns.endsWith("#")) {
-                    context.addProperty(prefix, ns);
-                }
-                else {
-                    context.addProperty(prefix, ns + "#");
-                }
-                resultFlags = (short) (resultFlags | X2J_EXTENDED);
-            }
-        }
-    }
-    
+   
     // Creates the right kind of JsonElement based on base type
     protected static JsonElement genJsonValue(String val, String simpleType) {
         if (simpleType == null) {
@@ -332,6 +325,44 @@ public class NTXMLHandler extends DefaultHandler {
             return new JsonPrimitive(new BigInteger(val.trim()));
         }
         return new JsonPrimitive(val);
+    }
+    
+    // Get the namespace prefix for a namespace URI.
+    // Special handling for wildcard elements and attributes; their namespace
+    // may not be in the schema model context.
+    // Returns null if wildcard components should be omitted.
+    // Returns a possibly-munged prefix if wildcard components should be
+    // treated as NIEM conforming, and the namespace added to the
+    // schema model context
+    private String namespacePrefix (String nsURI, String cQName) {
+        
+        // Return namespace prefix from schema model context if it's there
+        String prefix = pmap_orig.getPrefix(nsURI);
+        if (prefix != null) return prefix;
+        
+        // Return namespace prefix from extended context if it's there
+        if (pmap_mod != null) {
+            prefix = pmap_mod.getPrefix(nsURI);
+            if (prefix != null) return prefix;
+        }
+        // Not there? This must be a wildcard element or attribute.
+        // Are we omitting those?
+        if (econtext == null) {
+            resultFlags |= X2J_OMITTED;
+            return null;
+        }
+        // Get a candidate prefix from the component QName
+        prefix = "noprefix";
+        int cx = cQName.indexOf(":");
+        if (cx >= 0) prefix = cQName.substring(0,cx);
+        
+        // Now add the candidate prefix to the econtext mapping, possibly
+        // munging the candidate if it's already assigned.
+        if (pmap_mod == null) pmap_mod = new NamespacePrefixMap(pmap_orig);
+        pmap_mod.assignPrefix(prefix, nsURI);
+        prefix = pmap_mod.getPrefix(nsURI);
+        econtext.addProperty(prefix, nsURI);
+        return prefix;
     }
     
     // every IDREF becomes a URI relative to the document base 

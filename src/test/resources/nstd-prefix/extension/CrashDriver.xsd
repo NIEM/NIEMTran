@@ -9,7 +9,7 @@
     xmlns:structures="http://release.niem.gov/niem/structures/4.0/" 
     xmlns:xs="http://www.w3.org/2001/XMLSchema" 
     xmlns:appinfo="http://release.niem.gov/niem/appinfo/4.0/" 
-    xmlns:ct="http://release.niem.gov/niem/conformanceTargets/4.0/" 
+    xmlns:ct="http://release.niem.gov/niem/conformanceTargets/3.0/" 
     elementFormDefault="qualified"> 
 
     <xs:annotation>

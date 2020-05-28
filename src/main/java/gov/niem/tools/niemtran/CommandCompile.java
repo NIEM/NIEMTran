@@ -18,13 +18,9 @@ import com.beust.jcommander.Parameters;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import static gov.niem.tools.niemtran.NTSchema.uriToFile;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.xerces.xs.XSModel;
 
@@ -88,7 +84,7 @@ public class CommandCompile implements JCCommand {
             cob.usage();
             System.exit(0);
         }
-        if (mainArgs == null || mainArgs.size() < 1) {
+        if (mainArgs == null || mainArgs.isEmpty()) {
             cob.usage();
             System.exit(1);
         }
@@ -96,7 +92,7 @@ public class CommandCompile implements JCCommand {
             String s = mainArgs.remove(0);
             fsep = s.substring(2);
         }
-        if (mainArgs.size() < 0) {
+        if (mainArgs.isEmpty()) {
             cob.usage();
             System.exit(1);            
         }
@@ -126,25 +122,24 @@ public class CommandCompile implements JCCommand {
             System.out.println(ex.getMessage());
             System.exit(2);
         }
-        if (sc.initializationErrorMessages().size() > 0) {
-            System.out.println("initialization error");
-            for (String s : sc.initializationErrorMessages()) {
-                System.out.print("  "+s);
-            }
-            System.exit(1);
-        }
+//        if (sc.initializationErrorMessages().size() > 0) {
+//            System.out.println("initialization error");
+//            for (String s : sc.initializationErrorMessages()) {
+//                System.out.print("  "+s);
+//            }
+//            System.exit(1);
+//        }
         
         // Arguments processed; determine file for compiled output, if not specified
         if ("".equals(objFile)) {
             List<String> schemaURIs = sc.getAllInitialSchemas();
-            if (schemaURIs.size() > 0) {
-                File sf  = uriToFile(schemaURIs.get(0));
-                Path sfp = sf.toPath().getFileName();
-                String sfbase = FilenameUtils.getBaseName(sfp.toString());
-                objFile = sfbase + ".no";
-            }
-            else {
-                objFile = "NIEM.no";
+            objFile = "NIEM.no";
+            if (!schemaURIs.isEmpty()) {
+                File sf  = new File(schemaURIs.get(0));
+                if (sf != null) {
+                    String sfbase = FilenameUtils.getBaseName(sf.getName());
+                    objFile = sfbase + ".no";
+                }
             }
         }
 

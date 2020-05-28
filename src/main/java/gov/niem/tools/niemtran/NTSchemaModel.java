@@ -14,6 +14,7 @@ package gov.niem.tools.niemtran;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import java.io.Reader;
 import java.util.HashMap;
 import java.util.Map;
@@ -32,14 +33,14 @@ public class NTSchemaModel {
        
     private final String modelVersion = "1.0";
     
-    private NamespaceBindings nsbind;                   // namespace declarations in schema
-    private HashMap<String,String> attributes;          // attribute URI -> XSD type (string, list/IDREF, etc.)
-    private HashMap<String,String> simpleElements;      // element URI   -> XSD type
-    private HashMap<String,String> externalNSHandler;   // namespace URI -> name of class implementing xxx interface
+    private NamespacePrefixMap prefixMap;               // maps namespace URI to JSON-LD prefix 
+    private Map<String,String> attributes;              // attribute URI -> XSD type (string, list/IDREF, etc.)
+    private Map<String,String> simpleElements;          // element URI   -> XSD type
+    private Map<String,String> externalNSHandler;       // namespace URI -> name of class for components from this NS
     private boolean hasWildcard;
     
     public NTSchemaModel () {     
-        this.nsbind           = new NamespaceBindings();
+        this.prefixMap        = new NamespacePrefixMap();
         this.attributes       = new HashMap<>();
         this.simpleElements   = new HashMap<>();
         this.externalNSHandler = new HashMap<>();
@@ -50,7 +51,7 @@ public class NTSchemaModel {
         NTSchemaModel m = null;
         try {
             m = gson.fromJson(jsonString, NTSchemaModel.class);
-            this.nsbind           = m.nsbind;
+            this.prefixMap        = m.prefixMap;
             this.attributes       = m.attributes;
             this.simpleElements   = m.simpleElements;
             this.externalNSHandler = m.externalNSHandler;
@@ -64,7 +65,7 @@ public class NTSchemaModel {
         NTSchemaModel m = null;
         try {
             m = gson.fromJson(r, NTSchemaModel.class);
-            this.nsbind           = m.nsbind;
+            this.prefixMap        = m.prefixMap;
             this.attributes       = m.attributes;
             this.simpleElements   = m.simpleElements;
             this.externalNSHandler = m.externalNSHandler;
@@ -74,14 +75,12 @@ public class NTSchemaModel {
         }
     }
     
-    /**
-     * Return the object for the prefix-namespace bindings in this schema.
-     * Callers must make a shallow copy of this object if they need to modify
-     * any of the bindings.
-     * @return namespace binding object
-     */
-    public NamespaceBindings namespaceBindings() {
-        return nsbind;
+    public NamespacePrefixMap prefixMap () {
+        return prefixMap;
+    }
+    
+    public String prefixOf (String uri) {
+        return prefixMap.getPrefix(uri);
     }
     
     public String attributeType(String uri) {
@@ -120,16 +119,23 @@ public class NTSchemaModel {
         simpleElements.put(uri, type);    
     }
     
-    public void addNamespacePrefix (String namespace, String prefix) {
-        nsbind.assignPrefix(prefix, namespace);
+    public void assignPrefix (String prefix, String namespace) {
+        prefixMap.assignPrefix(prefix, namespace);
     }
     
     public void addExternalNS (String ns) {
         externalNSHandler.put(ns, "");
     }
     
+    public void generateContext (JsonObject cxt) {
+        prefixMap.getPrefixMap().forEach((uri, prefix) -> {
+            cxt.addProperty(prefix, uri);
+        });
+    }
+    
     public String toJson () {
         return gson.toJson(this);
     }
+    
 }
 

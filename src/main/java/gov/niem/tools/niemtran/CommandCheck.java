@@ -20,7 +20,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import javax.xml.parsers.ParserConfigurationException;
-import org.apache.xerces.xs.XSModel;
 
 /**
  *
@@ -34,11 +33,8 @@ public class CommandCheck implements JCCommand {
     @Parameter(names = "-s", description = "filename separator character (e.g. \"-s,\" or \"-s ,\")")
     private String fsep = ",";
     
-    @Parameter(names = "-i", description = "continue checking after initialization or assembly warnings")
+    @Parameter(names = "-i", description = "continue checking after initialization errors")
     private boolean ignore = false;
-    
-    @Parameter(names = "-n", description = "don't report NIEM-specific warnings")
-    private boolean noNIEM = false;
    
     @Parameter(names = {"-v"}, description = "verbose output")
     private boolean verbose = false;
@@ -48,6 +44,9 @@ public class CommandCheck implements JCCommand {
      
     @Parameter(description = "[xmlCatalog[,...]] schemaOrNamespace[,...]")
     private List<String> mainArgs;
+    
+    String schemaRoot = "";
+    int schemaRootLength = 0;
     
     CommandCheck () {
     }
@@ -87,7 +86,7 @@ public class CommandCheck implements JCCommand {
             cob.usage();
             System.exit(0);
         }
-        if (mainArgs == null || mainArgs.size() < 1) {
+        if (mainArgs == null || mainArgs.isEmpty()) {
             cob.usage();
             System.exit(1);
         }
@@ -101,7 +100,7 @@ public class CommandCheck implements JCCommand {
         // Except for "--", which is ignored and allows filenames starting with "-"
         String na = mainArgs.get(0);
         if (na.startsWith("-")) {
-            if (na.equals("--")) {
+            if ("--".equals(na)) {
                 mainArgs.remove(0);
             } else {
                 System.out.println("unknown option: " + na);
@@ -110,7 +109,7 @@ public class CommandCheck implements JCCommand {
             }
         } 
         // Must be at least one schema or nsmespsce argument
-        if (mainArgs.size() < 0) {
+        if (mainArgs.isEmpty()) {
             cob.usage();
             System.exit(1);            
         }
@@ -131,75 +130,57 @@ public class CommandCheck implements JCCommand {
             System.out.println(ex.getMessage());
             System.exit(2);
         }
+        
+        // Get the schema root directory. This executes the schema assembly checking, but
+        // I want it now so we can print the root directory first thing.
+        schemaRoot = sc.schemaRootDirectory();
+        schemaRootLength = schemaRoot.length();
+        System.out.println("Schema root directory: " + schemaRoot);
+        
         // Initialization checking -- tell us about catalog parsing and resolved namespaces
         boolean schemasFound = (sc.getAllInitialSchemas().size() > 0);
         if (verbose) {
-            System.out.println("== Schema initialization checking ==");
-            printMessages("Catalog validation results:", sc.resolver().validationResults());
-            printItems("Initial schema documents:", sc.getAllInitialSchemas());
+            printRelativeMessages("Catalog validation results:", sc.resolver().validationResults());
+            printRelativeMessages("Initial schema documents:", sc.getAllInitialSchemas());
         }
         if (!schemasFound) {
             System.out.println("Schema initialization error: no initial schema documents");
             System.exit(1);
         }
-        List<String> initErrs = sc.initializationErrorMessages();
-        if (initErrs.size() > 0) {
-            printMessages("Schema initialization errors:", initErrs);
-            if (!ignore) {
-                System.exit(1);
-            }
+        if (!sc.initializationErrorMessages().isEmpty()) {
+            printRelativeMessages("Schema initialization errors:", sc.initializationErrorMessages());
+            if (!ignore) System.exit(1);
         }
-        // Get the schema root directory. This executes the schema assembly checking, but
-        // I want it now so we can print the root directory before "Schema initialization: OK"
-        String schemaRoot = sc.schemaRootDirectory();
-        int schemaRootLength = schemaRoot.length();
-        System.out.println("Schema root directory: " + schemaRoot);
-        
-        // OK, now tell us about successful initialization
-        if (initErrs.size() < 1) {
-            System.out.println("Schema initialization: OK");
-        }
+        else System.out.println("Schema initialization: OK");
+
         // And now tell us about schema assembly checking
         if (verbose) {
-            System.out.println("== Schema assembly checking ==");
-            System.out.println("Schema documents assembled:");
-            List<String> dl = sc.assembledSchemaDocuments();
-            Collections.sort(dl);
-            for (String s : dl) {
-                System.out.println("  " + s.substring(schemaRootLength));
+            List<String> dl = new ArrayList<>();
+            for (String s : sc.assembledSchemaDocuments()) {
+                dl.add(s + "\n");
             }
+            Collections.sort(dl);
+            printRelativeMessages("Schema documents assembled:", dl);
             printMessages("Schema assembly log messages:", sc.assemblyLogMessages());
         }
-        else if (sc.assemblyWarnings()) {            
-                printMessages("Schema assembly warnings:", sc.assemblyWarningMessages());
+        else { 
+            printMessages("Schema assembly warnings:", sc.assemblyWarningMessages());
         }
-        if (sc.assemblyWarnings()) {
-            if (!ignore) {
-                System.exit(1);
-            }
-        }
-        else {
-            System.out.println("Schema assembly: OK");
-        }
+        if (sc.assemblyWarnings()) System.out.println("Schema assembly: WARNINGS");
+        else System.out.println("Schema assembly: OK");
 
         // Schema construction
-        XSModel xs = sc.xsmodel();
+        List<String> xsm = sc.xsConstructionMessages();
+        printRelativeMessages("Schema construction messages:", xsm);
         if (verbose) {
-            System.out.println("== Schema construction ==");
+            printRelativeMessages("Namespaces constructed by Xerces:", sc.xsNamespaceDocuments());
+            printRelativeMessages("Catalog resolutions performed by Xerces:", sc.xsResolutionMessages());
         }
-        printMessages("Schema construction messages:", sc.xsConstructionMessages());
-        if (xs == null) {
-            System.out.println("Schema construction: FAILED");
-            System.exit(1);
-        }        
-        printMessages("Schema warnings:", sc.xsWarningMessages());
-        if (!noNIEM) { printMessages("Schema NIEM warnings:", sc.xsNIEMWarningMessages()); }
-        if (verbose) {
-            printMessages("Namespaces constructed:", sc.xsNamespaceList());
-            printMessages("Catalog resolutions:", sc.xsResolutionMessages());
-        }
+        System.out.println("Schema construction: " + sc.xsConstructionResult());
      }
        
+    // If message list not empty, print header and indented list of messages.
+    // Don't mess with absolute file URLs relative to schemaRoot.
     private void printMessages (String header, List<String> msgs) {
         if (msgs.isEmpty() && !verbose) {
             return;
@@ -209,16 +190,19 @@ public class CommandCheck implements JCCommand {
             System.out.print("  " + s);
         }
     }
- 
-    private void printItems (String header, List<String> msgs) {
+    
+    // If message list not empty, print header and indented list of messages.
+    // First occurance of absolute file URL made relevant to schemaRoot in each message.
+    private void printRelativeMessages (String header, List<String> msgs) {
         if (msgs.isEmpty() && !verbose) {
             return;
         }
         System.out.println(header);
         for (String s : msgs) {
-            System.out.println("  " + s);
+            System.out.print("  " + s.replace(schemaRoot, ""));
         }
     }
+ 
 }    
 
 

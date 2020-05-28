@@ -17,8 +17,6 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
@@ -26,14 +24,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
-import static java.lang.Math.max;
-import static java.lang.Math.min;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.xml.parsers.ParserConfigurationException;
@@ -99,7 +90,7 @@ public class CommandTranslate implements JCCommand {
             cob.usage();
             System.exit(0);
         }
-        if (mainArgs == null || mainArgs.size() < 1) {
+        if (mainArgs == null || mainArgs.isEmpty()) {
             cob.usage();
             System.exit(1);
         }
@@ -161,19 +152,16 @@ public class CommandTranslate implements JCCommand {
         }
         
         // Set up the translator object, collect results
-        Translate trans = new Translate(model);
+        Translator trans = new Translator(model);
         JsonObject data = new JsonObject();
         JsonObject cxt  = new JsonObject();
         int rflag = -1;
         try {
-            rflag = trans.xml2json(inST, data, cxt);
-        } catch (IOException ex) {
-            Logger.getLogger(CommandTranslate.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (SAXException ex) {
-            Logger.getLogger(CommandTranslate.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (ParserConfigurationException ex) {
+            rflag = trans.xml2json_dataAndContext(inST, data, cxt);
+        } catch (IOException | SAXException | ParserConfigurationException ex) {
             Logger.getLogger(CommandTranslate.class.getName()).log(Level.SEVERE, null, ex);
         }
+        
         
         // Write results in desired syntax
         if (nx2t) {

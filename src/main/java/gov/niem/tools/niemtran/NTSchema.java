@@ -12,13 +12,17 @@
 
 package gov.niem.tools.niemtran;
 
+import static gov.niem.tools.niemtran.ParserBootstrap.BOOTSTRAP_ALL;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import javax.xml.parsers.ParserConfigurationException;
 import static org.apache.commons.lang3.StringUtils.getCommonPrefix;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.xerces.impl.xs.util.StringListImpl;
 import org.apache.xerces.util.URI;
 import org.apache.xerces.xs.StringList;
@@ -32,19 +36,10 @@ import org.w3c.dom.DOMErrorHandler;
 import org.w3c.dom.DOMLocator;
 
 /**
- * A class to construct a Xerces XSModel object for an XML schema defined
- * by local resources that are specified by two lists: <ul>
+ * A class to construct a Xerces XSModel object for an XML schema specified 
+ * by two lists: <ul>
  * <li>a list of initial XML Schema documents (or namespace URIs)
  * <li>a list of XML Catalog documents</ul>
- * 
- * <p>
- * The schema thus specified is the schema constructed by:
- * <ul><li> Loading each initial schema document, and
- * <li>Resolving each initial namespace URI and loading the resulting local file, and
- * <li>Recursively loading the resource described by every <code>import</code>, 
- * <code>include</code>, and <code>redefine</code> element encountered, while
- * <li>Using the XML Commons Resolver constructed from the list of XML Catalog 
- * documents to resolve each namespace and schemaLocation URI.</ul>
  *
  * <p>
  * The class offers insight into the actions of Xerces as it assembles a
@@ -81,7 +76,11 @@ import org.w3c.dom.DOMLocator;
  }
  System.out.println("Catalog resolutions:");
  System.out.print(s.xsResolutionMessages());
- * </code></pre>
+ System.out.println("Schema document root directory:");
+ System.out.print(s.xsSchemaRoot());
+ System.out.println("Namespaces and schema documents:");
+ System.out.print(s.xsNamespaceDocuments());
+ </code></pre>
  *
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
@@ -89,17 +88,18 @@ import org.w3c.dom.DOMLocator;
 
 public class NTSchema {
 
-    protected ParserBootstrap parsers;
-    private List<String> catalogFiles = new ArrayList<>();  // list of initial catalog files for resolver (as provided)
-    private List<String> schemaFiles = new ArrayList<>();   // list of initial schema documents to load (as provided)
-    private List<String> initialNSs = new ArrayList<>();    // list of namespaces to resolve for initial schema documents (as provided)
+    protected List<String> catalogFiles = new ArrayList<>();// list of initial catalog files for resolver (as provided)
+    protected List<String> schemaFiles = new ArrayList<>(); // list of initial schema documents to load (as provided)
+    protected List<String> initialNSs = new ArrayList<>();  // list of namespaces to resolve for initial schema documents (as provided)
+    protected List<String> initialSchemaFileURIs = null;    // list of initial schema document canonical file URIs
     private List<String> allSchemaFileURIs = null;          // list of initial schema documents & initial namespace URI resolutions
-    private String schemaRootDir = null;                    // common path prefix of schema and catalog documents
+    private String xercesSchemaRootDir = null;              // common path prefix of schema and catalog documents
     private NTCatalogResolver resolver = null;              // catalog resolver used for load checking & schema generation
     private XSModel xsmodel = null;                         // constructed XML schema object from Xerces
-    private String initErrors = null;                       // initialization errors; eg. schema document not found
-    private String xsConstructionMsgs = null;               // error and warning messages from Xerces
-    private String xsNamespaceDocs = null;                  // namespaces constructed from schema documents
+    private int xsErrorLevel = 0;
+    private List<String> initErrors = null;                 // initialization errors; eg. schema document not found
+    private List<String> xsConstructionMsgs = null;         // error and warning messages from Xerces
+    private List<String> xsNamespaceDocs = null;            // namespaces constructed from schema documents
     
     /**
      * Constructs an empty Schema object. Add schema documents, namespace URIs,
@@ -109,8 +109,7 @@ public class NTSchema {
      * @throws ParserConfigurationException
      */
     public NTSchema() throws ParserConfigurationException {
-        // Bootstrap the parsers when the first object is created
-        parsers = new ParserBootstrap();
+        ParserBootstrap.init(BOOTSTRAP_ALL);
     }
 
     /**
@@ -158,7 +157,7 @@ public class NTSchema {
      * @param cfn catalog file path
      */
     public void addCatalogFile(String cfn) {
-        catalogFiles.add(canonicalFileURI(cfn));
+        catalogFiles.add(cfn);
         reset();
     }
 
@@ -219,28 +218,7 @@ public class NTSchema {
     public List<String> getAllValidCatalogFiles() {
         initialize();
         return resolver.allValidCatalogFiles();
-    }
-    
-    /**
-     * Returns the result of parsing the catalog files used to specify the
-     * schema. Includes result of parsing subordinate catalogs.
-     * @return list of catalog parsing results
-     */
-    public List<String> catalogParsingResults() {
-        initialize();
-        return resolver().validationResults();
-    }
-
-    /**
-     * Returns any errors encountered in parsing the catalog files used to
-     * specify the schema. Includes errors found while parsing subordinate
-     * catalogs.
-     * @return list of catalog parsing errors; empty list if none
-     */
-    public List<String> catalogParsingErrors() {
-        initialize();
-        return resolver().validationErrors();
-    }    
+    } 
 
     /**
      * Returns the catalog resolver used to construct the schema.
@@ -276,23 +254,24 @@ public class NTSchema {
      * the catalog files.
      * @return schema initialization errors; zero-length if none
      */
-    public String initializationErrorMessages() {
+    public List<String> initializationErrorMessages() {
         initialize();
         return initErrors;
     }
 
-    private void initialize() {
+    protected void initialize() {
         if (initErrors != null) {
             return;
         }
-        StringBuilder msg = new StringBuilder();
+        initErrors = new ArrayList<>();
         resolver = new NTCatalogResolver();
-        if (catalogFiles.size() > 0) {
+        if (!catalogFiles.isEmpty()) {
             resolver.setCatalogList(catalogFiles.toArray(new String[0]));
         }
-        resolver.validationErrors().forEach((em) -> { msg.append(em).append("\n"); } );
+        resolver.validationErrors().forEach((em) -> { initErrors.add(em+"\n"); } );
         
         // Convert initial schema files to URIs, ensure they are readable
+        initialSchemaFileURIs = new ArrayList<>();
         allSchemaFileURIs = new ArrayList<>();
         for (String s : schemaFiles) {
             String suri = null;
@@ -301,9 +280,10 @@ public class NTSchema {
                 suri = canonicalFileURI(f);
             }
             if (suri != null) {
+                initialSchemaFileURIs.add(suri);
                 allSchemaFileURIs.add(suri);
             } else {
-                msg.append(String.format("can't read schema file %s\n", s));
+                initErrors.add(String.format("can't read schema file %s\n", s));
             }
         }
         // Resolve initial namespaces, ensure they map to readable files
@@ -312,20 +292,19 @@ public class NTSchema {
             try {
                 rv = resolver.resolveURI(s);
                 if (rv == null) {
-                    msg.append(String.format("can't resolve initial namespace %s\n", s));
+                    initErrors.add(String.format("can't resolve initial namespace %s\n", s));
                 } else if (!rv.startsWith("file:")) {
-                    msg.append(String.format("initial namespace %s resolves to non-local resource %s\n", s, rv));
+                    initErrors.add(String.format("initial namespace %s resolves to non-local resource %s\n", s, rv));
                 } else {
                     allSchemaFileURIs.add(rv);
                 }
             } catch (IOException ex) {
-                msg.append(String.format("invalid URI syntax for initial namespace %s\n", s));
+                initErrors.add(String.format("invalid URI syntax for initial namespace %s\n", s));
             }
         }
-        if (allSchemaFileURIs.size() < 1) {
-            msg.append("no readable schema documents provided\n");
+        if (allSchemaFileURIs.isEmpty()) {
+            initErrors.add("no readable schema documents provided\n");
         }
-        initErrors = msg.toString();
     }
     
     
@@ -333,12 +312,12 @@ public class NTSchema {
     
     /**
      * Returns the longest common path of all schema and catalog documents
-     * used to construct the schema.
+     * used by Xerces to construct the XSModel object.
      * @return schema root directory
      */
-    public String schemaRoot () {
-        if (schemaRootDir != null) {
-            return schemaRootDir;
+    public String xsSchemaRoot () {
+        if (xercesSchemaRootDir != null) {
+            return xercesSchemaRootDir;
         }
         xsmodel();
         XSNamespaceItemList nsil = xsmodel.getNamespaceItems();        
@@ -353,8 +332,8 @@ public class NTSchema {
                 }
             }
         }
-        schemaRootDir = getCommonPrefix(sdocs.toArray(new String[0]));
-        return schemaRootDir;
+        xercesSchemaRootDir = getCommonPrefix(sdocs.toArray(new String[0]));
+        return xercesSchemaRootDir;
     }
    
     /**
@@ -364,34 +343,32 @@ public class NTSchema {
      * the XSModel object.
      * @return namespaces and schema documents
      */
-    public String xsNamespaceDocuments () {
+    public List<String> xsNamespaceDocuments () {
         if (xsNamespaceDocs !=  null) {
             return xsNamespaceDocs;
         }
-        int schemaRootLen = schemaRoot().length();
+        xsNamespaceDocs = new ArrayList<>();
+        if (xsmodel() == null) return xsNamespaceDocs;
+        
         XSNamespaceItemList nsil = xsmodel.getNamespaceItems();
-        StringBuilder msgs = new StringBuilder();
-        msgs.append(String.format("Schema root directory: %s\n", schemaRootDir));
         for (int i = 0; i < nsil.getLength(); i++) {
             XSNamespaceItem nsi = nsil.item(i);
             String ns = nsi.getSchemaNamespace();  
             if (!W3C_XML_SCHEMA_NS_URI.equals(ns)) {
                 StringList docs = nsi.getDocumentLocations();
                 if (docs.getLength() > 1) {
-                    StringBuilder msg = new StringBuilder();
-                    msg.append(String.format("%s <- MULTIPLE DOCUMENTS\n", ns));
+                    xsNamespaceDocs.add(String.format("%s <- MULTIPLE DOCUMENTS\n", ns));
                     for (int di = 0; di < docs.getLength(); di++) {
-                        msg.append(String.format("  %s\n", docs.item(di).substring(schemaRootLen)));
+                        xsNamespaceDocs.add(String.format("  %s\n", docs.item(di)));
                     }
                 } else if (docs.getLength() == 1) {
-                    msgs.append(String.format("%s <- %s\n", ns, docs.item(0).substring(schemaRootLen)));
+                    xsNamespaceDocs.add(String.format("%s <- %s\n", ns, docs.item(0)));
                 } else {
-                    msgs.append(String.format("%s <- NOTHING???\n", ns));
+                    xsNamespaceDocs.add(String.format("%s <- NOTHING???\n", ns));
                 }
             
             }
         }
-        xsNamespaceDocs = msgs.toString();
         return xsNamespaceDocs;
     }
      
@@ -400,22 +377,32 @@ public class NTSchema {
      * schema construction
      * @return resolution messages
      */
-    public String xsResolutionMessages () {
+    public List<String> xsResolutionMessages () {
         xsmodel();
-        StringBuilder msgs = new StringBuilder();
-        resolver().resolutionMessages().forEach((rm) -> { msgs.append(rm).append("\n"); } );
-        return msgs.toString();
+        return resolver().resolutionMessages();
     }
     
     /**
      * Return schema construction messages produced by Xerces
      * @return schema construction messages
      */
-    public String xsConstructionMessages () {
+    public List<String> xsConstructionMessages () {
         xsmodel();
         return xsConstructionMsgs;
     }
 
+    /**
+     * Returns status of Xerces schema construction
+     * @return error status
+     */
+    public String xsConstructionResult () {
+        xsmodel();
+        switch (xsErrorLevel) {
+            case 2: return "ERRORS";
+            case 1: return "WARNINGS";
+            default: return "OK";
+        }
+    }
    
     /**
      * Returns the XSModel constructed by Xerces for this schema.
@@ -426,9 +413,14 @@ public class NTSchema {
             return xsmodel;
         }
         initialize();
-        StringBuilder msgs = new StringBuilder();
-        SchemaErrorHandler ehandler = new SchemaErrorHandler(msgs);
-        XSLoader loader = parsers.xsLoader();   // don't reuse these, they keep state    
+        xsConstructionMsgs = new ArrayList<>();
+        SchemaErrorHandler ehandler = new SchemaErrorHandler();
+        XSLoader loader;
+        try {
+            loader = ParserBootstrap.xsLoader(); // don't reuse these, they keep state
+        } catch (ParserConfigurationException ex) {
+            return null;    // can't happen
+        }
         DOMConfiguration config = loader.getConfig();
         config.setParameter("validate", true);
         config.setParameter("resource-resolver", resolver());
@@ -439,25 +431,34 @@ public class NTSchema {
                 allSchemaFileURIs.size());
         xsmodel = loader.loadURIList(slist);
         if (xsmodel == null) {
-            msgs.append("Xerces xsloader returned null\n");
+            xsConstructionMsgs.add("Xerces xsloader returned null\n");
         }
-        xsConstructionMsgs = msgs.toString();
         return xsmodel;
     }
    
     private class SchemaErrorHandler implements DOMErrorHandler {
-        private final StringBuilder msgs;
-        SchemaErrorHandler(StringBuilder msgs) {
+     
+        SchemaErrorHandler() {
             super();
-            this.msgs = msgs;
         }
         @Override
         public boolean handleError(DOMError error) {
             short sevCode = error.getSeverity();
             String sevstr;
-            if (sevCode == DOMError.SEVERITY_FATAL_ERROR) { sevstr = "[fatal]"; } 
-            else if (sevCode == DOMError.SEVERITY_ERROR)  { sevstr = "[error]"; } 
-            else { sevstr = "[warn] "; }
+            switch (sevCode) {
+                case DOMError.SEVERITY_FATAL_ERROR:
+                    sevstr = "[fatal]";
+                    xsErrorLevel = NumberUtils.max(2, xsErrorLevel);
+                    break;
+                case DOMError.SEVERITY_ERROR:
+                    sevstr = "[error]";
+                    xsErrorLevel = NumberUtils.max(2, xsErrorLevel);                    
+                    break;
+                default:
+                    sevstr = "[warn] ";
+                    xsErrorLevel = NumberUtils.max(1, xsErrorLevel);                    
+                    break;
+            }
 
             DOMLocator loc = error.getLocation();
             String uri = loc.getUri();
@@ -468,18 +469,18 @@ public class NTSchema {
                     fn = uri.substring(index + 1)+":";
                 }
             }
-            msgs.append(String.format("xerces%s %s %d:%d %s\n", 
-                    sevstr, 
-                    fn, 
-                    loc.getLineNumber(),
-                    loc.getColumnNumber(),
-                    error.getMessage()));
+            int ln = loc.getLineNumber();
+            int cn = loc.getColumnNumber();
+            if (ln >= 0 && cn >= 0) {
+                xsConstructionMsgs.add(String.format("xerces %s %s %d:%d %s\n",
+                        sevstr,
+                        fn,
+                        loc.getLineNumber(),
+                        loc.getColumnNumber(),
+                        error.getMessage()));
+            }
             return true;
-        }
-        @Override
-        public String toString() {
-            return msgs.toString();
-        }     
+        }    
     }
 
     
@@ -501,39 +502,8 @@ public class NTSchema {
         File f = new File(fn);
         return canonicalFileURI(f);
     }
-
-    static String canonicalFileURI(String ancestor, String path) {
-        File fp = uriToFile(path);
-        if (fp == null) {
-            fp = new File(path);
-        }
-        if (!fp.isAbsolute()) {
-            File pf = uriToFile(ancestor);
-            pf = pf.getParentFile();
-            path = fp.getPath();
-            fp = new File(pf, path);
-        }
-        return canonicalFileURI(fp);
-    }
-
-    static File uriToFile(String uri) {
-        File f = null;
-        if (uri != null && uri.startsWith("file:")) {
-            uri = uri.substring(5);
-            f = new File(uri);
-        }
-        return f;
-    }
     
-    // Extract exception reason in parenthesis, if it's there
-    static String exceptionReason (Exception ex) {
-        String rmsg = ex.getMessage();
-        int px = rmsg.indexOf("(");
-        if (px >= 0) {
-            rmsg = rmsg.substring(px);
-        }
-        return rmsg;
-    }
+
 
 }
 

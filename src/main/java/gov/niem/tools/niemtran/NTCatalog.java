@@ -17,14 +17,12 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.xml.resolver.Catalog;
-import org.apache.xml.resolver.CatalogEntry;
 import org.apache.xml.resolver.CatalogException;
 import org.apache.xml.resolver.CatalogManager;
 import org.apache.xml.resolver.helpers.FileURL;
@@ -126,7 +124,6 @@ public class NTCatalog extends Catalog {
      */
     @Override
     protected synchronized void parseCatalogFile(String fileName) {     // MODIFIED: doesn't throw exceptions
-        CatalogEntry entry;
 
         // The base-base is the cwd. If the catalog file is specified
         // with a relative path, this assures that it gets resolved

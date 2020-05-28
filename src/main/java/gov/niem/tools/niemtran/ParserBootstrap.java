@@ -35,31 +35,38 @@ public class ParserBootstrap {
     public static final int BOOTSTRAP_SAX2 = 2;
     public static final int BOOTSTRAP_ALL = 3;
     
-    private static SAXParserFactory sfact = null;
-    private static XSImplementation xsimpl = null;          // Xerces XSImplementation, for creating XSLoader object
+    private SAXParserFactory sfact = null;
+    private XSImplementation xsimpl = null;          // Xerces XSImplementation, for creating XSLoader object
 
-    ParserBootstrap () throws ParserConfigurationException {
-        this(BOOTSTRAP_ALL);
+    private ParserBootstrap () { }
+    
+    private static class Holder {
+        private static final ParserBootstrap instance = new ParserBootstrap();
     }
     
-    ParserBootstrap(int which) throws ParserConfigurationException {
-        if (0 != (which | BOOTSTRAP_SAX2) && sfact == null) {
+    public static void init () throws ParserConfigurationException {
+        init(BOOTSTRAP_ALL);
+    }
+    
+    public synchronized static void init (int which) throws ParserConfigurationException {
+ 
+        if (0 != (which | BOOTSTRAP_SAX2) && Holder.instance.sfact == null) {
             try {
-                sfact = SAXParserFactory.newInstance();
-                sfact.setNamespaceAware(true);
-                sfact.setValidating(false);
-                SAXParser saxp = sfact.newSAXParser();
-            } catch (Exception ex) {
+                Holder.instance.sfact = SAXParserFactory.newInstance();
+                Holder.instance.sfact.setNamespaceAware(true);
+                Holder.instance.sfact.setValidating(false);
+                SAXParser saxp = Holder.instance.sfact.newSAXParser();
+            } catch (ParserConfigurationException | SAXException ex) {
                 throw (new ParserConfigurationException("Can't initialize suitable SAX2 parser" + ex.getMessage()));
             }
         }
-        if (0 != (which | BOOTSTRAP_XERCES_XS) && xsimpl == null) {
+        if (0 != (which | BOOTSTRAP_XERCES_XS) && Holder.instance.xsimpl == null) {
             System.setProperty(DOMImplementationRegistry.PROPERTY, "org.apache.xerces.dom.DOMXSImplementationSourceImpl");
             DOMImplementationRegistry direg;
             try {
                 direg = DOMImplementationRegistry.newInstance();
-                xsimpl = (XSImplementation) direg.getDOMImplementation("XS-Loader");
-            } catch (Exception ex) {
+                Holder.instance.xsimpl = (XSImplementation) direg.getDOMImplementation("XS-Loader");
+            } catch (ClassCastException | ClassNotFoundException | IllegalAccessException | InstantiationException ex) {
                 throw (new ParserConfigurationException("Can't initializte Xerces XML Schema parser implementation" + ex.getMessage()));
             }
         }
@@ -68,8 +75,9 @@ public class ParserBootstrap {
     /**
      * Returns a SAXParser object.  OK to reuse these.
      */
-    SAXParser sax2Parser () throws ParserConfigurationException, SAXException {
-        return sfact.newSAXParser();
+    public static SAXParser sax2Parser () throws ParserConfigurationException, SAXException {
+        init(BOOTSTRAP_SAX2);
+        return Holder.instance.sfact.newSAXParser();
     }
     
     /**
@@ -77,8 +85,8 @@ public class ParserBootstrap {
      * where the schema documents come from -- the loader object remembers and
      * happily reuses any document it has already seen.
      */
-    
-    XSLoader xsLoader () {
-        return xsimpl.createXSLoader(null);
+    public static XSLoader xsLoader () throws ParserConfigurationException {
+        init(BOOTSTRAP_XERCES_XS);
+        return Holder.instance.xsimpl.createXSLoader(null);
     }
 }

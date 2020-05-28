@@ -12,6 +12,8 @@
 
 package gov.niem.tools.niemtran;
 
+import static gov.niem.tools.niemtran.NTConstants.APPINFO_NS_URI_PREFIX;
+import static gov.niem.tools.niemtran.NTConstants.STRUCTURES_NS_URI_PREFIX;
 import java.util.List;
 import javax.xml.parsers.ParserConfigurationException;
 import org.apache.xerces.xs.XSAttributeDeclaration;
@@ -24,7 +26,6 @@ import org.apache.xerces.xs.XSObject;
 import org.apache.xerces.xs.XSSimpleTypeDefinition;
 import org.apache.xerces.xs.XSTypeDefinition;
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
-import static gov.niem.tools.niemtran.NTConstants.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import org.apache.xerces.xs.XSModelGroup;
@@ -33,18 +34,18 @@ import org.apache.xerces.xs.XSParticle;
 import org.apache.xerces.xs.XSTerm;
 
 /**
- * A class for producing a NTSchemaModel object from an XML schema; that 
- * object holds the information needed to drive translation between NIEM XML, 
- * NIEM JSON, and NIEM RDF. 
+ * A class for producing a NTSchemaModel object from an XML schema.
+ * The NTSchemaModel object holds the information needed to drive translation 
+ * between NIEM XML, NIEM JSON, and NIEM RDF. At present only the XML->JSON
+ * translation is implemented.
  * 
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 
-public class NTCompiledSchema extends NTSchema {
+public class NTCompiledSchema extends NTCheckedSchema {
         
     private NTSchemaModel ntmodel = null;
-    private XSNamespaceInfo nsInfo = null;
     
     public NTCompiledSchema () throws ParserConfigurationException, IOException {
         super();
@@ -63,27 +64,28 @@ public class NTCompiledSchema extends NTSchema {
         if (xs == null) {
             return null;
         }        
-        ntmodel =  new NTSchemaModel();   
-        nsInfo  = new XSNamespaceInfo(xs);
-    
-        // Assign unique prefix for each namespace in schema.
-        // Start with declarations in the extension schemas, on the assumption
-        // that the message designer knew what he was doing.
-        // Follow with declarations in NIEM model schemas, to get the usual
-        // namespace prefixes (unless the designer chose something else).
-        // Declarations in external schemas come last.
-        // However, the rdf: prefix always means RDF, no matter what crazy
-        // declarations may be in the extension or external schemas.
-        ntmodel.namespaceBindings().assignPrefix("rdf", RDF_NS_URI); 
-        nsInfo.nsList().forEach((ns) -> {
-            nsInfo.nsDecls().get(ns).forEach((prefix, uri) -> {
-                  ntmodel().namespaceBindings().assignPrefix(prefix, uri);
-            });
+        ntmodel =  new NTSchemaModel();
+        
+        // Set the preferred prefix for every schema document's namespace
+        // The NamespaceDecls object has all of the namespace declarations in
+        // the schema document pile, in priority order. But for the context
+        // mappings, we only want to map the target namespaces from the assembled 
+        // schema documents. The NTModel object knows how to handle the case
+        // where a single prefix string is mapped to more than one target namespace URI.
+        NamespaceDecls ndl = namespaceDeclarations();
+        List<NamespaceDecls.NSDeclRec> decls = ndl.nsDecls();
+        decls.forEach((d) -> {
+            if (namespaces().contains(d.uri)) {
+                ntmodel.assignPrefix(d.prefix, d.uri);
+            }
         });
-        // Find external namespaces
-        nsInfo.nsNDRversion().forEach((ns, ver) -> {
-            if ("".equals(ver)){
-                ntmodel.addExternalNS(ns);
+        
+        // Get the external namespaces, set their default handler
+        namespaces().forEach((nsURI) -> {
+            if (!nsURI.startsWith(APPINFO_NS_URI_PREFIX) &&
+                !nsURI.startsWith(STRUCTURES_NS_URI_PREFIX) &&
+                "".equals(namespaceNIEMVersion(nsURI))) {
+                ntmodel.addExternalNS(nsURI);
             }
         });
         // Get the simple types for simple elements
@@ -113,6 +115,7 @@ public class NTCompiledSchema extends NTSchema {
             ntmodel.addAttribute(buildURI(item), ts);
         }
         // Find wildcards
+        // FIXME -- what about attributes?
         map = xs.getComponents(XSTypeDefinition.COMPLEX_TYPE);
         for (int i = 0; i < map.getLength(); i++) {
             XSComplexTypeDefinition ctype = (XSComplexTypeDefinition)map.item(i);
@@ -150,9 +153,6 @@ public class NTCompiledSchema extends NTSchema {
     
     private static String genTypeString (XSSimpleTypeDefinition stype) {
         String result = "";
-        if (stype == null) {
-            int k = 0;
-        }
         if (stype.getItemType() != null) {
             result = "list/";
             stype = stype.getItemType();
