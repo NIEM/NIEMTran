@@ -1,3 +1,22 @@
+# Building
+
+    mvn package appassembler:assemble
+
+# Quick Start
+
+You will find the executable in `target/appassembler/bin`. <br>
+There is a sample IEPD in `target/appassembler/share/sample-iepd`. <br>
+Try the following commands in the IEPD directory:
+
+
+    niemtool check xml-catalog.xml extension/CrashDriver.xsd
+    niemtool check -v xml-catalog.xml extension/CrashDriver.xsd
+    niemtool compile xml-catalog.xml extension/CrashDriver.xsd
+    niemtool translate CrashDriver.no iep/iep1.xml > iep1.json
+    niemtool translate --x2t CrashDriver.no iep/iep1.xml > iep1.ttl
+    niemtool translate --x2g CrashDriver.no iep/iep1.xml > iep1.gv
+    dot -Tpng iep1.gv > iep1.png
+
 # Overview
 
 This is a project for translating data between NIEM XML, NIEM JSON,
@@ -13,7 +32,7 @@ translators from NIEM JSON and NIEM RDF are not yet implemented.
 
 As the genie says, there are also "a few provisos, a couple of quid
 pro quos"s for the XML to JSON translation, concerning external and
-wildcard schema component. These are described in a later section.
+wildcard schema components. These are described in a later section.
 
 # The Tools
 
@@ -31,11 +50,6 @@ written in Java, and based on the Xerces2 Java Parser.
   XML documents that conform to those message formats into the
   equivalent NIEM JSON. 
   
-The project uses the *appassembler* plugin for Maven to create the
-command-line tools; it collects JAR files into a library directory
-and constructs executable scripts with the correct class path. 
-Find these in the *target/appassembler* directory.
-
 Some of the Java classes in the project are only suitable for a
 development environment, while others can be reused and deployed to
 translate NIEM XML at runtime.
