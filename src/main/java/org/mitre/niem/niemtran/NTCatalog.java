@@ -152,16 +152,21 @@ public class NTCatalog extends Catalog {
         }
 
         catalogManager.debug.message(2, "Loading catalog", fileName);
-        catalogManager.debug.message(4, "Default BASE", base.toString());
-
-        fileName = base.toString();
+        catalogManager.debug.message(4, "Default BASE", base != null ? base.toString() : "NULL");
 
         DataInputStream inStream = null;
         boolean parsed = false;
         boolean notFound = false;
         boolean notRead = false;        // MODIFIED; separate handling for IOException
+        
+        if (base != null) {
+            fileName = base.toString();
+        }
+        else {
+            notFound = true;
+        }
 
-        for (int count = 0; !parsed && count < readerArr.size(); count++) {
+        for (int count = 0; !notFound && !parsed && count < readerArr.size(); count++) {
             CatalogReader reader = (CatalogReader) readerArr.get(count);
 
             try {

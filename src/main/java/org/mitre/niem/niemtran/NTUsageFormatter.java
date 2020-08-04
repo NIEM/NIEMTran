@@ -136,8 +136,7 @@ public class NTUsageFormatter extends UnixStyleUsageFormatter {
                 description += (description.length() == 0 ? "" : " ") + syntax;
             }
 
-            String dc = def.getClass().getName();
-            if (def != null && !"java.lang.Boolean".equals(dc) && !pd.isHelp()) {
+            if (def != null && !"java.lang.Boolean".equals(def.getClass().getName()) && !pd.isHelp()) {
                 if (!Strings.isStringEmpty(def.toString())) {
                     //String displayedDef = Strings.isStringEmpty(def.toString()) ? "<empty string>" : def.toString();
                     String displayedDef = def.toString();
