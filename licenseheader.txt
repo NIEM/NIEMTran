@@ -1,6 +1,15 @@
 <#if licenseFirst??>
 ${licenseFirst}
 </#if>
+
+${licensePrefix}NOTICE
+${licensePrefix?replace(" +$", "", "r")}
+${licensePrefix}This software was produced for the U. S. Government
+${licensePrefix}under Basic Contract No. W56KGU-18-D-0004, and is
+${licensePrefix}subject to the Rights in Noncommercial Computer Software
+${licensePrefix}and Noncommercial Computer Software Documentation
+${licensePrefix}Clause 252.227-7014 (FEB 2012)
+${licensePrefix?replace(" +$", "", "r")}
 ${licensePrefix}Copyright ${date?date?string("yyyy")} The MITRE Corporation. All rights reserved.
 ${licensePrefix?replace(" +$", "", "r")}
 ${licensePrefix}Licensed under the Apache License, Version 2.0 (the "License");

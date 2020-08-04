@@ -1,4 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <actions>
+        <action>
+            <actionName>CUSTOM-AppAssemble</actionName>
+            <displayName>AppAssemble</displayName>
+            <recursive>false</recursive>
+            <goals>
+                <goal>package</goal>
+                <goal>appassembler:assemble</goal>
+            </goals>
+        </action>
 
  </actions>

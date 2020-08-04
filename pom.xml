@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.mitre.niem</groupId>
     <artifactId>NIEMTran</artifactId>
-    <version>1.0.0rc</version>
+    <version>1.0.0</version>
     <packaging>jar</packaging>
     <dependencies>
         <dependency>
