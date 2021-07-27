@@ -17,9 +17,9 @@ Try the following commands in the IEPD directory:
     niemtool translate --x2g CrashDriver.no iep/iep1.xml > iep1.gv
     dot -Tpng iep1.gv > iep1.png
 
-# Overview
+# Overview of the NIEM Translator
 
-This is a project for translating data between NIEM XML, NIEM JSON,
+The NIEM Translator is a project for translating data between NIEM XML, NIEM JSON,
 and NIEM RDF, a way to convert a NIEM message in one serialization
 into the equivalent NIEM message in either of the others. It is a
 lossless translation, preserving all of the meaning that is defined by
